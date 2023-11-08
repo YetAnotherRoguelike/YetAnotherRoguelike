@@ -1,0 +1,9 @@
+[submodule "lib/adt"]
+	path = lib/adt
+	url = https://github.com/kxirk/adt.js.git
+[submodule "lib/random"]
+	path = lib/random
+	url = https://github.com/kxirk/random.js.git
+[submodule "lib/utils"]
+	path = lib/utils
+	url = https://github.com/kxirk/utils.js.git
