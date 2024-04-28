@@ -1,0 +1,14 @@
+{
+  "name": "@yetanotherroguelike/yetanotherroguelike",
+  "private": true,
+  "version": "0.0.0",
+  "license": "GPL-3.0-only",
+  "author": "Cody Morton",
+  "homepage": "https://github.com/YetAnotherRoguelike/YetAnotherRoguelike#readme",
+  "repository": "github:YetAnotherRoguelike/YetAnotherRoguelike",
+  "bugs": {
+    "url": "https://github.com/YetAnotherRoguelike/YetAnotherRoguelike/issues"
+  },
+  "workspaces": [],
+  "scripts": {}
+}
