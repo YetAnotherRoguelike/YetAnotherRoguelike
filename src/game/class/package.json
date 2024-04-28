@@ -1,6 +1,5 @@
 {
-  "name": "@yetanotherroguelike/yetanotherroguelike",
-  "private": true,
+  "name": "@yetanotherroguelike/class",
   "version": "0.0.0",
   "license": "GPL-3.0-only",
   "author": "Cody Morton",
@@ -9,12 +8,11 @@
   "bugs": {
     "url": "https://github.com/YetAnotherRoguelike/YetAnotherRoguelike/issues"
   },
-  "workspaces": [
-    "lib/*",
-    "src/",
-    "src/*",
-    "src/game",
-    "src/game/*"
-  ],
-  "scripts": {}
+  "type": "module",
+  "main": "index.js",
+  "dependencies": {
+    "@kxirk/adt": "^1.0.0",
+    "@kxirk/random": "^3.0.1",
+    "@kxirk/utils": "^1.0.0"
+  }
 }
