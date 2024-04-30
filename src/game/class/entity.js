@@ -47,22 +47,7 @@ const Entity = class {
    * @returns {Entity}
    */
   static fromJSON (json) {
-    const entity = new Entity();
-
-    entity.name = json.name;
-    entity.description = json.description;
-
-    entity.display.push(...json.display);
-    entity.color = json.color;
-
-    entity.length = json.length;
-    entity.width = json.width;
-    entity.height = json.height;
-    entity.volumeFactor = json.volumeFactor;
-
-    entity.density = json.density;
-
-    return entity;
+    return new Entity().fromJSON(json);
   }
 
 
@@ -130,6 +115,27 @@ const Entity = class {
     return (this.density * this.volume).round(0.001);
   }
 
+
+  /**
+   * @param {Object} json
+   * @returns {Entity}
+   */
+  fromJSON (json) {
+    this.name = json.name;
+    this.description = json.description;
+
+    this.display.write(...json.display);
+    this.color = json.color;
+
+    this.length = json.length;
+    this.width = json.width;
+    this.height = json.height;
+    this.volumeFactor = json.volumeFactor;
+
+    this.density = json.density;
+
+    return this;
+  }
 
   /** @type {Object} */
   toJSON () {
