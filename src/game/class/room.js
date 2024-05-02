@@ -47,7 +47,7 @@ const Room = class extends Matrix /* <Tile> */ {
     return this;
   }
 
-  /** @type {Object} */
+  /** @returns {Object} */
   toJSON () {
     const json = [...this];
 

@@ -138,7 +138,7 @@ const Tile = class extends Entity {
     return this;
   }
 
-  /** @type {Object} */
+  /** @returns {Object} */
   toJSON () {
     const json = super.toJSON();
 

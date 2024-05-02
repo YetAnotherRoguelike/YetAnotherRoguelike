@@ -68,7 +68,7 @@ const Point = class {
     return this;
   }
 
-  /** @type {Object} */
+  /** @returns {Object} */
   toJSON () {
     return {
       x: this.x,

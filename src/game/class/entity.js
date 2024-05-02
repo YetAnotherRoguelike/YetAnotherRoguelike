@@ -137,7 +137,7 @@ const Entity = class {
     return this;
   }
 
-  /** @type {Object} */
+  /** @returns {Object} */
   toJSON () {
     return {
       name: this.name,
