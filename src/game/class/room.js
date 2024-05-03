@@ -3,6 +3,7 @@ import "@kxirk/utils/number.js";
 import { Matrix } from "@kxirk/adt";
 
 import Point from "./point.js";
+import Tile from "./tile.js";
 
 
 const Room = class extends Matrix /* <Tile> */ {
@@ -36,20 +37,20 @@ const Room = class extends Matrix /* <Tile> */ {
 
 
   /**
-   * @param {Object} json
+   * @param {Object[][]} json
    * @returns {Room}
    */
   fromJSON (json) {
-    this.write(...json);
+    this.write(...json.map((row) => row.map( (tile) => Tile.fromJSON(tile) )));
 
     this.center.fromJSON(json.center);
 
     return this;
   }
 
-  /** @returns {Object} */
+  /** @returns {Object[][]} */
   toJSON () {
-    const json = [...this];
+    const json = this.map((row) => row.map( (tile) => tile.toJSON() ));
 
     json.center = this.center.toJSON();
 

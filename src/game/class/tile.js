@@ -108,12 +108,12 @@ const Tile = class extends Entity {
   set walkable (walkable) { this.#walkable = walkable; }
 
 
-  /** @type {Set.<Entity>} */
+  /** @type {Set.<Mob>} */
   get mobs () { return this.#mobs; }
 
   /** @type {number} */
   get occupancy () {
-    const volume = Object.values(this.mobs).reduce((total, entity) => (total + entity.volume), 0);
+    const volume = Object.values(this.mobs).reduce((total, mob) => (total + mob.volume), 0);
 
     return (volume / 5);
   }
