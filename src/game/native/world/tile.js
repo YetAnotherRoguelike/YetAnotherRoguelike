@@ -9,6 +9,13 @@ import { Point } from "@yetanotherroguelike/class";
 export const tileAt = (tiles, point) => tiles[point.y][point.x];
 
 /**
+ * @param {Point} a
+ * @param {Point} b
+ * @returns {number} ft
+ */
+export const tileDistance = (a, b) => 5 * Math.sqrt(Math.abs(a.x - b.x) ** 2 + Math.abs(a.y - b.y) ** 2);
+
+/**
  * @param {Tile} tile
  * @param {Object.<string, boolean>} [properties]
  * @returns {boolean}

@@ -37,6 +37,12 @@ export const generateDepth = (random, level, depthBase, depthLevel) => {
   }
 
 
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      depth[y][x].at.set(x, y, depthBase + depthLevel);
+    }
+  }
+
   return depth;
 };
 

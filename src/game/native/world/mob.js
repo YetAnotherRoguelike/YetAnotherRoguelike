@@ -1,7 +1,7 @@
 import { Point } from "@yetanotherroguelike/class";
 
 import { pointDistance, pointLine, pointsEqual } from "./point.js";
-import { tileAt } from "./tile.js";
+import { tileAt, tileDistance } from "./tile.js";
 import { line } from "./fov.js";
 
 
@@ -36,9 +36,8 @@ export const move = (depths, mob, point) => {
   const depth = depths[z];
 
   const relative = new Point((point.x - mob.at.x), (point.y - mob.at.y), (point.z - mob.at.z));
-  const distance = pointDistance(mob.at, point);
 
-  if (distance === 1) {
+  if (pointDistance(mob.at, point) === 1) {
     const prev = tileAt(depth, mob.at);
     const tile = tileAt(depth, point);
 

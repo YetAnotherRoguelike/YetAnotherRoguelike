@@ -2,9 +2,13 @@ import "@kxirk/utils/number.js";
 
 import Entity from "./entity.js";
 import Mob from "./mob.js";
+import Point from "./point.js";
 
 
 const Tile = class extends Entity {
+  /** @type {Point} */
+  #at;
+
   /** @type {boolean} */
   #masked;
   /** @type {Tile} */
@@ -27,6 +31,8 @@ const Tile = class extends Entity {
     this.length = 5;
     this.width = 5;
     this.height = 10;
+
+    this.#at = new Point();
 
     this.masked = false;
     this.mask = null;
@@ -86,6 +92,10 @@ const Tile = class extends Entity {
   set density (density) { super.density = density; }
 
 
+  /** @type {Point} */
+  get at () { return this.#at; }
+
+
   /** @type {boolean} */
   get masked () { return this.#masked; }
   set masked (masked) { this.#masked = masked; }
@@ -113,7 +123,7 @@ const Tile = class extends Entity {
 
   /** @type {number} */
   get occupancy () {
-    const volume = Object.values(this.mobs).reduce((total, mob) => (total + mob.volume), 0);
+    const volume = [...this.mobs.values()].reduce((total, mob) => (total + mob.volume), 0);
 
     return (volume / 5);
   }
@@ -125,6 +135,8 @@ const Tile = class extends Entity {
    */
   fromJSON (json) {
     super.fromJSON(json);
+
+    this.at.fromJSON(json.at);
 
     this.masked = json.masked;
     this.mask = Tile.fromJSON(json.mask);
@@ -154,6 +166,8 @@ const Tile = class extends Entity {
     json.volumeFactor = super.volumeFactor;
 
     json.density = super.density;
+
+    json.at = this.at.toJSON();
 
     json.masked = this.masked;
     json.mask = this.mask.toJSON();
