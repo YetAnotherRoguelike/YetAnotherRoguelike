@@ -1,3 +1,6 @@
+import "@kxirk/utils/number.js";
+
+
 const Level = class {
   /** @type {number} */
   #depthCount;
