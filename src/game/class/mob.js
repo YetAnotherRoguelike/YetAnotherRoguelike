@@ -1,9 +1,10 @@
+import "@kxirk/utils/number.js";
+
 import Ability from "./ability.js";
 import Entity from "./entity.js";
 import Point from "./point.js";
 import Stat from "./stat.js";
 import Type from "./type.js";
-import Vital from "./vital.js";
 
 
 const Mob = class extends Entity {
@@ -24,9 +25,6 @@ const Mob = class extends Entity {
   #statBase;
   /** @type {Stat} */
   #stat;
-
-  /** @type {Vital} */
-  #vital;
 
   constructor () {
     super();
@@ -50,14 +48,14 @@ const Mob = class extends Entity {
       healthMax: { get: () => Math.max(this.ability.constitution, ((10 * this.ability.constitution) - 80)) },
       healthRegen: { value: 25 },
 
-      speed: { get: () => ((this.ability.dexterity / 2) + 1) },
+      speed: { get: () => (this.ability.dexterity / 2) + 1 },
       stealth: { get: () => this.ability.dexterity },
 
-      accuracy: { get: () => this.ability.dexterity },
-      critical: { get: () => (this.ability.luck / 200) },
+      critical: { get: () => this.ability.luck / 200 },
+      strikingAttack: { get: () => this.ability.strength },
 
-      evade: { get: () => (this.ability.dexterity / 2) },
-      physicalDefense: { get: () => (this.ability.constitution / 2) }
+      evade: { get: () => (this.ability.dexterity / 2) + this.level },
+      physicalDefense: { get: () => this.ability.constitution / 2 }
     });
     this.#stat = new Proxy(new Stat(), {
       get: (target, stat) => {
@@ -77,6 +75,10 @@ const Mob = class extends Entity {
 
         let value = this.statBase[stat] ?? this.statBase[statGroup] ?? this.statBase[statType] ?? 0;
 
+        if (["health", "regen"].includes(stat)) {
+          value = target[stat];
+        }
+
         if (["speed", "stealth", "evade"].includes(stat)) {
           value *= (1 / this.sizeMod);
         }
@@ -93,10 +95,17 @@ const Mob = class extends Entity {
         }
 
         return value;
+      },
+      set: (target, stat, value) => {
+        if (["health", "regen"].includes(stat)) {
+          const statMax = `${stat}Max`;
+          target[stat] = value.clamp(0, this.stat[statMax]);
+
+          return true;
+        }
+        return false;
       }
     });
-
-    this.#vital = new Vital();
   }
 
   /**
@@ -140,10 +149,6 @@ const Mob = class extends Entity {
   get stat () { return this.#stat; }
 
 
-  /** @type {Vital} */
-  get vital () { return this.#vital; }
-
-
   /**
    * @param {Object} json
    * @returns {Mob}
@@ -159,8 +164,6 @@ const Mob = class extends Entity {
 
     this.ability.fromJSON(json.ability);
 
-    this.vital.fromJSON(json.vital);
-
     return this;
   }
 
@@ -175,8 +178,6 @@ const Mob = class extends Entity {
     json.facing = this.facing.toJSON();
 
     json.ability = this.ability.toJSON();
-
-    json.vital = this.vital.toJSON();
 
     return json;
   }

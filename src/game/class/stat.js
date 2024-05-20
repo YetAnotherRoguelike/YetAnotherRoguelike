@@ -19,15 +19,18 @@ const Stat = class {
   /** @type {number} */
   #healthMax;
   /** @type {number} */
-  #healthRegen; // turns to regen 1 health
+  #health;
+
+  /** @type {number} */
+  #regenMax; // turns to regen 1 health
+  /** @type {number} */
+  #regen; // reset on taking damage
 
   /** @type {number} */
   #speed; // ft/turn
   /** @type {number} */
   #stealth;
 
-  /** @type {number} */
-  #accuracy;
   /** @type {number} */
   #critical; // % chance to deal additional damage: [0.0, 1.0]
   /** @type {Type.<number>} */
@@ -50,12 +53,14 @@ const Stat = class {
     this.perception = initial;
 
     this.healthMax = initial;
-    this.healthRegen = initial;
+    this.health = initial;
+
+    this.regenMax = initial;
+    this.regen = initial;
 
     this.speed = initial;
     this.stealth = initial;
 
-    this.accuracy = initial;
     this.critical = initial;
     this.#attack = new Type(initial); Object.assignGettersSettersAs(this, this.#attack, (type) => `${type}Attack`);
 
@@ -103,9 +108,22 @@ const Stat = class {
   }
 
   /** @type {number} */
-  get healthRegen () { return this.#healthRegen; }
-  set healthRegen (healthRegen) {
-    this.#healthRegen = healthRegen.clamp(0);
+  get health () { return this.#health; }
+  set health (health) {
+    this.#health = health.clamp(0);
+  }
+
+
+  /** @type {number} */
+  get regenMax () { return this.#regenMax; }
+  set regenMax (regenMax) {
+    this.#regenMax = regenMax.clamp(0);
+  }
+
+  /** @type {number} */
+  get regen () { return this.#regen; }
+  set regen (regen) {
+    this.#regen = regen.clamp(0);
   }
 
 
@@ -121,12 +139,6 @@ const Stat = class {
     this.#stealth = stealth.clamp(0);
   }
 
-
-  /** @type {number} */
-  get accuracy () { return this.#accuracy; }
-  set accuracy (accuracy) {
-    this.#accuracy = accuracy.clamp(0);
-  }
 
   /** @type {number} */
   get critical () { return this.#critical; }
@@ -204,12 +216,14 @@ const Stat = class {
     this.perception = json.perception;
 
     this.healthMax = json.healthMax;
-    this.healthRegen = json.healthRegen;
+    this.health = json.health;
+
+    this.regenMax = json.regenMax;
+    this.regen = json.regen;
 
     this.speed = json.speed;
     this.stealth = json.stealth;
 
-    this.accuray = json.accuracy;
     this.critical = json.critical;
     this.#attack.fromJSON(json.attack);
 
@@ -229,12 +243,14 @@ const Stat = class {
       perception: this.perception,
 
       healthMax: this.healthMax,
-      healthRegen: this.healthRegen,
+      healh: this.health,
+
+      regenMax: this.regenMax,
+      regen: this.regen,
 
       speed: this.speed,
       stealth: this.stealth,
 
-      accuray: this.accuracy,
       critical: this.critical,
       attack: this.#attack.toJSON(),
 

@@ -9,4 +9,3 @@ export { default as Size } from "./size.js";
 export { default as Stat } from "./stat.js";
 export { default as Tile } from "./tile.js";
 export { default as Type } from "./type.js";
-export { default as Vital } from "./vital.js";
