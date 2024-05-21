@@ -18,6 +18,13 @@ const Mob = class extends Entity {
   /** @type {Point} */
   #facing;
 
+  /** @type {number} */
+  #experience;
+  /** @type {number} */
+  #level;
+
+  /** @type {Ability.<number>} */
+  #abilityBase;
   /** @type {Ability.<number>} */
   #ability;
 
@@ -36,7 +43,17 @@ const Mob = class extends Entity {
     this.#looking = new Point();
     this.#facing = new Point();
 
-    this.#ability = new Ability(1);
+    this.#experience = 0;
+    this.#level = 1;
+
+    this.#abilityBase = new Ability(1);
+    this.#ability = new Proxy(new Ability(), {
+      get: (target, ability) => {
+        let value = this.abilityBase[ability] ?? 0;
+
+        return value.round();
+      }
+    });
 
     this.#statBase = new Stat();
     Object.defineProperties(this.statBase, {
@@ -45,7 +62,7 @@ const Mob = class extends Entity {
       view: { value: 8 },
       perception: { get: () => this.ability.wisdom },
 
-      healthMax: { get: () => Math.max(this.ability.constitution, ((10 * this.ability.constitution) - 80)) },
+      healthMax: { get: () => (this.sizeMod * this.ability.constitution) + this.level * Math.max(this.ability.constitution - 5, 1) },
       healthRegen: { value: 25 },
 
       speed: { get: () => (this.ability.dexterity / 2) + 1 },
@@ -138,6 +155,29 @@ const Mob = class extends Entity {
   get facing () { return this.#facing; }
 
 
+  /** @type {number} */
+  get experience () { return this.#experience; }
+  set experience (experience) {
+    this.#experience += experience;
+
+    let next = Infinity;
+    do {
+      next = 5 * (this.level + 1);
+      if (this.experience >= next) {
+        this.#level++;
+        this.#experience -= next;
+      }
+    } while (this.experience >= next);
+  }
+
+  /** @type {number} */
+  get level () { return this.#level; }
+  set level (level) { this.#level = level; }
+
+
+  /** @type {Ability.<number>} */
+  get abilityBase () { return this.#abilityBase; }
+
   /** @type {Ability.<number>} */
   get ability () { return this.#ability; }
 
@@ -162,7 +202,10 @@ const Mob = class extends Entity {
     this.looking.fromJSON(json.looking);
     this.facing.fromJSON(json.facing);
 
-    this.ability.fromJSON(json.ability);
+    this.experience = json.experience;
+    this.level = json.level;
+
+    this.abilityBase.fromJSON(json.abilityBase);
 
     return this;
   }
@@ -177,7 +220,10 @@ const Mob = class extends Entity {
     json.looking = this.looking.toJSON();
     json.facing = this.facing.toJSON();
 
-    json.ability = this.ability.toJSON();
+    json.experience = this.experience;
+    json.level = this.level;
+
+    json.abilityBase = this.abilityBase.toJSON();
 
     return json;
   }
