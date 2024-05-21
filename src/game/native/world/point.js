@@ -38,6 +38,27 @@ export const pointLine = (start, stop, excludeStart = false) => {
 
 
 /**
+ * @param {Point[]} center
+ * @param {number} radius
+ * @param {boolean} [excludeCenter]
+ * @returns {Point[]}
+ */
+export const pointsAdjacent = (center, radius, excludeCenter = false) => {
+  const points = [];
+
+  for (let y = -radius; y <= radius; y++) {
+    for (let x = -radius; x <= radius; x++) {
+      if (excludeCenter && x === center.x && y === center.y) continue;
+
+      const point = new Point((center.x + x), (center.y + y));
+      if (pointDistance(point, center) <= radius) points.push(point);
+    }
+  }
+
+  return points;
+};
+
+/**
  * @param {...Point} points
  * @returns {boolean}
  */

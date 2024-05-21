@@ -1,9 +1,11 @@
 import "@kxirk/utils/number.js";
 
 import Ability from "./ability.js";
+import Conditions from "./conditions.js";
 import Entity from "./entity.js";
 import Point from "./point.js";
 import Stat from "./stat.js";
+import Tick from "./tick.js";
 import Type from "./type.js";
 
 
@@ -33,6 +35,9 @@ const Mob = class extends Entity {
   /** @type {Stat} */
   #stat;
 
+  /** @type {Conditions} */
+  #conditions;
+
   constructor () {
     super();
     this.display.push("mob");
@@ -51,6 +56,20 @@ const Mob = class extends Entity {
       get: (target, ability) => {
         let value = this.abilityBase[ability] ?? 0;
 
+
+        // factor
+        for (const condition of this.conditions) {
+          value *= condition?.effect.abilityFactor?.[ability] ?? 1.0;
+        }
+
+
+        // flat
+        for (const condition of this.conditions) {
+          value += condition?.effect.ability?.[ability] ?? 0;
+        }
+
+
+        // round
         return value.round();
       }
     });
@@ -91,11 +110,12 @@ const Mob = class extends Entity {
 
 
         let value = this.statBase[stat] ?? this.statBase[statGroup] ?? this.statBase[statType] ?? 0;
-
         if (["health", "regen"].includes(stat)) {
           value = target[stat];
         }
 
+
+        // factor
         if (["speed", "stealth", "evade"].includes(stat)) {
           value *= (1 / this.sizeMod);
         }
@@ -103,7 +123,18 @@ const Mob = class extends Entity {
           value *= this.sizeMod;
         }
 
+        for (const condition of this.conditions) {
+          value *= condition?.effect.statFactor?.[stat] ?? 1.0;
+        }
 
+
+        // flat
+        for (const condition of this.conditions) {
+          value += condition?.effect.stat?.[stat] ?? 0;
+        }
+
+
+        // round
         if (["critical"].includes(stat) || ["resist"].includes(statType)) {
           value = value.round(0.01);
         }
@@ -123,6 +154,8 @@ const Mob = class extends Entity {
         return false;
       }
     });
+
+    this.#conditions = new Conditions();
   }
 
   /**
@@ -189,6 +222,71 @@ const Mob = class extends Entity {
   get stat () { return this.#stat; }
 
 
+  /** @type {Conditions} */
+  get conditions () { return this.#conditions; }
+
+  /**
+   * @param {string} queue
+   * @param {string} [name]
+   * @returns {Condition[]} expired
+   */
+  tick (queue, name) {
+    const expired = [];
+
+    let conditions = this.conditions[queue];
+    if (queue === Tick.persist) conditions = conditions.get(name);
+
+
+    for (const condition of conditions) {
+      this.effect(condition.effect);
+      condition.duration--;
+
+      if (condition.duration === 0) {
+        expired.push( this.conditions[queue].remove(condition) );
+      }
+    }
+
+    return expired;
+  }
+
+
+  /**
+   * @param {Type} damage
+   * @param {boolean} [factor]
+   * @returns {Type}
+   */
+  damage (damage, factor = false) {
+    const dealt = new Type(0);
+
+    for (const [type, value] of Object.entries(damage)) {
+      const base = (factor ? (this.stat.healthMax * value) : value);
+      const resist = this.stat[`${type}Resist`] * base;
+      const defense = this.stat[`${type}Resist`];
+      const total = (base - resist) - (base - resist > 0 ? defense : 0);
+
+      this.stat.health -= total;
+      dealt[type] = total;
+    }
+
+    return dealt;
+  }
+
+  /**
+   * @param {Effect} effect
+   * @returns {Object} result
+   */
+  effect (effect) {
+    const damage = this.damage(effect.damage);
+    const damageFactor = this.damage(effect.damageFactor, true);
+    const damageTotal = Object.keys({ ...damage, ...damageFactor }).reduce((total, type) => {
+      total[type] = damage[type] + damageFactor[type];
+      return total;
+    }, {});
+
+    return { damage: damageTotal };
+  }
+
+
   /**
    * @param {Object} json
    * @returns {Mob}
@@ -207,6 +305,8 @@ const Mob = class extends Entity {
 
     this.abilityBase.fromJSON(json.abilityBase);
 
+    this.conditions.fromJSON(json.conditions);
+
     return this;
   }
 
@@ -224,6 +324,8 @@ const Mob = class extends Entity {
     json.level = this.level;
 
     json.abilityBase = this.abilityBase.toJSON();
+
+    json.conditions = this.conditions.toJSON();
 
     return json;
   }
