@@ -261,12 +261,14 @@ const Mob = class extends Entity {
     for (const [type, value] of Object.entries(damage)) {
       const base = (factor ? (this.stat.healthMax * value) : value);
       const resist = this.stat[`${type}Resist`] * base;
-      const defense = this.stat[`${type}Resist`];
-      const total = (base - resist) - (base - resist > 0 ? defense : 0);
+      const defense = this.stat[`${type}Defense`];
 
-      this.stat.health -= total;
+      let total = base - resist;
+      if (total > 0) total -= defense.clamp(0, total);
+
       dealt[type] = total;
     }
+    this.stat.health -= Object.values(dealt).reduce((total, type) => total + type, 0);
 
     return dealt;
   }
