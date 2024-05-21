@@ -6,6 +6,10 @@ import Entity from "./entity.js";
 const Condition = class extends Entity {
   /** @type {Effect} */
   #effect;
+  /** @type {keyof Type} */
+  #type;
+  /** @type {boolean} */
+  #resistible;
 
   /** @type {keyof Stack} */
   #stack;
@@ -19,6 +23,8 @@ const Condition = class extends Entity {
     this.display.push("condition");
 
     this.effect = null;
+    this.type = null;
+    this.resistible = false;
 
     this.stack = null;
     this.duration = 0;
@@ -37,6 +43,14 @@ const Condition = class extends Entity {
   /** @type {Effect} */
   get effect () { return this.#effect; }
   set effect (effect) { this.#effect = effect; }
+
+  /** @type {keyof Type} */
+  get type () { return this.#type; }
+  set type (type) { this.#type = type; }
+
+  /** @type {boolean} */
+  get resistible () { return this.#resistible; }
+  set resistible (resistible) { this.#resistible = resistible; }
 
 
   /** @type {keyof Stack} */
@@ -60,6 +74,8 @@ const Condition = class extends Entity {
     super.fromJSON(json);
 
     this.effect.fromJSON(json.effect);
+    this.type = json.type;
+    this.resistible = json.resistible;
 
     this.stack = json.stack;
     this.duration = json.duration;
@@ -73,6 +89,8 @@ const Condition = class extends Entity {
     const json = super.toJSON();
 
     json.effect = this.effect.toJSON();
+    json.type = this.type;
+    json.resistible = this.resistible;
 
     json.stack = this.stack;
     json.duration = this.duration;

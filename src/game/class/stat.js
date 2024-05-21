@@ -39,7 +39,7 @@ const Stat = class {
   /** @type {number} */
   #evade;
   /** @type {Type.<number>} */
-  #resist; // % damage reduction before defense: vulnerable (-Infinity, 0.0), neutral [0.0], resist (0.0, 1.0), immune [1.0], absorb (1.0, Infinity)
+  #resist; // % damage reduction before defense: weak (-Infinity, 0.0), neutral [0.0], resist (0.0, 1.0), immune [1.0], absorb (1.0, Infinity)
   /** @type {Type.<number>} */
   #defense;
 

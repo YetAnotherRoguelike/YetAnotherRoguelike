@@ -8,6 +8,36 @@ import { line } from "./fov.js";
 
 
 /**
+ * @param {Entity} entity
+ * @param {FrequencyMap.<Effect|Condition>} effects
+ * @param {number} [proc]
+ * @returns {Array.<Effect|Condition>}
+ */
+export const applyEffects = (entity, effects, proc = Math.random()) => {
+  const applied = [];
+
+  for (const effect of effects.keysGreater(proc)) {
+    if (effect instanceof Effect && entity.effect) {
+      entity.effect(effect);
+
+      applied.push(effect);
+    }
+
+    if (effect instanceof Condition && entity.conditions) {
+      const chance = effects.get(effect);
+      const resist = (effect.resistible ? (entity?.stat[`${effect.type}Resist`] ?? 0) : 0) * chance;
+      if ((chance - resist) > proc) {
+        entity.conditions.add(effect);
+
+        applied.push(effect);
+      }
+    }
+  }
+
+  return applied;
+};
+
+/**
  * @param {Tile[][][]} depths
  * @param {Mob} user
  * @param {Action} action
@@ -36,11 +66,7 @@ export const act = (depths, user, action, target) => {
   else return hit;
 
 
-  const userBefore = action.userBefore.keysGreater(Math.random());
-  for (const effect of userBefore) {
-    if (effect instanceof Effect) user.effect(effect);
-    if (effect instanceof Condition) user.conditions.add(effect);
-  }
+  applyEffects(user, action.userBefore);
 
   for (const entity of targets) {
     const distance = tileDistance(origin, entity.at);
@@ -56,24 +82,11 @@ export const act = (depths, user, action, target) => {
     // critical
     const proc = Math.random();
 
-    const targetEffects = action.target.keysGreater(proc);
-    for (const effect of targetEffects) {
-      if (effect instanceof Effect && entity.effect) entity.effect(effect);
-      if (effect instanceof Condition && entity.conditions) entity.conditions.add(effect);
-    }
-
-    const userEffects = action.user.keysGreater(proc);
-    for (const effect of userEffects) {
-      if (effect instanceof Effect) user.effect(effect);
-      if (effect instanceof Condition) user.conditions.add(effect);
-    }
+    applyEffects(entity, action.target, proc);
+    applyEffects(user, action.user, proc);
   }
 
-  const userAfter = action.userAfter.keysGreater(Math.random());
-  for (const effect of userAfter) {
-    if (effect instanceof Effect) user.effect(effect);
-    if (effect instanceof Condition) user.conditions.add(effect);
-  }
+  applyEffects(user, action.userAfter);
 
 
   return hit;
