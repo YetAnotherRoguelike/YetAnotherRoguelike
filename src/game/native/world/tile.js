@@ -1,5 +1,7 @@
 import { Point } from "@yetanotherroguelike/class";
 
+import { pointDistance } from "./point.js";
+
 
 /**
  * @param {Tile[][]} tiles
@@ -13,7 +15,7 @@ export const tileAt = (tiles, point) => tiles[point.y][point.x];
  * @param {Point} b
  * @returns {number} ft
  */
-export const tileDistance = (a, b) => 5 * Math.sqrt(Math.abs(a.x - b.x) ** 2 + Math.abs(a.y - b.y) ** 2);
+export const tileDistance = (a, b) => 5 * pointDistance(a, b);
 
 /**
  * @param {Tile} tile

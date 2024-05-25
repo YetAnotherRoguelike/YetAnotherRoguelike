@@ -1,3 +1,5 @@
+import "@kxirk/utils/number.js";
+
 import { Point } from "@yetanotherroguelike/class";
 
 
@@ -6,7 +8,7 @@ import { Point } from "@yetanotherroguelike/class";
  * @param {Point} b
  * @returns {number}
  */
-export const pointDistance = (a, b) => Math.abs(a.x - b.x) + Math.abs(a.y - b.y);
+export const pointDistance = (a, b) => Math.sqrt(Math.abs(a.x - b.x) ** 2 + Math.abs(a.y - b.y) ** 2);
 
 /**
  * @param {Point} start
@@ -46,12 +48,13 @@ export const pointLine = (start, stop, excludeStart = false) => {
 export const pointsAdjacent = (center, radius, excludeCenter = false) => {
   const points = [];
 
-  for (let y = -radius; y <= radius; y++) {
-    for (let x = -radius; x <= radius; x++) {
-      if (excludeCenter && x === center.x && y === center.y) continue;
+  const r = radius.round();
+  for (let y = -r; y <= r; y++) {
+    for (let x = -r; x <= r; x++) {
+      if (excludeCenter && x === 0 && y === 0) continue;
 
       const point = new Point((center.x + x), (center.y + y));
-      if (pointDistance(point, center) <= radius) points.push(point);
+      if (pointDistance(center, point) <= radius) points.push(point);
     }
   }
 
