@@ -1,4 +1,5 @@
 import "@kxirk/utils/array.js";
+import Math from "@kxirk/utils/math.js";
 import "@kxirk/utils/number.js";
 import { Condition, Effect, Point } from "@yetanotherroguelike/class";
 
@@ -74,8 +75,11 @@ export const act = (depths, user, action, target) => {
 
     const speedFactor = action.speed / (action.speed + (entity.stat?.evade ?? 0));
     const evadeFactor = (1 - speedFactor) / accuracy;
-    if (Math.random() <= evadeFactor) continue;
 
+    const occupancies = pointsAdjacent(entity.at, Math.SQRT2, true).map((point) => tileAt(depths[entity.at.z], point).occupancy.clamp(0, 1));
+    const moveFactor = 1 - Math.average(...occupancies);
+
+    if (Math.random() <= (evadeFactor * moveFactor)) continue;
     hit.push(entity);
 
 

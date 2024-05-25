@@ -123,7 +123,7 @@ const Tile = class extends Entity {
 
   /** @type {number} */
   get occupancy () {
-    const volume = [...this.mobs.values()].reduce((total, mob) => (total + mob.volume), 0);
+    const volume = this.volume + [...this.mobs.values()].reduce((total, mob) => (total + mob.volume), 0);
 
     return (volume / 5);
   }
