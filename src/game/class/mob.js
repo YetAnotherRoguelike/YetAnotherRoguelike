@@ -82,7 +82,8 @@ const Mob = class extends Entity {
       perception: { get: () => this.ability.wisdom },
 
       healthMax: { get: () => (this.sizeMod * this.ability.constitution) + this.level * Math.max(this.ability.constitution - 5, 1) },
-      healthRegen: { value: 25 },
+
+      regenMax: { value: 10 },
 
       speed: { get: () => (this.ability.dexterity / 2) + 1 },
       stealth: { get: () => this.ability.dexterity },
@@ -268,7 +269,11 @@ const Mob = class extends Entity {
 
       dealt[type] = total;
     }
-    this.stat.health -= Object.values(dealt).reduce((total, type) => total + type, 0);
+
+    const dealtTotal = Object.values(dealt).reduce((total, type) => total + type, 0);
+    this.stat.health -= dealtTotal;
+    if (dealtTotal > 0) this.stat.regen = this.stat.regenMax;
+
 
     return dealt;
   }
