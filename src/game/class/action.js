@@ -15,6 +15,9 @@ const Action = class {
   #userAfter;
 
   /** @type {number} */
+  #energy;
+
+  /** @type {number} */
   #speed; // ft
   /** @type {number} */
   #range; // ft: self 0, melee (0, 5√2), ranged 5√2+
@@ -28,6 +31,8 @@ const Action = class {
     this.#target = new FrequencyMap();
     this.#user = new FrequencyMap();
     this.#userAfter = new FrequencyMap();
+
+    this.energy = 0;
 
     this.speed = 0;
     this.range = 0;
@@ -55,6 +60,13 @@ const Action = class {
 
   /** @type {FrequencyMap.<Effect|Condition>} */
   get userAfter () { return this.#userAfter; }
+
+
+  /** @type {number} */
+  get energy () { return this.#energy; }
+  set energy (energy) {
+    this.#energy = energy.clamp(0);
+  }
 
 
   /** @type {number} */
@@ -90,6 +102,8 @@ const Action = class {
     for (const [key, value] of Object.entries(json.user)) this.user.set(key, value);
     for (const [key, value] of Object.entries(json.userAfter)) this.userAfter.set(key, value);
 
+    this.energy = json.energy;
+
     this.speed = json.speed;
     this.range = json.range;
     this.radius = json.radius;
@@ -104,6 +118,8 @@ const Action = class {
       target: Object.fromEntries(this.target),
       user: Object.fromEntries(this.user),
       userAfter: Object.fromEntries(this.userAfter),
+
+      energy: this.energy,
 
       speed: this.speed,
       range: this.range,

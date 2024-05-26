@@ -1,7 +1,7 @@
 import "@kxirk/utils/array.js";
 import Math from "@kxirk/utils/math.js";
 import "@kxirk/utils/number.js";
-import { Condition, Effect, Point } from "@yetanotherroguelike/class";
+import { Condition, Effect, Point, Tick } from "@yetanotherroguelike/class";
 
 import { pointDistance, pointLine, pointsAdjacent, pointsEqual } from "./point.js";
 import { tileAt, tileDistance } from "./tile.js";
@@ -163,4 +163,20 @@ export const place = (depths, mob, at, looking) => {
   look(depths, mob, looking);
 
   return true;
+};
+
+/**
+ * @param {PriorityQueue.<Mob>} initiative
+ * @returns {undefined}
+ */
+export const tick = async (initiative) => {
+  initiative.update();
+
+  const mob = initiative.remove();
+  mob.tick(Tick.before);
+  mob.stat.energy = mob.stat.energyMax;
+  await mob.act(mob);
+  mob.tick(Tick.after);
+
+  initiative.add(mob);
 };

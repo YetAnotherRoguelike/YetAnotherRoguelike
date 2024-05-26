@@ -38,6 +38,9 @@ const Mob = class extends Entity {
   /** @type {Conditions} */
   #conditions;
 
+  /** @type {Function} */
+  #act;
+
   constructor () {
     super();
     this.display.push("mob");
@@ -85,6 +88,8 @@ const Mob = class extends Entity {
 
       regenMax: { value: 10 },
 
+      energyMax: { get: () => 10 * this.stat.speed },
+
       speed: { get: () => (this.ability.dexterity / 2) + 1 },
       stealth: { get: () => this.ability.dexterity },
 
@@ -111,7 +116,7 @@ const Mob = class extends Entity {
 
 
         let value = this.statBase[stat] ?? this.statBase[statGroup] ?? this.statBase[statType] ?? 0;
-        if (["health", "regen"].includes(stat)) {
+        if (["health", "regen", "energy"].includes(stat)) {
           value = target[stat];
         }
 
@@ -146,7 +151,7 @@ const Mob = class extends Entity {
         return value;
       },
       set: (target, stat, value) => {
-        if (["health", "regen"].includes(stat)) {
+        if (["health", "regen", "energy"].includes(stat)) {
           const statMax = `${stat}Max`;
           target[stat] = value.clamp(0, this.stat[statMax]);
 
@@ -157,6 +162,8 @@ const Mob = class extends Entity {
     });
 
     this.#conditions = new Conditions();
+
+    this.act = null;
   }
 
   /**
@@ -249,6 +256,11 @@ const Mob = class extends Entity {
 
     return expired;
   }
+
+
+  /** @type {Function} */
+  get act () { return this.#act; }
+  set act (act) { this.#act = act; }
 
 
   /**

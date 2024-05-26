@@ -27,6 +27,11 @@ const Stat = class {
   #regen; // reset on taking damage
 
   /** @type {number} */
+  #energyMax;
+  /** @type {number} */
+  #energy;
+
+  /** @type {number} */
   #speed; // ft/turn
   /** @type {number} */
   #stealth;
@@ -57,6 +62,9 @@ const Stat = class {
 
     this.regenMax = initial;
     this.regen = initial;
+
+    this.energyMax = initial;
+    this.energy = initial;
 
     this.speed = initial;
     this.stealth = initial;
@@ -124,6 +132,19 @@ const Stat = class {
   get regen () { return this.#regen; }
   set regen (regen) {
     this.#regen = regen.clamp(0);
+  }
+
+
+  /** @type {number} */
+  get energyMax () { return this.#energyMax; }
+  set energyMax (energyMax) {
+    this.#energyMax = energyMax.clamp(0);
+  }
+
+  /** @type {number} */
+  get energy () { return this.#energy; }
+  set energy (energy) {
+    this.#energy = energy.clamp(0);
   }
 
 
@@ -221,6 +242,9 @@ const Stat = class {
     this.regenMax = json.regenMax;
     this.regen = json.regen;
 
+    this.energyMax = json.energyMax;
+    this.energy = json.energy;
+
     this.speed = json.speed;
     this.stealth = json.stealth;
 
@@ -247,6 +271,9 @@ const Stat = class {
 
       regenMax: this.regenMax,
       regen: this.regen,
+
+      energyMax: this.energyMax,
+      energy: this.energy,
 
       speed: this.speed,
       stealth: this.stealth,
