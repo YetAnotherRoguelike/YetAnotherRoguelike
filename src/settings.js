@@ -21,7 +21,15 @@ export const events = {
 };
 events.streams.push(events.console);
 
+export const time = {
+  /** @type {number} ms interval to update server */
+  tickRate: 50,
+  /** @type {number} tick drift allowance before time sync, Infinity to disable */
+  tickDriftThreshold: 10
+};
+
 
 export default {
-  events
+  events,
+  time
 };
