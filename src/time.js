@@ -1,5 +1,3 @@
-/* eslint-disable max-classes-per-file */
-
 import { PriorityQueue } from "@kxirk/adt";
 import "@kxirk/utils/number.js";
 
