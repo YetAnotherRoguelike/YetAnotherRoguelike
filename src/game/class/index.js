@@ -6,6 +6,7 @@ export { default as Armor } from "./armor.js";
 export { default as Color } from "./color.js";
 export { default as Condition } from "./condition.js";
 export { default as Conditions } from "./conditions.js";
+export { default as Decoration } from "./decoration.js";
 export { default as Effect } from "./effect.js";
 export { default as Entity } from "./entity.js";
 export { default as Equip } from "./equip.js";

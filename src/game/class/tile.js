@@ -1,6 +1,7 @@
 import "@kxirk/utils/number.js";
 
 import Entity from "./entity.js";
+import Decoration from "./decoration.js";
 import Item from "./item.js";
 import Mob from "./mob.js";
 import Point from "./point.js";
@@ -26,6 +27,8 @@ const Tile = class extends Entity {
   #mobs;
   /** @type {Set.<Item>} */
   #items;
+  /** @type {Set.<Decoration>} */
+  #decorations;
 
 
   constructor () {
@@ -47,6 +50,7 @@ const Tile = class extends Entity {
 
     this.#mobs = new Set();
     this.#items = new Set();
+    this.#decorations = new Set();
   }
 
   /**
@@ -129,9 +133,13 @@ const Tile = class extends Entity {
   /** @type {Set.<Item>} */
   get items () { return this.#items; }
 
+  /** @type {Set.<Decoration>} */
+  get decorations () { return (this.masked ? this.#mask.decorations : this.#decorations); }
+
   /** @type {number} */
   get occupancy () {
     const volume = this.volume + [
+      ...this.decorations.values(),
       ...this.items.values(),
       ...this.mobs.values()
     ].reduce((total, entity) => (total + entity.volume), 0);
@@ -158,6 +166,7 @@ const Tile = class extends Entity {
 
     for (const mob of json.mobs) this.mobs.add( Mob.fromJSON(mob) );
     for (const item of json.items) this.items.add( Item.fromJSON(item) );
+    for (const decoration of json.decorations) this.decorations.add( Decoration.fromJSON(decoration) );
 
     return this;
   }
@@ -190,6 +199,7 @@ const Tile = class extends Entity {
 
     json.mobs = [...this.mobs].map((mob) => mob.toJSON());
     json.items = [...this.items].map((item) => item.toJSON());
+    json.decorations = [...this.decorations].map((decoration) => decoration.toJSON());
 
     return json;
   }
