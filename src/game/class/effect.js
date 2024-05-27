@@ -75,14 +75,14 @@ const Effect = class {
   /** @returns {Object} */
   toJSON () {
     return {
-      ability: this.ability.toJSON(),
-      abilityFactor: this.abilityFactor.toJSON(),
+      ability: this.ability,
+      abilityFactor: this.abilityFactor,
 
-      stat: this.stat.toJSON(),
-      statFactor: this.statFactor.toJSON(),
+      stat: this.stat,
+      statFactor: this.statFactor,
 
-      damage: this.damage.toJSON(),
-      damageFactor: this.damageFactor.toJSON()
+      damage: this.damage,
+      damageFactor: this.damageFactor
     };
   }
 };
