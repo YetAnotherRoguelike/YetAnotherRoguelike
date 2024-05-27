@@ -11,11 +11,11 @@ const Condition = class extends Entity {
   /** @type {boolean} */
   #resistible;
 
-  /** @type {keyof Stack} */
+  /** @type {Stack} */
   #stack;
   /** @type {number} */
   #duration;
-  /** @type {keyof Tick} */
+  /** @type {Tick} */
   #tick;
 
   constructor () {

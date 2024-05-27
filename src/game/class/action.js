@@ -23,7 +23,7 @@ const Action = class {
   #range; // ft: self 0, melee (0, 5√2), ranged 5√2+
   /** @type {number} */
   #radius; // tiles: entity 0, tile (0, 1), aoe 1+
-  /** @type {AccuracyFunction} */
+  /** @type {Accuracy} */
   #accuracy;
 
   constructor () {
@@ -87,7 +87,7 @@ const Action = class {
     this.#radius = radius.clamp(0);
   }
 
-  /** @type {AccuracyFunction} */
+  /** @type {Accuracy} */
   get accuracy () { return this.#accuracy; }
   set accuracy (accuracy) { this.#accuracy = accuracy; }
 

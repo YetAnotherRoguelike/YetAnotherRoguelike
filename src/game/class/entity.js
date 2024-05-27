@@ -12,7 +12,7 @@ const Entity = class {
 
   /** @type {string[]} */
   #display;
-  /** @type {keyof Color} */
+  /** @type {Color} */
   #color;
 
   /** @type {number} */
@@ -63,7 +63,7 @@ const Entity = class {
   /** @type {string[]} */
   get display () { return this.#display; }
 
-  /** @type {keyof Color} */
+  /** @type {Color} */
   get color () { return this.#color; }
   set color (color) { this.#color = color; }
 
