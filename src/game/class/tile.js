@@ -1,6 +1,7 @@
 import "@kxirk/utils/number.js";
 
 import Entity from "./entity.js";
+import Item from "./item.js";
 import Mob from "./mob.js";
 import Point from "./point.js";
 
@@ -23,6 +24,9 @@ const Tile = class extends Entity {
 
   /** @type {Set.<Mob>} */
   #mobs;
+  /** @type {Set.<Item>} */
+  #items;
+
 
   constructor () {
     super();
@@ -42,6 +46,7 @@ const Tile = class extends Entity {
     this.walkable = false;
 
     this.#mobs = new Set();
+    this.#items = new Set();
   }
 
   /**
@@ -121,9 +126,15 @@ const Tile = class extends Entity {
   /** @type {Set.<Mob>} */
   get mobs () { return this.#mobs; }
 
+  /** @type {Set.<Item>} */
+  get items () { return this.#items; }
+
   /** @type {number} */
   get occupancy () {
-    const volume = this.volume + [...this.mobs.values()].reduce((total, mob) => (total + mob.volume), 0);
+    const volume = this.volume + [
+      ...this.items.values(),
+      ...this.mobs.values()
+    ].reduce((total, entity) => (total + entity.volume), 0);
 
     return (volume / 5);
   }
@@ -146,6 +157,7 @@ const Tile = class extends Entity {
     this.walkable = json.walkable;
 
     for (const mob of json.mobs) this.mobs.add( Mob.fromJSON(mob) );
+    for (const item of json.items) this.items.add( Item.fromJSON(item) );
 
     return this;
   }
@@ -177,6 +189,7 @@ const Tile = class extends Entity {
     json.walkable = this.#walkable;
 
     json.mobs = [...this.mobs].map((mob) => mob.toJSON());
+    json.items = [...this.items].map((item) => item.toJSON());
 
     return json;
   }

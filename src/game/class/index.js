@@ -6,6 +6,8 @@ export { default as Condition } from "./condition.js";
 export { default as Conditions } from "./conditions.js";
 export { default as Effect } from "./effect.js";
 export { default as Entity } from "./entity.js";
+export { default as Equip } from "./equip.js";
+export { default as Item } from "./item.js";
 export { default as Level } from "./level.js";
 export { default as Mob } from "./mob.js";
 export { default as Point } from "./point.js";
