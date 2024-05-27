@@ -130,7 +130,7 @@ export const TokenViolation = class extends Violation {
 };
 
 
-export const Profile = class {
+export const Record = class {
   /** @type {Violation[]} */
   #violations;
 
@@ -140,10 +140,10 @@ export const Profile = class {
 
   /**
    * @param {Object} json
-   * @returns {Profile}
+   * @returns {Record}
    */
   static fromJSON (json) {
-    return new Profile().fromJSON(json);
+    return new Record().fromJSON(json);
   }
 
 
@@ -166,7 +166,7 @@ export const Profile = class {
 
   /**
    * @param {Object} json
-   * @returns {Profile}
+   * @returns {Record}
    */
   fromJSON (json) {
     for (const violation of json.violations) this.violations.push( Violation.fromJSON(violation) );
@@ -183,17 +183,17 @@ export const Profile = class {
 };
 
 
-/** @type {Map.<string, Profile>} */
-export const profiles = new Map();
-Object.defineProperty(profiles, "get", {
+/** @type {Map.<string, Record>} */
+export const records = new Map();
+Object.defineProperty(records, "get", {
   /**
    * @param {string} ip
-   * @returns {Profile}
+   * @returns {Record}
    */
   value (ip) {
-    if ( !profiles.has(ip) ) profiles.set(ip, new Profile());
+    if ( !records.has(ip) ) records.set(ip, new Record());
 
-    return Map.prototype.get.call(profiles, ip);
+    return Map.prototype.get.call(records, ip);
   },
   enumerable: false
 });
@@ -205,7 +205,7 @@ Object.defineProperty(profiles, "get", {
 export const blacklisted = (ip) => {
   if (blacklistedAuth(ip)) return true;
 
-  return profiles.get(ip)?.blacklisted ?? false;
+  return records.get(ip)?.blacklisted ?? false;
 };
 
 /**
@@ -215,8 +215,8 @@ export const blacklisted = (ip) => {
 export const pardon = (ip) => {
   let count = 0;
 
-  const profile = profiles.get(ip);
-  for (const violation of profile.violations) {
+  const record = records.get(ip);
+  for (const violation of record.violations) {
     if (violation.active) {
       violation.pardon();
       count++;
@@ -230,7 +230,7 @@ export const pardon = (ip) => {
  * @param {string} ip
  * @returns {boolean}
  */
-export const expunge = (ip) => profiles.delete(ip);
+export const expunge = (ip) => records.delete(ip);
 
 
 /** @type {Violation[]} */
@@ -247,19 +247,19 @@ Object.defineProperty(violations, "add", {
     violations.push(violation);
     log(new Event("info", "audit", `${violation.ip} ${violation.name}`, { cause: violation }));
 
-    const profile = profiles.get(violation.ip);
-    profile.violations.push(violation);
-    if (profile.blacklistedPermanent) {
+    const record = records.get(violation.ip);
+    record.violations.push(violation);
+    if (record.blacklistedPermanent) {
       log(new Event("info", "audit", `${violation.ip} blacklisted permanently`, { cause: "Exceeded max allowed violations" }));
     }
-    else if (profile.blacklistedTemporary) {
-      const active = [...profile.active].sort((a, b) => a.expires - b.expires);
+    else if (record.blacklistedTemporary) {
+      const active = [...record.active].sort((a, b) => a.expires - b.expires);
       const expires = active.at(-settings.maxActiveViolations).expires;
 
       log(new Event("info", "audit", `${violation.ip} blacklisted for ${Date.standard(expires - time.now)}`, { cause: "Exceeded max allowed active violations" }));
     }
 
-    return profile.violations.length;
+    return record.violations.length;
   },
   enumerable: false
 });
@@ -275,9 +275,9 @@ Object.defineProperty(violations, "active", {
 
 export default {
   Violation,
-  Profile,
+  Record,
 
-  profiles,
+  records,
   blacklisted,
   pardon,
   expunge,

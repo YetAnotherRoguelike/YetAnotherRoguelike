@@ -80,9 +80,9 @@ export const audit = {
   majorViolationDuration: (24 * 60 * 60 * 1000), // 24 hours
 
   /** @type {number} */
-  maxActiveViolations: 1, // 10
+  maxActiveViolations: 10,
   /** @type {number} */
-  maxTotalViolations: 3 // 25
+  maxTotalViolations: 25
 };
 
 export const connections = {
