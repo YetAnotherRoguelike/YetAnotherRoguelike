@@ -4,6 +4,7 @@ import Ability from "./ability.js";
 import Conditions from "./conditions.js";
 import Entity from "./entity.js";
 import Point from "./point.js";
+import Proficiency from "./proficiency.js";
 import Stat from "./stat.js";
 import Tick from "./tick.js";
 import Type from "./type.js";
@@ -29,6 +30,11 @@ const Mob = class extends Entity {
   #abilityBase;
   /** @type {Ability.<number>} */
   #ability;
+
+  /** @type {Proficiency.<number>} */
+  #proficiencyBase;
+  /** @type {Proficiency.<number>} */
+  #proficiency;
 
   /** @type {Stat} */
   #statBase;
@@ -73,6 +79,15 @@ const Mob = class extends Entity {
 
 
         // round
+        return value.round();
+      }
+    });
+
+    this.#proficiencyBase = new Proficiency(0.0);
+    this.#proficiency = new Proxy(new Proficiency(), {
+      get: (target, proficiency) => {
+        const value = this.proficiencyBase[proficiency] ?? 0;
+
         return value.round();
       }
     });
@@ -223,6 +238,13 @@ const Mob = class extends Entity {
   get ability () { return this.#ability; }
 
 
+  /** @type {Proficiency.<number>} */
+  get proficiencyBase () { return this.#proficiencyBase; }
+
+  /** @type {Proficiency.<number>} */
+  get proficiency () { return this.#proficiency; }
+
+
   /** @type {Stat} */
   get statBase () { return this.#statBase; }
 
@@ -324,6 +346,8 @@ const Mob = class extends Entity {
 
     this.abilityBase.fromJSON(json.abilityBase);
 
+    this.proficiencyBase.fromJSON(json.proficiencyBase);
+
     this.conditions.fromJSON(json.conditions);
 
     return this;
@@ -343,6 +367,8 @@ const Mob = class extends Entity {
     json.level = this.level;
 
     json.abilityBase = this.abilityBase.toJSON();
+
+    json.proficiencyBase = this.proficiencyBase.toJSON();
 
     json.conditions = this.conditions.toJSON();
 
