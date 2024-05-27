@@ -70,10 +70,18 @@ export const auth = {
   tokensCleanInterval: (15 * 60 * 1000) // 15 mins
 };
 
+export const connections = {
+  /** @type {number} max WebSocket clients to permit */
+  max: 50,
+  /** @type {number} ^ per IP */
+  maxIP: 10
+};
+
 
 export default {
   events,
   time,
 
-  auth
+  auth,
+  connections
 };
