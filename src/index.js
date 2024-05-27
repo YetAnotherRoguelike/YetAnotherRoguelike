@@ -6,4 +6,5 @@ export { default as time } from "./time.js";
 export { default as api } from "./api.js";
 
 export { default as auth } from "./auth.js";
+export { default as audit } from "./audit.js";
 export { default as connections } from "./connections.js";

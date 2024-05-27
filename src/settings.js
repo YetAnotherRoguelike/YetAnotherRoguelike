@@ -70,6 +70,21 @@ export const auth = {
   tokensCleanInterval: (15 * 60 * 1000) // 15 mins
 };
 
+export const audit = {
+  /** @type {boolean} prevent logging violations against whitelisted IPs */
+  pardonWhitelist: true,
+
+  /** @type {number} */
+  minorViolationDuration: (1 * 60 * 60 * 1000), // 1 hour
+  /** @type {number} */
+  majorViolationDuration: (24 * 60 * 60 * 1000), // 24 hours
+
+  /** @type {number} */
+  maxActiveViolations: 1, // 10
+  /** @type {number} */
+  maxTotalViolations: 3 // 25
+};
+
 export const connections = {
   /** @type {number} max WebSocket clients to permit */
   max: 50,
@@ -83,5 +98,6 @@ export default {
   time,
 
   auth,
+  audit,
   connections
 };
