@@ -1,10 +1,15 @@
 import "@kxirk/utils/number.js";
 
 import Ability from "./ability.js";
+import Accessory from "./accessory.js";
+import Armor from "./armor.js";
 import Conditions from "./conditions.js";
 import Entity from "./entity.js";
+import Inventory from "./inventory.js";
+import Item from "./item.js";
 import Point from "./point.js";
 import Proficiency from "./proficiency.js";
+import Slot from "./slot.js";
 import Stat from "./stat.js";
 import Tick from "./tick.js";
 import Type from "./type.js";
@@ -40,6 +45,17 @@ const Mob = class extends Entity {
   #statBase;
   /** @type {Stat} */
   #stat;
+
+  /** @type {Slot.<Armor>} */
+  #armor;
+  /** @type {Slot.<Item>} */
+  #hand;
+  /** @type {Slot.<Item>} */
+  #side;
+  /** @type {Inventory.<Accessory>} */
+  #accessories;
+  /** @type {Inventory.<Item>} */
+  #inventory;
 
   /** @type {Conditions} */
   #conditions;
@@ -130,13 +146,15 @@ const Mob = class extends Entity {
         }
 
 
+        const equipped = [...this.armor, ...this.hand, ...this.side, ...this.accessories];
+
         let value = this.statBase[stat] ?? this.statBase[statGroup] ?? this.statBase[statType] ?? 0;
         if (["health", "regen", "energy"].includes(stat)) {
           value = target[stat];
         }
 
 
-        // factor
+        // size
         if (["speed", "stealth", "evade"].includes(stat)) {
           value *= (1 / this.sizeMod);
         }
@@ -144,14 +162,32 @@ const Mob = class extends Entity {
           value *= this.sizeMod;
         }
 
+
+        // factor
         for (const condition of this.conditions) {
           value *= condition?.effect.statFactor?.[stat] ?? 1.0;
         }
 
 
         // flat
+        for (const item of equipped) {
+          const ability = (this.ability?.[item.scaleAbility] ?? 0) - item.scaleMin;
+          const scaleFactor = 1 + (0.02 * ability.clamp(0, item.scaleMax));
+
+          const base = item.statBase?.[stat] ?? 0;
+          const quality = item.qualityFactor * (item.statQuality?.[stat] ?? 0);
+          const scale = scaleFactor * (item.statScale?.[stat] ?? 0);
+
+          value += (base + quality + scale);
+        }
         for (const condition of this.conditions) {
           value += condition?.effect.stat?.[stat] ?? 0;
+        }
+
+
+        // weight
+        if (["speed", "evade"].includes(stat)) {
+          value *= this.weightMod;
         }
 
 
@@ -176,6 +212,12 @@ const Mob = class extends Entity {
       }
     });
 
+    this.#armor = new Slot(Armor);
+    this.#hand = new Slot(Item);
+    this.#side = new Slot(Item);
+    this.#accessories = new Inventory(Accessory, 2);
+    this.#inventory = new Inventory(Item, 5);
+
     this.#conditions = new Conditions();
 
     this.act = null;
@@ -193,6 +235,28 @@ const Mob = class extends Entity {
   /** @type {number} */
   get sizeMod () {
     return (this.dimensionMax / 6);
+  }
+
+
+  /** @type {number} */
+  get weight () {
+    let weight = super.weight;
+
+    weight += this.armor.weight;
+    weight += this.hand.weight;
+    weight += this.side.weight;
+    for (const accessory of this.accessories) weight += accessory.weight;
+    for (const item of this.inventory) weight += item.weight;
+
+    return weight;
+  }
+
+  /** @type {number} */
+  get weightMod () {
+    const use = (this.weight - super.weight);
+    const useFactor = (use / this.stat.weightMax);
+
+    return 1 - (useFactor / 2);
   }
 
 
@@ -250,6 +314,87 @@ const Mob = class extends Entity {
 
   /** @type {Stat} */
   get stat () { return this.#stat; }
+
+
+  /** @type {Slot.<Armor>} */
+  get armor () { return this.#armor; }
+
+  /** @type {Slot.<Item>} */
+  get hand () { return this.#hand; }
+
+  /** @type {Slot.<Item>} */
+  get side () { return this.#side; }
+
+  /** @type {Inventory.<Accessory>} */
+  get accessories () { return this.#accessories; }
+
+  /** @type {Inventory.<Item>} */
+  get inventory () { return this.#inventory; }
+
+  /**
+   * @argument {Item} item
+   * @returns {boolean}
+   */
+  add (item) {
+    return (this.hand.add(item) || this.side.add(item) || this.inventory.add(item));
+  }
+  /**
+   * @argument {number} index
+   * @returns {Item}
+   */
+  remove (index) {
+    return this.inventory.remove(index);
+  }
+
+  /**
+   * @argument {number} index
+   * @returns {boolean}
+   */
+  equip (index) {
+    const item = this.inventory.remove(index);
+    if (item === undefined) return false;
+
+    let success = false;
+    if (item.equip.contains("armor") && this.armor.add(item)) {
+      success = true;
+    }
+    else if (item.equip.contains("side") && this.side.add(item)) {
+      success = true;
+    }
+    else if ((item.equip.contains("hand") || item.equip.contains("side")) && this.hand.add(item)) {
+      success = true;
+    }
+    else if (item.equip.contains("both") && this.side.count === 0 && this.hand.add(item)) {
+      this.side.open = false;
+      success = true;
+    }
+    else if (item.equip.contains("accessories") && this.accessories.add(item)) {
+      success = true;
+    }
+    else {
+      this.add(item);
+    }
+
+    return success;
+  }
+  /**
+   * @argument {string} slot
+   * @argument {number} index
+   * @returns {boolean}
+   */
+  unequip (slot, index) {
+    const item = this[slot].remove(index);
+    if (item === undefined) return false;
+
+    if (item.equip.contains("both")) this.side.open = true;
+
+
+    if ( this.add(item) ) return true;
+
+    this[slot].add(item);
+    if (item.equip.contains("both")) this.side.open = false;
+    return false;
+  }
 
 
   /** @type {Conditions} */
@@ -348,6 +493,12 @@ const Mob = class extends Entity {
 
     this.proficiencyBase.fromJSON(json.proficiencyBase);
 
+    this.armor.fromJSON(json.armor);
+    this.hand.fromJSON(json.hand);
+    this.side.fromJSON(json.side);
+    this.accessories.fromJSON(json.accessories);
+    this.inventory.fromJSON(json.inventory);
+
     this.conditions.fromJSON(json.conditions);
 
     return this;
@@ -369,6 +520,12 @@ const Mob = class extends Entity {
     json.abilityBase = this.abilityBase.toJSON();
 
     json.proficiencyBase = this.proficiencyBase.toJSON();
+
+    json.armor = this.armor.toJSON();
+    json.hand = this.hand.toJSON();
+    json.side = this.side.toJSON();
+    json.accessories = this.accessories.toJSON();
+    json.inventory = this.inventory.toJSON();
 
     json.conditions = this.conditions.toJSON();
 
