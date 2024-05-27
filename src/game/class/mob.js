@@ -355,20 +355,20 @@ const Mob = class extends Entity {
     if (item === undefined) return false;
 
     let success = false;
-    if (item.equip.contains("armor") && this.armor.add(item)) {
+    if (item.equip.includes("armor") && this.armor.add(item)) {
       success = true;
     }
-    else if (item.equip.contains("side") && this.side.add(item)) {
+    else if (item.equip.includes("side") && this.side.add(item)) {
       success = true;
     }
-    else if ((item.equip.contains("hand") || item.equip.contains("side")) && this.hand.add(item)) {
+    else if ((item.equip.includes("hand") || item.equip.includes("side")) && this.hand.add(item)) {
       success = true;
     }
-    else if (item.equip.contains("both") && this.side.count === 0 && this.hand.add(item)) {
+    else if (item.equip.includes("both") && this.side.count === 0 && this.hand.add(item)) {
       this.side.open = false;
       success = true;
     }
-    else if (item.equip.contains("accessories") && this.accessories.add(item)) {
+    else if (item.equip.includes("accessories") && this.accessories.add(item)) {
       success = true;
     }
     else {
@@ -386,13 +386,13 @@ const Mob = class extends Entity {
     const item = this[slot].remove(index);
     if (item === undefined) return false;
 
-    if (item.equip.contains("both")) this.side.open = true;
+    if (item.equip.includes("both")) this.side.open = true;
 
 
     if ( this.add(item) ) return true;
 
     this[slot].add(item);
-    if (item.equip.contains("both")) this.side.open = false;
+    if (item.equip.includes("both")) this.side.open = false;
     return false;
   }
 
