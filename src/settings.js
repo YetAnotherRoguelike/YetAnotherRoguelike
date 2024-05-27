@@ -29,7 +29,51 @@ export const time = {
 };
 
 
+/** @typedef {"<address>" | "<start>-<end>" | "<network>/<prefix>"} Rule */
+export const auth = {
+  /** @type {Rule[]} */
+  blacklist: [],
+
+  /** @type {boolean} deny unless on whitelist */
+  enforceWhitelist: false,
+  /** @type {Rule[]} */
+  whitelist: [],
+  /** @type {boolean} bypass server password */
+  alwaysPermitWhitelist: true,
+
+  /** @type {boolean} */
+  enforceServerPassword: true,
+  /** @type {string} null to assign randomly */
+  serverPassword: null,
+  /** @type {number} */
+  serverPasswordBytes: 4,
+  /** @type {string} base64url or hex */
+  serverPasswordEncoding: "base64url",
+  /** @type {boolean} removes lowercase and special characters when assigning randomly */
+  serverPasswordSimple: true,
+
+  /** @type {string} null to assign randomly */
+  tokenSecret: null,
+  /** @type {number} */
+  tokenSecretBytes: 64,
+  /** @type {string} base64url or hex */
+  tokenSecretEncoding: "base64url",
+
+  /** @type {number} */
+  tokenBytes: 128,
+  /** @type {string} base64url or hex */
+  tokenEncoding: "base64url",
+  /** @type {number} ms */
+  tokenTimeout: (15 * 60 * 1000), // 15 mins
+
+  /** @type {number} ms */
+  tokensCleanInterval: (15 * 60 * 1000) // 15 mins
+};
+
+
 export default {
   events,
-  time
+  time,
+
+  auth
 };
