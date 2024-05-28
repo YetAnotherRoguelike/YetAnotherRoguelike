@@ -93,11 +93,32 @@ export const connections = {
 };
 
 
+export const socket = {
+  /** @type {boolean} require HTTPS tokens to connect */
+  validateTokens: true,
+
+  /** @type {number} ms delay */
+  pingInterval: (15 * 1000), // 15 secs
+  /** @type {number} ms delay, checked every pingInterval */
+  pingTimeout: (60 * 1000), // 1 min
+
+  /** @type {number} bytes */
+  maxPayload: (1 * 1024 * 1024), // 1 MB
+
+  /** @type {number} max messages allowed in period */
+  maxRate: 500,
+  /** @type {number} period size in ms */
+  maxRateWindow: (60 * 1000) // 1 min
+};
+
+
 export default {
   events,
   time,
 
   auth,
   audit,
-  connections
+  connections,
+
+  socket
 };

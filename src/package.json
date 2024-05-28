@@ -20,7 +20,10 @@
     "@kxirk/adt": "^1.0.0",
     "@kxirk/random": "^3.0.1",
     "@kxirk/utils": "^1.0.0",
-    "@yetanotherroguelike/game": "^0.0.0"
+    "@yetanotherroguelike/game": "^0.0.0",
+    "cookie": "^0.5.0",
+    "cookie-parser": "^1.4.6",
+    "ws": "^8.14.2"
   },
   "devDependencies": {}
 }
