@@ -275,6 +275,12 @@ Object.defineProperty(violations, "active", {
 
 export default {
   Violation,
+  ConnectionViolation,
+  CredentialViolation,
+  MessageViolation,
+  PathViolation,
+  RateViolation,
+  TokenViolation,
   Record,
 
   records,
