@@ -1,3 +1,6 @@
+import fs from "fs";
+
+
 /**
  * @typedef {Object} Stream
  * @property {stream.Writable} stream
@@ -112,6 +115,26 @@ export const socket = {
 };
 
 
+export const server = {
+  /** @type {number} */
+  ipv6Only: false,
+  /** @type {string} */
+  host: "0.0.0.0",
+  /** @type {number} */
+  port: 443,
+
+  /** @type {string} */
+  key: fs.readFileSync(new URL("cert/cert.key", import.meta.url), "utf8"),
+  /** @type {string} */
+  cert: fs.readFileSync(new URL("cert/cert.pem", import.meta.url), "utf8"),
+
+  /** @type {number} max allowable sockets */
+  maxConnections: 100,
+  /** @type {number} ms delay */
+  timeout: (2 * 60 * 1000) // 2 mins
+};
+
+
 export default {
   events,
   time,
@@ -120,5 +143,7 @@ export default {
   audit,
   connections,
 
-  socket
+  socket,
+
+  server
 };

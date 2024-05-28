@@ -1,3 +1,6 @@
+import server from "./server.js";
+
+
 export { default as settings } from "./settings.js";
 
 export { default as events } from "./events.js";
@@ -11,3 +14,6 @@ export { default as connections } from "./connections.js";
 
 export { default as Client } from "./client.js";
 export { default as socket } from "./socket.js";
+
+export { default as app } from "./app.js";
+export default server;
