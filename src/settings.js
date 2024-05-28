@@ -17,7 +17,7 @@ export const events = {
   /** @type {Stream} */
   console: {
     stream: process.stdout,
-    level: "info",
+    level: "debug",
     format: "string",
     console: true
   }
