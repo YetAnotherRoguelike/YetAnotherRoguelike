@@ -1,0 +1,24 @@
+@font-face {
+  font-family: "Share Tech Mono";
+  src: url("../font/sharetechmono.ttf");
+}
+
+html {
+  --spacing-scale-small: 0.25vw;
+  --spacing-scale: 0.5vw;
+  --spacing-scale-large: 1.0vw;
+
+  --outline-scale-small: 0.15vw;
+  --outline-scale: 0.25vw;
+  --outline-scale-large: 0.5vw;
+
+
+  --font-family-mono: "Share Tech Mono", monospace;
+  --font-size-root: 18px;
+
+  --text-scale-small: 0.75rem;
+  --text-scale: 1.0rem;
+  --text-scale-large: 1.25rem;
+
+  --cursor: url(../font/cursor.cur), auto;
+}

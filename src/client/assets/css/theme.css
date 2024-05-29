@@ -1,0 +1,91 @@
+.theme-saturated-dark {
+  --red: rgb(255, 0, 0);
+  --scarlet: rgb(255, 32, 0);
+  --vermilion: rgb(255, 64, 0);
+  --orange: rgb(255, 128, 0);
+  --amber: rgb(255, 192, 0);
+  --gold: rgb(255, 224, 0);
+  --yellow: rgb(255, 255, 0);
+  --lime: rgb(192, 255, 0);
+  --chartreuse: rgb(128, 255, 0);
+  --harlequin: rgb(64, 255, 0);
+  --green: rgb(0, 255, 0);
+  --jade: rgb(0, 255, 32);
+  --erin: rgb(0, 255, 64);
+  --springgreen: rgb(0, 255, 128);
+  --aquamarine: rgb(0, 255, 192);
+  --turquoise: rgb(0, 255, 224);
+  --cyan: rgb(0, 255, 255);
+  --capri: rgb(0, 192, 255);
+  --azure: rgb(0, 128, 255);
+  --cerulean: rgb(0, 64, 255);
+  --sapphire: rgb(0, 32, 255);
+  --blue: rgb(0, 0, 255);
+  --indigo: rgb(64, 0, 255);
+  --violet: rgb(128, 0, 255);
+  --purple: rgb(192, 0, 255);
+  --magenta: rgb(255, 0, 255);
+  --fuchsia: rgb(255, 0, 224);
+  --cerise: rgb(255, 0, 192);
+  --rose: rgb(255, 0, 128);
+  --crimson: rgb(255, 0, 64);
+  
+  --tan: rgb(192, 96, 32);
+  --brown: rgb(128, 64, 0);
+  --bistre: rgb(64, 32, 0);
+  
+  --foreground: rgb(255, 255, 255);
+  --silver: rgb(192, 192, 192);
+  --gray: rgb(128, 128, 128);
+  --charcoal: rgb(64, 64, 64);
+  --background: rgb(0, 0, 0);
+
+  --accent: var(--azure);
+}
+
+.theme-selenized-dark {
+  /* based on https://github.com/jan-warchol/selenized */
+
+  --red: rgb(237, 74, 70);
+  --scarlet: rgb(236, 88, 70);
+  --vermilion: rgb(234, 101, 69);
+  --orange: rgb(230, 127, 67);
+  --amber: rgb(225, 153, 56);
+  --gold: rgb(222, 166, 51);
+  --yellow: rgb(219, 179, 45);
+  --lime: rgb(193, 180, 47);
+  --chartreuse: rgb(166, 180, 48);
+  --harlequin: rgb(139, 180, 50);
+  --green: rgb(112, 180, 51);
+  --jade: rgb(106, 183, 68);
+  --erin: rgb(100, 185, 84);
+  --springgreen: rgb(88, 189, 117);
+  --aquamarine: rgb(76, 193, 150);
+  --turquoise: rgb(70, 195, 167);
+  --cyan: rgb(63, 197, 183);
+  --capri: rgb(61, 183, 196);
+  --azure: rgb(59, 168, 209);
+  --cerulean: rgb(57, 153, 222);
+  --sapphire: rgb(56, 146, 229);
+  --blue: rgb(54, 138, 235);
+  --indigo: rgb(110, 133, 231);
+  --violet: rgb(165, 128, 226);
+  --purple: rgb(200, 119, 205);
+  --magenta: rgb(235, 110, 183);
+  --fuchsia: rgb(236, 106, 169);
+  --cerise: rgb(236, 101, 155);
+  --rose: rgb(236, 92, 127);
+  --crimson: rgb(237, 83, 99);
+  
+  --tan: rgb(166, 116, 68);
+  --brown: rgb(128, 89, 52);
+  --bistre: rgb(89, 62, 37);
+  
+  --foreground: rgb(222, 222, 222);
+  --silver: rgb(185, 185, 185);
+  --gray: rgb(119, 119, 119); 
+  --charcoal: rgb(59, 59, 59); 
+  --background: rgb(24, 24, 24);
+  
+  --accent: var(--azure);
+}
