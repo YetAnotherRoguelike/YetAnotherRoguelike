@@ -25,8 +25,8 @@ app.use(cookieParser(settings.auth.tokenSecret));
 
 /** @type {Set.<string>} */
 export const sharedAssets = new Set([
-  "/assets/css/theme.css", "/assets/css/style.css",
-  "/assets/icon/favicon.png", "/assets/font/sharetechmono.ttf", "/assets/font/skyrim.cur",
+  "/assets/css/theme.css", "/assets/css/main.css",
+  "/assets/font/sharetechmono.ttf", "/assets/font/cursor.cur",
   "/config.js"
 ]);
 

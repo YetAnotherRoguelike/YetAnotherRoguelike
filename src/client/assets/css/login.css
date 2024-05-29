@@ -1,0 +1,159 @@
+* {
+  box-sizing: border-box;
+}
+
+html {
+  font-size: var(--font-size-root);
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+
+  width: 100vw; 
+  height: 100vh;
+
+  margin: 0;
+
+  font-family: var(--font-family-mono);
+  font-size: var(--font-scale);
+  color: var(--foreground);
+
+  background: var(--background);
+
+  cursor: var(--cursor);
+}
+
+
+#invalid {
+  display: none;
+
+  width: 30%;
+
+  padding: 0 var(--spacing-scale);
+}
+#invalid:target {
+  display: block;
+}
+
+#invalid-title {
+  padding-left: var(--spacing-scale-large);
+
+  border-left: var(--outline-scale) solid var(--red);
+}
+
+
+#login {
+  display: flex;
+  flex-direction: column;
+
+  width: 30%;
+
+  padding: 0 var(--spacing-scale);
+}
+
+#login fieldset {
+  margin: 0;
+
+  padding: var(--spacing-scale) 0;
+
+  border: 0;
+}
+
+#login-data input {
+  width: 100%;
+
+  margin: var(--spacing-scale-small) 0;
+
+  border: 0;
+
+  outline: var(--outline-scale-small) solid var(--foreground);
+
+  font-family: var(--font-family-mono);
+  font-size: var(--font-scale);
+  color: var(--foreground);
+
+  background: transparent;
+}
+#login-data input:hover {
+  outline: var(--outline-scale-small) solid var(--accent);
+
+  cursor: var(--cursor);
+}
+#login-data input:focus {
+  outline: var(--outline-scale-small) solid var(--accent);
+
+  caret-color: var(--foreground);
+}
+
+#password-title {
+  margin-bottom: var(--outline-scale-small);
+}
+
+#remember {
+  appearance: none;
+  display: grid;
+  place-content: center;
+  float: left;
+
+  width: 2.5ch;
+  height: 2.5ch;
+
+  margin: 0 auto;
+  margin-right: var(--spacing-scale);
+
+  padding: var(--outline-scale);
+
+  border: var(--outline-scale-small) solid var(--foreground);
+
+  background: transparent;
+
+  cursor: var(--cursor);
+}
+#remember:hover {
+  border-color: var(--accent);
+}
+#remember:checked::before {
+  transform: scale(1.0);
+}
+#remember::before {
+  transform: scale(0.0);
+
+  width: 1.0ch;
+  height: 1.0ch;
+
+  box-shadow: inset 1em 1em var(--accent);
+
+  content: "";
+}
+
+#remember-title {
+  float: left;
+}
+
+#login-button {
+  float: right;
+
+  margin: 0;
+
+  padding: var(--spacing-scale-small);
+
+  border: var(--outline-scale-small) solid var(--foreground);
+
+  font-family: var(--font-family-mono);
+  color: var(--foreground);
+
+  background: transparent;
+}
+#login-button:hover {
+  border-color: var(--accent);
+
+  cursor: var(--cursor);
+}
+#login-button:active {
+  border-color: transparent;
+
+  cursor: var(--cursor);
+}
