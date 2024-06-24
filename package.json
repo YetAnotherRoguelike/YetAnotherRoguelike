@@ -16,5 +16,8 @@
     "src/game",
     "src/game/*"
   ],
-  "scripts": {}
+  "scripts": {
+    "start": "node src/server.js",
+    "shell": "node src/shell.js"
+  }
 }
