@@ -130,7 +130,7 @@ export const server = {
 
   /** @type {number} max allowable sockets */
   maxConnections: 100,
-  /** @type {number} ms delay */
+  /** @type {number} ms */
   timeout: (2 * 60 * 1000) // 2 mins
 };
 
