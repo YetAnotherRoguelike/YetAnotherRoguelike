@@ -100,18 +100,18 @@ export const socket = {
   /** @type {boolean} require HTTPS tokens to connect */
   validateTokens: true,
 
-  /** @type {number} ms delay */
+  /** @type {number} ms */
   pingInterval: (15 * 1000), // 15 secs
-  /** @type {number} ms delay, checked every pingInterval */
+  /** @type {number} max elapsed ms allowed before closing socket */
   pingTimeout: (60 * 1000), // 1 min
 
   /** @type {number} bytes */
   maxPayload: (1 * 1024 * 1024), // 1 MB
 
   /** @type {number} max messages allowed in period */
-  maxRate: 500,
-  /** @type {number} period size in ms */
-  maxRateWindow: (60 * 1000) // 1 min
+  rateMax: 500,
+  /** @type {number} rate period in ms */
+  rateWindow: (60 * 1000) // 1 min
 };
 
 

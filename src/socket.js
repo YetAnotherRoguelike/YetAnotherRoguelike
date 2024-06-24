@@ -169,7 +169,7 @@ export const connect = (ws, request, ip, token) => {
   ws.last = 0;
 
   /** @type {TokenBucket} */
-  ws.rate = new TokenBucket(settings.socket.maxRate, settings.socket.maxRateWindow, time.now);
+  ws.rate = new TokenBucket(settings.socket.rateMax, settings.socket.rateWindow, time.now);
 
   /**
    * @param {string} event
