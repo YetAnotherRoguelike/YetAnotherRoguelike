@@ -172,11 +172,17 @@ export const place = (depths, mob, at, looking) => {
 export const tick = async (initiative) => {
   initiative.update();
 
-  const mob = initiative.remove();
-  mob.tick(Tick.before);
-  mob.stat.energy = mob.stat.energyMax;
-  await mob.act(mob);
-  mob.tick(Tick.after);
+  const actor = initiative.next;
+  actor.tick(Tick.before);
+  const energy = await actor.act(actor);
+  actor.stat.energyOverflow = 0;
+  actor.tick(Tick.after);
 
-  initiative.add(mob);
+  const energyMaxMax = Math.max(...[...initiative].map((mob) => mob.stat.energyMax));
+  for (const mob of [...initiative]) {
+    if (mob === actor) continue;
+
+    const delta = ((mob.stat.energyMax / energyMaxMax) * energy);
+    mob.stat.energy += delta;
+  }
 };

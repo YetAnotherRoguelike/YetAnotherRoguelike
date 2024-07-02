@@ -3,7 +3,7 @@ import { Mob } from "@yetanotherroguelike/class";
 
 
 /** @type {PriorityQueue.<Mob>} */
-const initiative = new PriorityQueue((a, b) => (a.stat.speed > b.stat.speed));
+const initiative = new PriorityQueue((a, b) => ((a.stat.energy + a.stat.energyOverflow) > (b.stat.energy + b.stat.energyOverflow)));
 export default initiative;
 
 Object.defineProperty(initiative, "fromJSON", {

@@ -30,6 +30,8 @@ const Stat = class {
   #energyMax;
   /** @type {number} */
   #energy;
+  /** @type {number} */
+  #energyOverflow;
 
   /** @type {number} */
   #speed; // ft/turn
@@ -65,6 +67,7 @@ const Stat = class {
 
     this.energyMax = initial;
     this.energy = initial;
+    this.energyOverflow = initial;
 
     this.speed = initial;
     this.stealth = initial;
@@ -145,6 +148,12 @@ const Stat = class {
   get energy () { return this.#energy; }
   set energy (energy) {
     this.#energy = energy.clamp(0);
+  }
+
+  /** @type {number} */
+  get energyOverflow () { return this.#energyOverflow; }
+  set energyOverflow (energy) {
+    this.#energyOverflow = energy.clamp(0);
   }
 
 
@@ -244,6 +253,7 @@ const Stat = class {
 
     this.energyMax = json.energyMax;
     this.energy = json.energy;
+    this.energyOverflow = json.energyOverflow;
 
     this.speed = json.speed;
     this.stealth = json.stealth;
@@ -274,6 +284,7 @@ const Stat = class {
 
       energyMax: this.energyMax,
       energy: this.energy,
+      energyOverflow: this.energyOverflow,
 
       speed: this.speed,
       stealth: this.stealth,

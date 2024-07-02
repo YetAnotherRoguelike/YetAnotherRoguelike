@@ -149,7 +149,7 @@ const Mob = class extends Entity {
         const equipped = [...this.armor, ...this.hand, ...this.side, ...this.accessories];
 
         let value = this.statBase[stat] ?? this.statBase[statGroup] ?? this.statBase[statType] ?? 0;
-        if (["health", "regen", "energy"].includes(stat)) {
+        if (["health", "regen", "energy", "energyOverflow"].includes(stat)) {
           value = target[stat];
         }
 
@@ -204,7 +204,15 @@ const Mob = class extends Entity {
       set: (target, stat, value) => {
         if (["health", "regen", "energy"].includes(stat)) {
           const statMax = `${stat}Max`;
+          const statOverflow = `${stat}Overflow`;
+
           target[stat] = value.clamp(0, this.stat[statMax]);
+          target[statOverflow] += (value - this.stat[statMax]).clamp(0);
+
+          return true;
+        }
+        if (["energyOverflow"].includes(stat)) {
+          target[stat] = value.clamp(0);
 
           return true;
         }
