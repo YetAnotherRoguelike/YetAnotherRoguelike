@@ -64,32 +64,44 @@ export const TickQueue = class {
   }
 
   /**
-   * @param {string} name
+   * @param {Class.<Condition>} Class
    * @returns {Condition[]}
    */
-  get (name) {
-    const match = this.stack.filter((condition) => condition.name === name);
-    const map = this.map.get(name); if (map) match.push(map);
+  get (Class) {
+    const match = this.stack.filter((condition) => condition instanceof Class);
+    const map = this.map.get(Class.name); if (map) match.push(map);
 
     return match;
   }
 
   /**
-   * @param {Condition} condition
-   * @returns {boolean}
+   * @param {Class.<Condition>} Class
+   * @param {boolean} stopFirst
+   * @param {boolean} newestFirst
+   * @returns {Condition[]}
    */
-  remove (condition) {
-    if (condition.stack === Stack.stack) {
-      const index = this.stack.indexOf(condition);
-      if (index >= 0) {
-        this.stack.remove(index);
+  remove (Class, stopFirst, newestFirst) {
+    const removed = [];
 
-        return true;
+    if (newestFirst || !stopFirst) {
+      for (let i = this.stack.length - 1; i >= 0; i--) {
+        if (this.stack[i] instanceof Class) {
+          removed.push( this.stack.remove(i) );
+          if (stopFirst) return removed;
+        }
       }
-
-      return false;
     }
-    return this.map.delete(condition.name);
+    else {
+      for (let i = 0; i < this.stack.length; i++) {
+        if (this.stack[i] instanceof Class) {
+          removed.push( this.stack.remove(i) ); i--;
+          if (stopFirst) return removed;
+        }
+      }
+    }
+    const map = this.map.get(Class.name); if (map) removed.push(map); this.map.delete(Class.name);
+
+    return removed;
   }
 
 
@@ -163,23 +175,37 @@ const Conditions = class {
   }
 
   /**
-   * @param {string} name
+   * @param {Class.<Condition>} Class
    * @returns {Condition[]}
    */
-  get (name) {
-    const before = this.before.get(name);
-    const after = this.after.get(name);
-    const persist = this.persist.get(name);
+  get (Class) {
+    const before = this.before.get(Class);
+    const after = this.after.get(Class);
+    const persist = this.persist.get(Class);
 
     return [...before, ...after, ...persist];
   }
 
   /**
-   * @param {Condition} condition
+   * @param {Class.<Condition>} Class
    * @returns {boolean}
    */
-  remove (condition) {
-    return this[condition.tick].remove(condition);
+  has (Class) {
+    return this.get(Class).length > 0;
+  }
+
+  /**
+   * @param {Class.<Condition>} Class
+   * @param {boolean} [stopFirst]
+   * @param {boolean} [newestFirst]
+   * @returns {Condition[]}
+   */
+  remove (Class, stopFirst = false, newestFirst = false) {
+    const before = this.before.remove(Class, stopFirst, newestFirst);
+    const after = this.after.remove(Class, stopFirst, newestFirst);
+    const persist = this.persist.remove(Class, stopFirst, newestFirst);
+
+    return [...before, ...after, ...persist];
   }
 
 
