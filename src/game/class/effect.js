@@ -44,14 +44,14 @@ const Effect = class {
   /** @type {Stat} */
   get stat () { return this.#stat; }
 
-  /** @type {Ability} */
+  /** @type {Stat} */
   get statFactor () { return this.#statFactor; }
 
 
   /** @type {Type} */
   get damage () { return this.#damage; }
 
-  /** @type {Ability} */
+  /** @type {Type} */
   get damageFactor () { return this.#damageFactor; }
 
 
