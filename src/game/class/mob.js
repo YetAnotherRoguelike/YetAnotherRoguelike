@@ -441,13 +441,15 @@ const Mob = class extends Entity {
   /**
    * @param {Type} damage
    * @param {boolean} [factor]
+   * @param {boolean} [max]
    * @returns {Type}
    */
-  damage (damage, factor = false) {
-    const dealt = new Type(0);
+  damage (damage, factor = false, max = false) {
+    const healthMax = (max ? this.stat.healthMax : this.stat.health);
 
+    const dealt = new Type(0);
     for (const [type, value] of Object.entries(damage)) {
-      const base = (factor ? (this.stat.healthMax * value) : value);
+      const base = (factor ? (healthMax * value) : value);
       const resist = this.stat[`${type}Resist`] * base;
       const defense = this.stat[`${type}Defense`];
 
@@ -461,7 +463,6 @@ const Mob = class extends Entity {
     this.stat.health -= dealtTotal;
     if (dealtTotal > 0) this.stat.regen = this.stat.regenMax;
 
-
     return dealt;
   }
 
@@ -470,14 +471,33 @@ const Mob = class extends Entity {
    * @returns {Object} result
    */
   effect (effect) {
+    const statTotal = {
+      health: 0,
+      regen: 0,
+      energy: 0
+    };
+    for (const stat of Object.keys(statTotal)) {
+      const base = (effect.stat[stat] ?? 0);
+      const factor = this.stat[stat] * (effect.statFactor[stat] ?? 0);
+      const factorMax = this.stat[`${stat}Max`] * (effect.statFactorMax[stat] ?? 0);
+      const total = base + factor + factorMax;
+
+      statTotal[stat] = total;
+      this.stat[stat] += total;
+    }
+
     const damage = this.damage(effect.damage);
     const damageFactor = this.damage(effect.damageFactor, true);
-    const damageTotal = Object.keys({ ...damage, ...damageFactor }).reduce((total, type) => {
-      total[type] = damage[type] + damageFactor[type];
+    const damageFactorMax = this.damage(effect.damageFactorMax, true, true);
+    const damageTotal = Object.keys({ ...damage, ...damageFactor, ...damageFactorMax }).reduce((total, type) => {
+      total[type] = damage[type] + damageFactor[type] + damageFactorMax[type];
       return total;
     }, {});
 
-    return { damage: damageTotal };
+    return {
+      stat: statTotal,
+      damage: damageTotal
+    };
   }
 
 
