@@ -46,6 +46,10 @@ export const applyEffects = (entity, effects, proc = Math.random()) => {
  * @returns {Entity[]}
  */
 export const act = (depths, user, action, target) => {
+  user.turn.push(action);
+  user.stat.energy -= action.energy;
+
+
   const targets = [];
   const hit = [];
 
@@ -170,19 +174,18 @@ export const place = (depths, mob, at, looking) => {
  * @returns {undefined}
  */
 export const tick = async (initiative) => {
-  initiative.update();
-
-  const actor = initiative.next;
-  actor.tick(Tick.before);
-  const energy = await actor.act(actor);
+  const actor = initiative.remove();
   actor.stat.energyOverflow = 0;
-  actor.tick(Tick.after);
+  actor.turn.clear();
+  actor.tick(Tick.before);
 
-  const energyMaxMax = Math.max(...[...initiative].map((mob) => mob.stat.energyMax));
-  for (const mob of [...initiative]) {
-    if (mob === actor) continue;
-
-    const delta = ((mob.stat.energyMax / energyMaxMax) * energy);
+  const energy = await actor.act(actor);
+  const energyMax = Math.max(...[...initiative].map((mob) => mob.stat.energyMax), 0);
+  for (const mob of initiative) {
+    const delta = ((mob.stat.energyMax / energyMax) * energy);
     mob.stat.energy += delta;
   }
+
+  actor.tick(Tick.after);
+  initiative.add(actor);
 };

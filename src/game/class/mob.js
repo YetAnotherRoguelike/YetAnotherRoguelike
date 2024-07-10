@@ -2,6 +2,7 @@ import "@kxirk/utils/number.js";
 
 import Ability from "./ability.js";
 import Accessory from "./accessory.js";
+import Action from "./action.js";
 import Armor from "./armor.js";
 import Conditions from "./conditions.js";
 import Entity from "./entity.js";
@@ -60,6 +61,8 @@ const Mob = class extends Entity {
   /** @type {Conditions} */
   #conditions;
 
+  /** @type {Action[]} */
+  #turn;
   /** @type {Function} */
   #act;
 
@@ -202,7 +205,14 @@ const Mob = class extends Entity {
         return value;
       },
       set: (target, stat, value) => {
-        if (["health", "regen", "energy"].includes(stat)) {
+        if (["health", "regen"].includes(stat)) {
+          const statMax = `${stat}Max`;
+
+          target[stat] = value.clamp(0, this.stat[statMax]);
+
+          return true;
+        }
+        if (["energy"].includes(stat)) {
           const statMax = `${stat}Max`;
           const statOverflow = `${stat}Overflow`;
 
@@ -228,6 +238,7 @@ const Mob = class extends Entity {
 
     this.#conditions = new Conditions();
 
+    this.#turn = [];
     this.act = null;
   }
 
@@ -433,6 +444,9 @@ const Mob = class extends Entity {
   }
 
 
+  /** @type {Action[]} */
+  get turn () { return this.#turn; }
+
   /** @type {Function} */
   get act () { return this.#act; }
   set act (act) { this.#act = act; }
@@ -529,6 +543,8 @@ const Mob = class extends Entity {
 
     this.conditions.fromJSON(json.conditions);
 
+    for (const action of json.turn) this.turn.push( Action.fromJSON(action) );
+
     return this;
   }
 
@@ -556,6 +572,8 @@ const Mob = class extends Entity {
     json.inventory = this.inventory.toJSON();
 
     json.conditions = this.conditions.toJSON();
+
+    json.turn = this.turn.map((action) => action.toJSON());
 
     return json;
   }
