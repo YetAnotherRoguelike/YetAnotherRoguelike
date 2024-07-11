@@ -34,7 +34,7 @@ const Mob = class extends Entity {
 
   /** @type {Ability.<number>} */
   #abilityBase;
-  /** @type {Ability.<number>} */
+  /** @type {Ability.<Number>} */
   #ability;
 
   /** @type {Proficiency.<number>} */
@@ -111,7 +111,9 @@ const Mob = class extends Entity {
 
 
         // round
-        return value.round();
+        value = value.round();
+
+        return Object.defineProperty(new Number(value), "modifier", { value: Math.floor((value - 10) / 2) });
       }
     });
 
