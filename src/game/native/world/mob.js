@@ -180,7 +180,7 @@ export const tick = async (initiative) => {
   actor.tick(Tick.before);
 
   const energy = await actor.act(actor);
-  const energyMax = Math.max(...[...initiative].map((mob) => mob.stat.energyMax), 0);
+  const energyMax = Math.max(...[...initiative].map((mob) => mob.stat.energyMax), 50);
   for (const mob of initiative) {
     const delta = ((mob.stat.energyMax / energyMax) * energy);
     mob.stat.energy += delta;

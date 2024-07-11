@@ -122,7 +122,7 @@ const Mob = class extends Entity {
 
       regenMax: { value: 10 },
 
-      energyMax: { get: () => 10 * this.stat.speed },
+      energyMax: { get: () => Math.max(10 * this.stat.speed, 50) },
 
       speed: { get: () => (this.ability.dexterity / 2) + 1 },
       stealth: { get: () => this.ability.dexterity },
