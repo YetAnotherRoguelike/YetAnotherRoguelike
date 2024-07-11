@@ -80,7 +80,7 @@ const Mob = class extends Entity {
     this.#level = 1;
 
     this.#abilityBase = new Ability(1);
-    this.#ability = new Proxy(new Ability(), {
+    this.#ability = new Proxy({}, {
       get: (target, ability) => {
         let value = this.abilityBase[ability] ?? 0;
 
@@ -133,7 +133,7 @@ const Mob = class extends Entity {
       view: { value: 8 },
       perception: { get: () => this.ability.wisdom },
 
-      healthMax: { get: () => (this.level * Math.max(this.ability.constitution - 5, 1)) + this.ability.constitution },
+      healthMax: { get: () => (this.level * ((this.ability.constitution / 2) + this.ability.strength.modifier).clamp(0)) + this.ability.strength },
 
       regenMax: { value: 10 },
 
@@ -145,10 +145,10 @@ const Mob = class extends Entity {
       critical: { get: () => this.ability.luck / 200 },
       strikingAttack: { get: () => this.ability.strength },
 
-      evade: { get: () => (this.ability.dexterity / 2) + this.level },
-      physicalDefense: { get: () => this.ability.constitution / 2 }
+      evade: { get: () => this.ability.dexterity / 2 },
+      physicalDefense: { get: () => this.ability.strength / 2 }
     });
-    this.#stat = new Proxy(new Stat(), {
+    this.#stat = new Proxy({}, {
       get: (target, stat) => {
         let statType;
         let statGroup;
