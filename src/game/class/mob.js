@@ -85,11 +85,24 @@ const Mob = class extends Entity {
         let value = this.abilityBase[ability] ?? 0;
 
 
+        // size
+        if (["strength"].includes(ability)) {
+          value *= this.sizeMod;
+        }
+        if (["dexterity"].includes(ability)) {
+          value *= (1 / this.sizeMod);
+        }
+
+        // weight
+        if (["dexterity"].includes(ability)) {
+          value *= this.weightMod;
+        }
+
+
         // factor
         for (const condition of this.conditions) {
           value *= condition?.effect.abilityFactor?.[ability] ?? 1.0;
         }
-
 
         // flat
         for (const condition of this.conditions) {
@@ -118,7 +131,7 @@ const Mob = class extends Entity {
       view: { value: 8 },
       perception: { get: () => this.ability.wisdom },
 
-      healthMax: { get: () => (this.sizeMod * this.ability.constitution) + this.level * Math.max(this.ability.constitution - 5, 1) },
+      healthMax: { get: () => (this.level * Math.max(this.ability.constitution - 5, 1)) + this.ability.constitution },
 
       regenMax: { value: 10 },
 
@@ -157,20 +170,10 @@ const Mob = class extends Entity {
         }
 
 
-        // size
-        if (["speed", "stealth", "evade"].includes(stat)) {
-          value *= (1 / this.sizeMod);
-        }
-        else if (["healthMax"].includes(stat) || ["attack", "defense"].includes(statType)) {
-          value *= this.sizeMod;
-        }
-
-
         // factor
         for (const condition of this.conditions) {
           value *= condition?.effect.statFactor?.[stat] ?? 1.0;
         }
-
 
         // flat
         for (const item of equipped) {
@@ -185,12 +188,6 @@ const Mob = class extends Entity {
         }
         for (const condition of this.conditions) {
           value += condition?.effect.stat?.[stat] ?? 0;
-        }
-
-
-        // weight
-        if (["speed", "evade"].includes(stat)) {
-          value *= this.weightMod;
         }
 
 
