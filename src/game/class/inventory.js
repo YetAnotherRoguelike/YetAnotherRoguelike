@@ -5,19 +5,17 @@ import Slot from "./slot.js";
 
 
 const Inventory = class {
-  /** @type {Slot[]} */
-  #contents;
   /** @type {Class<Item>} */
   #Type;
-  /** @type {number} */
-  #size;
+  /** @type {Slot[]} */
+  #slots;
 
   /**
    * @argument {Class<Item>} [Type]
    * @argument {number} [size]
    */
   constructor (Type = Item, size = 1) {
-    this.#contents = [];
+    this.#slots = [];
     this.Type = Type;
     this.size = size;
   }
@@ -35,22 +33,21 @@ const Inventory = class {
   get Type () { return this.#Type; }
   set Type (Type) { this.#Type = Type; }
 
+
   /** @type {number} */
-  get size () { return this.#size; }
+  get size () { return this.#slots.length; }
   set size (size) {
     const prev = (this.size ?? 0);
-    this.#size = size.clamp(0);
 
-    for (let i = prev; i < this.size; i++) this.#contents[i] ??= new Slot(this.Type);
+    for (let i = prev; i < size.clamp(0); i++) this.#slots[i] ??= new Slot(this.Type);
   }
-
 
   /**
    * @argument {Item} item
    * @returns {boolean}
    */
   add (item) {
-    for (const slot of this.#contents) {
+    for (const slot of this.#slots) {
       if (slot.add(item)) return true;
     }
 
@@ -62,15 +59,16 @@ const Inventory = class {
    * @returns {Item}
    */
   remove (index) {
-    const item = this.#contents[index].remove();
+    const item = this.#slots[index].remove();
 
     return item;
   }
 
+
   /** @type {Iterator<Item>} */
   [Symbol.iterator] () {
     const items = [];
-    for (const slot of this.#contents) items.push(...slot);
+    for (const slot of this.#slots) items.push(...slot);
 
     return items[Symbol.iterator]();
   }
@@ -81,7 +79,7 @@ const Inventory = class {
    * @returns {Inventory}
    */
   fromJSON (json) {
-    for (const slot of json.contents) this.#contents.fromJSON(slot);
+    for (const slot of json.slots) this.#slots.fromJSON(slot);
     this.Type = (json.Type === "Item" ? Item : Item[json.Type]);
     this.size = json.size;
 
@@ -91,7 +89,7 @@ const Inventory = class {
   /** @returns {Object} */
   toJSON () {
     return {
-      contents: this.#contents.map((slot) => slot.toJSON()),
+      slots: this.#slots.map((slot) => slot.toJSON()),
       Type: this.Type.prototype.constructor.name,
       size: this.size
     };
