@@ -14,7 +14,7 @@ import Client from "./client.js";
 
 
 /**
- * @param {Set.<string>} protocols
+ * @param {Set<string>} protocols
  * @param {http.IncomingMessage} request
  * @returns {string} protocol
  */

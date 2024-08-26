@@ -48,7 +48,7 @@ const Point = class {
     this.z = z ?? this.z;
   }
 
-  /** @type {Function} */
+  /** @type {Iterator<number>} */
   [Symbol.iterator] () {
     const array = [this.x, this.y, this.z];
 

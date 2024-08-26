@@ -183,7 +183,7 @@ export const Record = class {
 };
 
 
-/** @type {Map.<string, Record>} */
+/** @type {Map<string, Record>} */
 export const records = new Map();
 Object.defineProperty(records, "get", {
   /**

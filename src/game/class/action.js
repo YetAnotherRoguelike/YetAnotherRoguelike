@@ -5,13 +5,13 @@ import Accuracy from "./accuracy.js";
 
 
 const Action = class {
-  /** @type {FrequencyMap.<Effect|Condition>} */
+  /** @type {FrequencyMap<Effect|Condition>} */
   #userBefore;
-  /** @type {FrequencyMap.<Effect|Condition>} */
+  /** @type {FrequencyMap<Effect|Condition>} */
   #target;
-  /** @type {FrequencyMap.<Effect|Condition>} */
+  /** @type {FrequencyMap<Effect|Condition>} */
   #user;
-  /** @type {FrequencyMap.<Effect|Condition>} */
+  /** @type {FrequencyMap<Effect|Condition>} */
   #userAfter;
 
   /** @type {number} */
@@ -49,16 +49,16 @@ const Action = class {
   }
 
 
-  /** @type {FrequencyMap.<Effect|Condition>} */
+  /** @type {FrequencyMap<Effect|Condition>} */
   get userBefore () { return this.#userBefore; }
 
-  /** @type {FrequencyMap.<Effect|Condition>} */
+  /** @type {FrequencyMap<Effect|Condition>} */
   get target () { return this.#target; }
 
-  /** @type {FrequencyMap.<Effect|Condition>} */
+  /** @type {FrequencyMap<Effect|Condition>} */
   get user () { return this.#user; }
 
-  /** @type {FrequencyMap.<Effect|Condition>} */
+  /** @type {FrequencyMap<Effect|Condition>} */
   get userAfter () { return this.#userAfter; }
 
 

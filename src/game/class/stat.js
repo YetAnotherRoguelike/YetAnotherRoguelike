@@ -9,7 +9,7 @@ const Stat = class {
   static types = ["Attack", "Resist", "Defense"];
 
   /** @type {number} */
-  #weightMax; // lb
+  #weightMax; // lbs
 
   /** @type {number} */
   #view; // tiles
@@ -40,14 +40,14 @@ const Stat = class {
 
   /** @type {number} */
   #critical; // % chance to deal additional damage: [0.0, 1.0]
-  /** @type {Type.<number>} */
+  /** @type {Type<number>} */
   #attack;
 
   /** @type {number} */
   #evade;
-  /** @type {Type.<number>} */
+  /** @type {Type<number>} */
   #resist; // % damage reduction before defense: weak (-Infinity, 0.0), neutral [0.0], resist (0.0, 1.0), immune [1.0], absorb (1.0, Infinity)
-  /** @type {Type.<number>} */
+  /** @type {Type<number>} */
   #defense;
 
   /**

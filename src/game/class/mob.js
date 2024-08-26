@@ -32,14 +32,14 @@ const Mob = class extends Entity {
   /** @type {number} */
   #level;
 
-  /** @type {Ability.<number>} */
+  /** @type {Ability<number>} */
   #abilityBase;
-  /** @type {Ability.<Number>} */
+  /** @type {Ability<Number>} */
   #ability;
 
-  /** @type {Proficiency.<number>} */
+  /** @type {Proficiency<number>} */
   #proficiencyBase;
-  /** @type {Proficiency.<number>} */
+  /** @type {Proficiency<number>} */
   #proficiency;
 
   /** @type {Stat} */
@@ -47,15 +47,15 @@ const Mob = class extends Entity {
   /** @type {Stat} */
   #stat;
 
-  /** @type {Slot.<Armor>} */
+  /** @type {Slot<Armor>} */
   #armor;
-  /** @type {Slot.<Item>} */
+  /** @type {Slot<Item>} */
   #hand;
-  /** @type {Slot.<Item>} */
+  /** @type {Slot<Item>} */
   #side;
-  /** @type {Inventory.<Accessory>} */
+  /** @type {Inventory<Accessory>} */
   #accessories;
-  /** @type {Inventory.<Item>} */
+  /** @type {Inventory<Item>} */
   #inventory;
 
   /** @type {Conditions} */
@@ -313,17 +313,17 @@ const Mob = class extends Entity {
   set level (level) { this.#level = level; }
 
 
-  /** @type {Ability.<number>} */
+  /** @type {Ability<number>} */
   get abilityBase () { return this.#abilityBase; }
 
-  /** @type {Ability.<number>} */
+  /** @type {Ability<number>} */
   get ability () { return this.#ability; }
 
 
-  /** @type {Proficiency.<number>} */
+  /** @type {Proficiency<number>} */
   get proficiencyBase () { return this.#proficiencyBase; }
 
-  /** @type {Proficiency.<number>} */
+  /** @type {Proficiency<number>} */
   get proficiency () { return this.#proficiency; }
 
 
@@ -334,19 +334,19 @@ const Mob = class extends Entity {
   get stat () { return this.#stat; }
 
 
-  /** @type {Slot.<Armor>} */
+  /** @type {Slot<Armor>} */
   get armor () { return this.#armor; }
 
-  /** @type {Slot.<Item>} */
+  /** @type {Slot<Item>} */
   get hand () { return this.#hand; }
 
-  /** @type {Slot.<Item>} */
+  /** @type {Slot<Item>} */
   get side () { return this.#side; }
 
-  /** @type {Inventory.<Accessory>} */
+  /** @type {Inventory<Accessory>} */
   get accessories () { return this.#accessories; }
 
-  /** @type {Inventory.<Item>} */
+  /** @type {Inventory<Item>} */
   get inventory () { return this.#inventory; }
 
   /**

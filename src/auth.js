@@ -159,7 +159,7 @@ export const Token = class {
   get remaining () { return Math.max((this.expires - time.now), 0); }
 };
 
-/** @type {Map.<string, Token>} */
+/** @type {Map<string, Token>} */
 const tokens = new Map();
 
 /**

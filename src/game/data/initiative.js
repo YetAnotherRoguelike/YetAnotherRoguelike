@@ -2,7 +2,7 @@ import { PriorityQueue } from "@kxirk/adt";
 import { Mob } from "@yetanotherroguelike/class";
 
 
-/** @type {PriorityQueue.<Mob>} */
+/** @type {PriorityQueue<Mob>} */
 const initiative = new PriorityQueue((a, b) => ((a.stat.energy + a.stat.energyOverflow) > (b.stat.energy + b.stat.energyOverflow)));
 export default initiative;
 

@@ -32,14 +32,14 @@ export const time = {
 };
 
 
-/** @typedef {"<address>" | "<start>-<end>" | "<network>/<prefix>"} Rule */
+/** @typedef {"<address>" | "<start>-<end>" | "<network>/<prefix>"} rule */
 export const auth = {
-  /** @type {Rule[]} */
+  /** @type {rule[]} */
   blacklist: [],
 
   /** @type {boolean} deny unless on whitelist */
   enforceWhitelist: false,
-  /** @type {Rule[]} */
+  /** @type {rule[]} */
   whitelist: [],
   /** @type {boolean} bypass server password */
   alwaysPermitWhitelist: true,

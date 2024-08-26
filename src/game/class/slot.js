@@ -4,9 +4,9 @@ import Item from "./item.js";
 
 
 const Slot = class {
-  /** @type {Class.<Item>} */
+  /** @type {Class<Item>} */
   #TypeInitial;
-  /** @type {Class.<Item>} */
+  /** @type {Class<Item>} */
   #Type;
 
   /** @type {Item[]} */
@@ -15,7 +15,7 @@ const Slot = class {
   #open;
 
   /**
-   * @argument {Class.<Item>} [Type]
+   * @argument {Class<Item>} [Type]
    */
   constructor (Type = Item) {
     this.TypeInitial = Type;
@@ -34,11 +34,11 @@ const Slot = class {
   }
 
 
-  /** @type {Class.<Item>} */
+  /** @type {Class<Item>} */
   get TypeInitial () { return this.#TypeInitial; }
   set TypeInitial (Type) { this.#TypeInitial = Type; }
 
-  /** @type {Class.<Item>} */
+  /** @type {Class<Item>} */
   get Type () { return this.#Type; }
   set Type (Type) { this.#Type = Type; }
 
@@ -82,7 +82,7 @@ const Slot = class {
   }
 
 
-  /** @type {Function} */
+  /** @type {Iterator<Item>} */
   [Symbol.iterator] () {
     return this.#items[Symbol.iterator]();
   }

@@ -3,7 +3,7 @@ import { Queue } from "@kxirk/adt";
 import { Level } from "@yetanotherroguelike/class";
 
 
-/** @type {Queue.<Level>} */
+/** @type {Queue<Level>} */
 const levels = new Queue();
 export default levels;
 

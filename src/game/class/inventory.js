@@ -7,13 +7,13 @@ import Slot from "./slot.js";
 const Inventory = class {
   /** @type {Slot[]} */
   #contents;
-  /** @type {Class.<Item>} */
+  /** @type {Class<Item>} */
   #Type;
   /** @type {number} */
   #size;
 
   /**
-   * @argument {Class.<Item>} [Type]
+   * @argument {Class<Item>} [Type]
    * @argument {number} [size]
    */
   constructor (Type = Item, size = 1) {
@@ -31,7 +31,7 @@ const Inventory = class {
   }
 
 
-  /** @type {Class.<Item>} */
+  /** @type {Class<Item>} */
   get Type () { return this.#Type; }
   set Type (Type) { this.#Type = Type; }
 
@@ -67,7 +67,7 @@ const Inventory = class {
     return item;
   }
 
-  /** @type {Function} */
+  /** @type {Iterator<Item>} */
   [Symbol.iterator] () {
     const items = [];
     for (const slot of this.#contents) items.push(...slot);

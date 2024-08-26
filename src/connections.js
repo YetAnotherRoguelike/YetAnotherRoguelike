@@ -1,7 +1,7 @@
 import { connections as settings } from "./settings.js";
 
 
-/** @type {Map.<string, number>} */
+/** @type {Map<string, number>} */
 const connections = new Map();
 Object.defineProperty(connections, "increment", {
   /**

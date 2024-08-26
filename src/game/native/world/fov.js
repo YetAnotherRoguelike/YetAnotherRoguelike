@@ -12,12 +12,12 @@ import { tileAt, tileMatch, tilesMatch } from "./tile.js";
  * @returns {Point[]}
  */
 export const fov = (tiles, center, radius = Infinity) => {
-  /** @type {Map.<number, Set.<number>>} */
+  /** @type {Map<number, Set<number>>} */
   const visible = new Map();
   Object.defineProperty(visible, "get", {
     /**
      * @param {number} x
-     * @returns {Set.<number>}
+     * @returns {Set<number>}
      */
     value (x) {
       if ( !this.has(x) ) this.set(x, new Set());
@@ -89,7 +89,7 @@ export const fov = (tiles, center, radius = Infinity) => {
  * @param {Tile[][]} tiles
  * @param {Point} start
  * @param {Point} stop
- * @param {Object.<string, boolean>} [properties]
+ * @param {Object<string, boolean>} [properties]
  * @param {boolean} [includeFirstException]
  * @returns {Point[]}
  */

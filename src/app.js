@@ -23,7 +23,7 @@ app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser(settings.auth.tokenSecret));
 
 
-/** @type {Set.<string>} */
+/** @type {Set<string>} */
 export const sharedAssets = new Set([
   "/assets/css/theme.css", "/assets/css/main.css",
   "/assets/font/sharetechmono.ttf", "/assets/font/cursor.cur",
@@ -59,7 +59,7 @@ export const any = (request, response, next) => {
 app.use(any);
 
 
-/** @type {Set.<string>} */
+/** @type {Set<string>} */
 export const loginAssets = new Set([
   ...sharedAssets,
   "/login",
@@ -131,7 +131,7 @@ app.post("/login", login);
 /** @type {string[]} */
 export const apiFiles = [...readdirSync(new URL("client/api/", import.meta.url))];
 
-/** @type {Set.<string>} */
+/** @type {Set<string>} */
 export const apiAssets = new Set([...apiFiles.map((file) => `/api/${file}`)]);
 
 /**
@@ -146,7 +146,7 @@ export const api = (request, response) => {
 app.get("/api.json", api);
 
 
-/** @type {Set.<string>} */
+/** @type {Set<string>} */
 export const indexAssets = new Set([
   ...sharedAssets,
   "/",

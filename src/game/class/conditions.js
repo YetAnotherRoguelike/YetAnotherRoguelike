@@ -7,7 +7,7 @@ import Stack from "./stack.js";
 export const TickQueue = class {
   /** @type {Condition[]} */
   #stack;
-  /** @type {Map.<Condition>} */
+  /** @type {Map<string, Condition>} */
   #map;
 
   constructor () {
@@ -27,7 +27,7 @@ export const TickQueue = class {
   /** @type {Condition[]} */
   get stack () { return this.#stack; }
 
-  /** @type {map.<Condition>} */
+  /** @type {Map<string, Condition>} */
   get map () { return this.#map; }
 
 
@@ -64,7 +64,7 @@ export const TickQueue = class {
   }
 
   /**
-   * @param {Class.<Condition>} Class
+   * @param {Class<Condition>} Class
    * @returns {Condition[]}
    */
   get (Class) {
@@ -75,7 +75,7 @@ export const TickQueue = class {
   }
 
   /**
-   * @param {Class.<Condition>} Class
+   * @param {Class<Condition>} Class
    * @param {boolean} stopFirst
    * @param {boolean} newestFirst
    * @returns {Condition[]}
@@ -106,7 +106,7 @@ export const TickQueue = class {
 
 
   /**
-   * @returns {Function}
+   * @returns {Iterator<Condition>}
    */
   [Symbol.iterator] () {
     return [...this.stack, ...this.map.values()][Symbol.iterator]();
@@ -175,7 +175,7 @@ const Conditions = class {
   }
 
   /**
-   * @param {Class.<Condition>} Class
+   * @param {Class<Condition>} Class
    * @returns {Condition[]}
    */
   get (Class) {
@@ -187,7 +187,7 @@ const Conditions = class {
   }
 
   /**
-   * @param {Class.<Condition>} Class
+   * @param {Class<Condition>} Class
    * @returns {boolean}
    */
   has (Class) {
@@ -195,7 +195,7 @@ const Conditions = class {
   }
 
   /**
-   * @param {Class.<Condition>} Class
+   * @param {Class<Condition>} Class
    * @param {boolean} [stopFirst]
    * @param {boolean} [newestFirst]
    * @returns {Condition[]}
@@ -210,7 +210,7 @@ const Conditions = class {
 
 
   /**
-   * @returns {Function}
+   * @returns {Iterator<Condition>}
    */
   [Symbol.iterator] () {
     return [...this.before, ...this.after, ...this.persist][Symbol.iterator]();

@@ -19,7 +19,7 @@ export const tileDistance = (a, b) => 5 * pointDistance(a, b);
 
 /**
  * @param {Tile} tile
- * @param {Object.<string, boolean>} [properties]
+ * @param {Object<string, boolean>} [properties]
  * @returns {boolean}
  */
 export const tileMatch = (tile, properties = {}) => {
@@ -35,7 +35,7 @@ export const tileMatch = (tile, properties = {}) => {
 
 /**
  * @param {Tile[][]} tiles
- * @param {Object.<string, boolean>} [properties]
+ * @param {Object<string, boolean>} [properties]
  * @param {Function} [map]
  * @returns {boolean[][]}
  */

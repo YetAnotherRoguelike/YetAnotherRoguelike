@@ -162,7 +162,7 @@ export const IntervalTask = class extends Task {
 };
 
 
-/** @type {PriorityQueue.<Task>} */
+/** @type {PriorityQueue<Task>} */
 export const tasks = new PriorityQueue((a, b) => {
   if (a.next === b.next) {
     if (a.priority === b.priority) return (a.interval < b.interval);

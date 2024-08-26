@@ -23,11 +23,11 @@ const Tile = class extends Entity {
   /** @type {boolean} */
   #walkable;
 
-  /** @type {Set.<Mob>} */
+  /** @type {Set<Mob>} */
   #mobs;
-  /** @type {Set.<Item>} */
+  /** @type {Set<Item>} */
   #items;
-  /** @type {Set.<Decoration>} */
+  /** @type {Set<Decoration>} */
   #decorations;
 
 
@@ -127,13 +127,13 @@ const Tile = class extends Entity {
   set walkable (walkable) { this.#walkable = walkable; }
 
 
-  /** @type {Set.<Mob>} */
+  /** @type {Set<Mob>} */
   get mobs () { return this.#mobs; }
 
-  /** @type {Set.<Item>} */
+  /** @type {Set<Item>} */
   get items () { return this.#items; }
 
-  /** @type {Set.<Decoration>} */
+  /** @type {Set<Decoration>} */
   get decorations () { return (this.masked ? this.#mask.decorations : this.#decorations); }
 
   /** @type {number} */

@@ -1,7 +1,7 @@
 import { EventEmitter } from "events";
 
 
-/** @type {WeakMap.<Player, EventEmitter>} */
+/** @type {WeakMap<Player, EventEmitter>} */
 const players = new WeakMap();
 export default players;
 

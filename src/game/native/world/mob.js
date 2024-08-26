@@ -10,9 +10,9 @@ import { line } from "./fov.js";
 
 /**
  * @param {Entity} entity
- * @param {FrequencyMap.<Effect|Condition>} effects
+ * @param {FrequencyMap<Effect|Condition>} effects
  * @param {number} [proc]
- * @returns {Array.<Effect|Condition>}
+ * @returns {Array<Effect|Condition>}
  */
 export const applyEffects = (entity, effects, proc = Math.random()) => {
   const applied = [];
@@ -170,7 +170,7 @@ export const place = (depths, mob, at, looking) => {
 };
 
 /**
- * @param {PriorityQueue.<Mob>} initiative
+ * @param {PriorityQueue<Mob>} initiative
  * @returns {undefined}
  */
 export const tick = async (initiative) => {
