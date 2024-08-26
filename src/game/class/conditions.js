@@ -86,7 +86,7 @@ export const TickQueue = class {
     if (newestFirst || !stopFirst) {
       for (let i = this.stack.length - 1; i >= 0; i--) {
         if (this.stack[i] instanceof Class) {
-          removed.push( this.stack.remove(i) );
+          removed.push(this.stack.remove(i));
           if (stopFirst) return removed;
         }
       }
@@ -94,7 +94,7 @@ export const TickQueue = class {
     else {
       for (let i = 0; i < this.stack.length; i++) {
         if (this.stack[i] instanceof Class) {
-          removed.push( this.stack.remove(i) ); i--;
+          removed.push(this.stack.remove(i)); i--;
           if (stopFirst) return removed;
         }
       }

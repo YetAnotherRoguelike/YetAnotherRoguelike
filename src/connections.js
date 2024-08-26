@@ -3,6 +3,7 @@ import { connections as settings } from "./settings.js";
 
 /** @type {Map<string, number>} */
 const connections = new Map();
+
 Object.defineProperty(connections, "increment", {
   /**
    * @param {string} ip
@@ -15,6 +16,7 @@ Object.defineProperty(connections, "increment", {
   },
   enumerable: false
 });
+
 Object.defineProperty(connections, "decrement", {
   /**
    * @param {string} ip
@@ -53,7 +55,7 @@ export const valid = (ip) => {
  */
 export const create = (ip) => {
   if (valid(ip)) {
-    if ( !connections.has(ip) ) connections.set(ip, 0);
+    if (!connections.has(ip)) connections.set(ip, 0);
     connections.increment(ip);
 
     return true;

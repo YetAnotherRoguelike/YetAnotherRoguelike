@@ -17,7 +17,7 @@ export default new Proxy(depths, {
     }
 
     const index = Number(property);
-    if ( Number.isInteger(index) ) {
+    if (Number.isInteger(index)) {
       while (index >= target.length) {
         const level = levels.remove();
         const generated = generate(random, level, target.length);

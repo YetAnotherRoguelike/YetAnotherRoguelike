@@ -11,7 +11,7 @@ Object.defineProperty(players, "add", {
    * @returns {EventEmitter}
    */
   value (player) {
-    if ( !players.has(player) ) players.set(player, new EventEmitter());
+    if (!players.has(player)) players.set(player, new EventEmitter());
 
     return players.get(player);
   },

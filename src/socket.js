@@ -22,7 +22,7 @@ export const selectProtocol = (protocols, request) => {
   const { socket } = request;
 
   for (const protocol of protocols) {
-    if ( api.protocols.includes(protocol) ) return protocol;
+    if (api.protocols.includes(protocol)) return protocol;
   }
 
   socket.end("HTTP/1.1 400 Bad Request\r\n\r\n");
@@ -103,7 +103,7 @@ export const upgrade = async (request, socket, head) => {
 
   log(new Event("debug", "server", `${ip} UPGRADE ${token}`));
 
-  if ( authenticate(request, socket, ip, token) ) {
+  if (authenticate(request, socket, ip, token)) {
     server.handleUpgrade(request, socket, head, (ws, req) => {
       server.emit("connection", ws, req, ip, token);
     });
@@ -120,7 +120,7 @@ export const upgrade = async (request, socket, head) => {
  * @returns {boolean}
  */
 export const verifyMessage = (ws, request, ip, token, event) => {
-  if ( audit.blacklisted(ip) ) {
+  if (audit.blacklisted(ip)) {
     ws.close(1008, "Forbidden");
     return false;
   }
@@ -132,7 +132,7 @@ export const verifyMessage = (ws, request, ip, token, event) => {
     return false;
   }
 
-  if ( !ws.rate.next(time.now) ) {
+  if (!ws.rate.next(time.now)) {
     violations.add(new RateViolation(ip));
 
     ws.close(1008, "Too Many Messages");
@@ -198,7 +198,7 @@ export const connect = (ws, request, ip, token) => {
 
       log(new Event("debug", "socket", `${token} MESSAGE ${event}`));
 
-      if ( verifyMessage(ws, request, ip, token, event) ) {
+      if (verifyMessage(ws, request, ip, token, event)) {
         api.emit(event, client, ...data);
       }
     }

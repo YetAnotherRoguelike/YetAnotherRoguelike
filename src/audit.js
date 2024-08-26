@@ -185,13 +185,14 @@ export const Record = class {
 
 /** @type {Map<string, Record>} */
 export const records = new Map();
+
 Object.defineProperty(records, "get", {
   /**
    * @param {string} ip
    * @returns {Record}
    */
   value (ip) {
-    if ( !records.has(ip) ) records.set(ip, new Record());
+    if (!records.has(ip)) records.set(ip, new Record());
 
     return Map.prototype.get.call(records, ip);
   },

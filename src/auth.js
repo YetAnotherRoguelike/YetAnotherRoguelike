@@ -52,6 +52,7 @@ export const BlockList = class extends net.BlockList {
 
 /** @type {BlockList} */
 export const blacklist = new BlockList();
+
 /** @type {BlockList} */
 export const whitelist = new BlockList();
 

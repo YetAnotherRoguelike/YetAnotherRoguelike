@@ -62,7 +62,7 @@ export const act = (depths, user, action, target) => {
     if (action.radius > 0) {
       const points = pointsAdjacent(target, action.radius);
       const tiles = points.map((point) => tileAt(depths[target.z], point));
-      const mobs = []; for (const tile of tiles) mobs.push( ...tile.mobs.values() );
+      const mobs = []; for (const tile of tiles) mobs.push(...tile.mobs.values());
 
       targets.push(...tiles, ...mobs);
     }
@@ -116,7 +116,7 @@ export const look = (depths, mob, point) => {
   mob.facing.set(...facing);
   mob.looking.set(...last);
 
-  if ( pointsEqual(last, point) ) return true;
+  if (pointsEqual(last, point)) return true;
   return false;
 };
 

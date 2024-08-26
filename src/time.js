@@ -18,6 +18,7 @@ let tick = 0;
  * @returns {number} tick
  */
 export const convertTime = (ms) => (ms / rate).round().clamp(1);
+
 /**
  * @param {number} tick
  * @returns {number} ms
@@ -80,7 +81,7 @@ export const Task = class {
 
     this.#last = null;
     this.#next = null;
-    this.start( start.clamp(0) );
+    this.start(start.clamp(0));
 
     this.#count = count.clamp(0);
 
@@ -170,6 +171,7 @@ export const tasks = new PriorityQueue((a, b) => {
   }
   return (a.next < b.next);
 });
+
 Object.defineProperty(tasks, "add", {
   /**
    * @param {Task} task

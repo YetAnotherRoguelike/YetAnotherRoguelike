@@ -20,7 +20,7 @@ export const fov = (tiles, center, radius = Infinity) => {
      * @returns {Set<number>}
      */
     value (x) {
-      if ( !this.has(x) ) this.set(x, new Set());
+      if (!this.has(x)) this.set(x, new Set());
 
       return Map.prototype.get.call(this, x);
     },
@@ -50,11 +50,11 @@ export const fov = (tiles, center, radius = Infinity) => {
       const tile = tileAt(tiles, point);
       const bevel = 0.375;
 
-      if ( tileMatch(tile, { transparent: true }) ) {
-        if ( (x >= (y * startSlope)) && ((x <= (y * endSlope))) ) visible.get(pointx).add(pointy);
+      if (tileMatch(tile, { transparent: true })) {
+        if ((x >= (y * startSlope)) && (x <= (y * endSlope))) visible.get(pointx).add(pointy);
       }
       else {
-        if ( !(tile instanceof Empty) && (x >= ((y - (1 - bevel)) * startSlope)) && ((x - bevel) <= (y * endSlope)) ) visible.get(pointx).add(pointy);
+        if (!(tile instanceof Empty) && (x >= ((y - (1 - bevel)) * startSlope)) && ((x - bevel) <= (y * endSlope))) visible.get(pointx).add(pointy);
         scan(y + 1, startSlope, ((x - bevel) / y), transform, radius - 1);
 
         startSlope = ((x + (1 - bevel)) / y);

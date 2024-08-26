@@ -24,7 +24,7 @@ export const pointLine = (start, stop, excludeStart = false) => {
 
   let error = (dx - dy);
   while (true) {
-    points.push( new Point(x, y) );
+    points.push(new Point(x, y));
 
     if (x === stop.x && y === stop.y) break;
 
@@ -69,8 +69,8 @@ export const pointsEqual = (...points) => {
   const { x, y, z } = points.first;
 
   for (const point of points) {
-    if ( (point.x !== x) || (point.y !== y)) return false;
-    if ( point?.z && (point.z !== z) ) return false;
+    if ((point.x !== x) || (point.y !== y)) return false;
+    if (point?.z && (point.z !== z)) return false;
   }
 
   return true;

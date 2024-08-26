@@ -407,7 +407,7 @@ const Mob = class extends Entity {
     if (item.equip.includes("both")) this.side.open = true;
 
 
-    if ( this.add(item) ) return true;
+    if (this.add(item)) return true;
 
     this[slot].add(item);
     if (item.equip.includes("both")) this.side.open = false;
@@ -435,7 +435,7 @@ const Mob = class extends Entity {
       condition.duration--;
 
       if (condition.duration === 0) {
-        expired.push( this.conditions[queue].remove(condition) );
+        expired.push(this.conditions[queue].remove(condition));
       }
     }
 
