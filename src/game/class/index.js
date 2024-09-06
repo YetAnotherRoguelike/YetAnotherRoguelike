@@ -24,6 +24,7 @@ export { default as Slot } from "./slot.js";
 export { default as Stack } from "./stack.js";
 export { default as Stat } from "./stat.js";
 export { default as Tick } from "./tick.js";
+export { default as TickQueue } from "./tick-queue.js";
 export { default as Tile } from "./tile.js";
 export { default as Type } from "./type.js";
 export { default as Weapon } from "./weapon.js";
