@@ -1,4 +1,5 @@
 import { Queue } from "@kxirk/adt";
+import { fromJSON, toJSON } from "@kxirk/serialize";
 
 import { Level } from "@yetanotherroguelike/class";
 
@@ -10,10 +11,13 @@ export default levels;
 Object.defineProperty(levels, "fromJSON", {
   /**
    * @param {Object[]} json
-   * @returns {Queue.<Level>}
+   * @param {Function} [reviver]
+   * @returns {Queue<Level>}
    */
-  value (json) {
-    levels.add(...json.map( (level) => Level.fromJSON(level) ));
+  value (json, reviver) {
+    levels.clear();
+
+    levels.add(...fromJSON(json, [], undefined, (reviver ?? { value: Level.fromJSON })));
 
     return levels;
   },
@@ -21,9 +25,15 @@ Object.defineProperty(levels, "fromJSON", {
 });
 
 Object.defineProperty(levels, "toJSON", {
-  /** @returns {Object[]} */
-  value () {
-    return levels.map( (level) => level.toJSON() );
+  /**
+   * @param {string} key
+   * @param {Function} [replacer]
+   * @returns {Object[]}
+   */
+  value (key, replacer) {
+    const json = toJSON([...levels], undefined, replacer);
+
+    return json;
   },
   enumerable: false
 });

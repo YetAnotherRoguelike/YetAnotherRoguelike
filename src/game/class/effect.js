@@ -1,3 +1,7 @@
+import { fromJSON, toJSON } from "@kxirk/serialize";
+
+
+/** @abstract */
 const Effect = class {
   /** @type {Ability} */
   #ability;
@@ -33,10 +37,20 @@ const Effect = class {
 
   /**
    * @param {Object} json
+   * @param {Function} [reviver]
    * @returns {Effect}
    */
-  static fromJSON (json) {
-    return new Effect().fromJSON(json);
+  static fromJSON (json, reviver) {
+    return new Effect[json.constructor]().fromJSON(json, reviver);
+  }
+
+  /**
+   * @param {string} key
+   * @param {Function} [replacer]
+   * @returns {string}
+   */
+  static toJSON (key, replacer) {
+    return toJSON(this, "name", replacer?.name);
   }
 
 
@@ -69,37 +83,45 @@ const Effect = class {
 
   /**
    * @param {Object} json
+   * @param {Function} [reviver]
    * @returns {Effect}
    */
-  fromJSON (json) {
-    Object.assign(this.ability, json.ability);
-    Object.assign(this.abilityFactor, json.abilityFactor);
+  fromJSON (json, reviver) {
+    fromJSON(json, this, "ability", reviver?.ability);
+    fromJSON(json, this, "abilityFactor", reviver?.abilityFactor);
 
-    Object.assign(this.stat, json.stat);
-    Object.assign(this.statFactor, json.statFactor);
-    Object.assign(this.statFactorMax, json.statFactorMax);
+    fromJSON(json, this, "stat", reviver?.stat);
+    fromJSON(json, this, "statFactor", reviver?.statFactor);
+    fromJSON(json, this, "statFactorMax", reviver?.statFactorMax);
 
-    Object.assign(this.damage, json.damage);
-    Object.assign(this.damageFactor, json.damageFactor);
-    Object.assign(this.damageFactorMax, json.damageFactorMax);
+    fromJSON(json, this, "damage", reviver?.damage);
+    fromJSON(json, this, "damageFactor", reviver?.damageFactor);
+    fromJSON(json, this, "damageFactorMax", reviver?.damageFactorMax);
 
     return this;
   }
 
-  /** @returns {Object} */
-  toJSON () {
-    return {
-      ability: this.ability,
-      abilityFactor: this.abilityFactor,
+  /**
+   * @param {string} key
+   * @param {Function} [replacer]
+   * @returns {Object}
+   */
+  toJSON (key, replacer) {
+    const json = {};
+    json.constructor = toJSON(this, "constructor", replacer?.constructor);
 
-      stat: this.stat,
-      statFactor: this.statFactor,
-      statFactorMax: this.statFactorMax,
+    json.ability = toJSON(this, "ability", replacer?.ability);
+    json.abilityFactor = toJSON(this, "abilityFactor", replacer?.abilityFactor);
 
-      damage: this.damage,
-      damageFactor: this.damageFactor,
-      damageFactorMax: this.damageFactorMax
-    };
+    json.stat = toJSON(this, "stat", replacer?.stat);
+    json.statFactor = toJSON(this, "statFactor", replacer?.statFactor);
+    json.statFactorMax = toJSON(this, "statFactorMax", replacer?.statFactorMax);
+
+    json.damage = toJSON(this, "damage", replacer?.damage);
+    json.damageFactor = toJSON(this, "damageFactor", replacer?.damageFactor);
+    json.damageFactorMax = toJSON(this, "damageFactorMax", replacer?.damageFactorMax);
+
+    return json;
   }
 };
 export default Effect;

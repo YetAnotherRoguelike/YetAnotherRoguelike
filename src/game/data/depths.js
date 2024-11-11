@@ -1,5 +1,6 @@
+import "@kxirk/serialize";
 import "@kxirk/utils/array.js";
-import { Tile } from "@yetanotherroguelike/class";
+import { Room } from "@yetanotherroguelike/class";
 
 import levels from "./levels.js";
 import random from "./random.js";
@@ -12,9 +13,9 @@ let generate = null;
 const depths = [];
 export default new Proxy(depths, {
   get: (target, property) => {
-    if (property === "generate") {
-      return generate;
-    }
+    if (property === "generate") return generate;
+
+    if (property.constructor === Symbol) return target[property];
 
     const index = Number(property);
     if (Number.isInteger(index)) {
@@ -41,20 +42,13 @@ export default new Proxy(depths, {
 Object.defineProperty(depths, "fromJSON", {
   /**
    * @param {Object[][][]} json
+   * @param {Function} [reviver]
    * @returns {Tile[][][]}
    */
-  value (json) {
-    depths.write(...json.map((depth) => depth.map((row) => row.map( (tile) => Tile.from(tile) ))));
+  value (json, reviver) {
+    for (let i = 0; i < json.length; i++) depths[i] = [];
 
-    return depths;
-  },
-  enumerable: false
-});
-
-Object.defineProperty(depths, "toJSON", {
-  /** @returns {Object[][][]} */
-  value () {
-    return depths.map((depth) => depth.map((row) => row.map( (tile) => tile.toJSON() )));
+    return Array.prototype.fromJSON.call(depths, json, (reviver ?? { value: Room.fromJSON }), false);
   },
   enumerable: false
 });

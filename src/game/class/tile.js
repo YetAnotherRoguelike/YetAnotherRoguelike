@@ -1,3 +1,4 @@
+import { fromJSON, toJSON } from "@kxirk/serialize";
 import "@kxirk/utils/number.js";
 
 import Entity from "./entity.js";
@@ -7,6 +8,7 @@ import Mob from "./mob.js";
 import Point from "./point.js";
 
 
+/** @abstract */
 const Tile = class extends Entity {
   /** @type {Point} */
   #at;
@@ -55,10 +57,20 @@ const Tile = class extends Entity {
 
   /**
    * @param {Object} json
+   * @param {Function} [reviver]
    * @returns {Tile}
    */
-  static fromJSON (json) {
-    return new Tile().fromJSON(json);
+  static fromJSON (json, reviver) {
+    return new Tile[json.constructor]().fromJSON(json, reviver);
+  }
+
+  /**
+   * @param {string} key
+   * @param {Function} [replacer]
+   * @returns {string}
+   */
+  static toJSON (key, replacer) {
+    return toJSON(this, "name", replacer?.name);
   }
 
 
@@ -150,56 +162,48 @@ const Tile = class extends Entity {
 
   /**
    * @param {Object} json
+   * @param {Function} [reviver]
    * @returns {Tile}
    */
-  fromJSON (json) {
-    super.fromJSON(json);
+  fromJSON (json, reviver) {
+    super.fromJSON(json, reviver);
 
-    this.at.fromJSON(json.at);
+    fromJSON(json, this, "at", reviver?.at);
 
-    this.masked = json.masked;
-    this.mask = Tile.fromJSON(json.mask);
+    this.masked = fromJSON(json, this, "masked", reviver?.masked);
+    this.mask = fromJSON(json, this, "mask", reviver?.mask);
 
-    this.destructible = json.destructible;
-    this.transparent = json.transparent;
-    this.walkable = json.walkable;
+    this.destructible = fromJSON(json, this, "destructible", reviver?.destructible);
+    this.transparent = fromJSON(json, this, "transparent", reviver?.transparent);
+    this.walkable = fromJSON(json, this, "walkable", reviver?.walkable);
 
-    for (const mob of json.mobs) this.mobs.add( Mob.fromJSON(mob) );
-    for (const item of json.items) this.items.add( Item.fromJSON(item) );
-    for (const decoration of json.decorations) this.decorations.add( Decoration.fromJSON(decoration) );
+    fromJSON(json, this, "mobs", (reviver?.mobs ?? { value: Mob.fromJSON }));
+    fromJSON(json, this, "items", (reviver?.items ?? { value: Item.fromJSON }));
+    fromJSON(json, this, "decorations", (reviver?.decorations ?? { value: Decoration.fromJSON }));
 
     return this;
   }
 
-  /** @returns {Object} */
-  toJSON () {
-    const json = super.toJSON();
+  /**
+   * @param {string} key
+   * @param {Function} [replacer]
+   * @returns {Object}
+   */
+  toJSON (key, replacer) {
+    const json = super.toJSON(key, replacer);
 
-    json.name = super.name;
-    json.description = super.description;
+    json.at = toJSON(this, "at", replacer?.at);
 
-    json.display = super.display;
-    json.color = super.color;
+    json.masked = toJSON(this, "masked", replacer?.mask);
+    json.mask = toJSON(this, "mask", replacer?.masked);
 
-    json.length = super.length;
-    json.width = super.width;
-    json.height = super.height;
-    json.volumeFactor = super.volumeFactor;
+    json.destructible = toJSON(this, "destructible", replacer?.destructible);
+    json.transparent = toJSON(this, "transparent", replacer?.transparent);
+    json.walkable = toJSON(this, "walkable", replacer?.walkable);
 
-    json.density = super.density;
-
-    json.at = this.at.toJSON();
-
-    json.masked = this.masked;
-    json.mask = this.mask.toJSON();
-
-    json.destructible = this.destructible;
-    json.transparent = this.#transparent;
-    json.walkable = this.#walkable;
-
-    json.mobs = [...this.mobs].map((mob) => mob.toJSON());
-    json.items = [...this.items].map((item) => item.toJSON());
-    json.decorations = [...this.decorations].map((decoration) => decoration.toJSON());
+    json.mobs = toJSON(this, "mobs", replacer?.mobs);
+    json.items = toJSON(this, "items", replacer?.items);
+    json.decorations = toJSON(this, "decorations", replacer?.decorations);
 
     return json;
   }

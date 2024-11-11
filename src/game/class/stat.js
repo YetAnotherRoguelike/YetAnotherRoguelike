@@ -1,3 +1,4 @@
+import { fromJSON, toJSON } from "@kxirk/serialize";
 import "@kxirk/utils/number.js";
 import { Object } from "@kxirk/utils";
 
@@ -81,14 +82,6 @@ const Stat = class {
 
 
     Object.assignGettersAsEnumerable(this, Stat);
-  }
-
-  /**
-   * @param {Object} json
-   * @returns {Stat}
-   */
-  static fromJSON (json) {
-    return new Stat().fromJSON(json);
   }
 
 
@@ -237,65 +230,72 @@ const Stat = class {
 
   /**
    * @param {Object} json
+   * @param {Function} [reviver]
    * @returns {Stat}
    */
-  fromJSON (json) {
-    this.weightMax = json.weightMax;
+  fromJSON (json, reviver) {
+    this.weightMax = fromJSON(json, this, "weightMax", reviver?.weightMax);
 
-    this.view = json.view;
-    this.perception = json.perception;
+    this.view = fromJSON(json, this, "view", reviver?.view);
+    this.perception = fromJSON(json, this, "perception", reviver?.perception);
 
-    this.healthMax = json.healthMax;
-    this.health = json.health;
+    this.healthMax = fromJSON(json, this, "healthMax", reviver?.healthMax);
+    this.healh = fromJSON(json, this, "healh", reviver?.healh);
 
-    this.regenMax = json.regenMax;
-    this.regen = json.regen;
+    this.regenMax = fromJSON(json, this, "regenMax", reviver?.regenMax);
+    this.regen = fromJSON(json, this, "regen", reviver?.regen);
 
-    this.energyMax = json.energyMax;
-    this.energy = json.energy;
-    this.energyOverflow = json.energyOverflow;
+    this.energyMax = fromJSON(json, this, "energyMax", reviver?.energyMax);
+    this.energy = fromJSON(json, this, "energy", reviver?.energy);
+    this.energyOverflow = fromJSON(json, this, "energyOverflow", reviver?.energyOverflow);
 
-    this.speed = json.speed;
-    this.stealth = json.stealth;
+    this.speed = fromJSON(json, this, "speed", reviver?.speed);
+    this.stealth = fromJSON(json, this, "stealth", reviver?.stealth);
 
-    this.critical = json.critical;
-    this.#attack.fromJSON(json.attack);
+    this.critical = fromJSON(json, this, "critical", reviver?.critical);
+    fromJSON(json, this, "attack", reviver?.attack);
 
-    this.evade = json.evade;
-    this.#resist.fromJSON(json.resist);
-    this.#defense.fromJSON(json.defense);
+    this.evade = fromJSON(json, this, "evade", reviver?.evade);
+    fromJSON(json, this, "resist", reviver?.resist);
+    fromJSON(json, this, "defense", reviver?.defense);
 
     return this;
   }
 
-  /** @returns {Object} */
-  toJSON () {
-    return {
-      weightMax: this.weightMax,
+  /**
+   * @param {string} key
+   * @param {Function} [replacer]
+   * @returns {Object}
+   */
+  toJSON (key, replacer) {
+    const json = {};
 
-      view: this.view,
-      perception: this.perception,
+    json.weightMax = toJSON(this, "weightMax", replacer?.weightMax);
 
-      healthMax: this.healthMax,
-      healh: this.health,
+    json.view = toJSON(this, "view", replacer?.view);
+    json.perception = toJSON(this, "perception", replacer?.perception);
 
-      regenMax: this.regenMax,
-      regen: this.regen,
+    json.healthMax = toJSON(this, "healthMax", replacer?.healthMax);
+    json.healh = toJSON(this, "healh", replacer?.healh);
 
-      energyMax: this.energyMax,
-      energy: this.energy,
-      energyOverflow: this.energyOverflow,
+    json.regenMax = toJSON(this, "regenMax", replacer?.regenMax);
+    json.regen = toJSON(this, "regen", replacer?.regen);
 
-      speed: this.speed,
-      stealth: this.stealth,
+    json.energyMax = toJSON(this, "energyMax", replacer?.energyMax);
+    json.energy = toJSON(this, "energy", replacer?.energy);
+    json.energyOverflow = toJSON(this, "energyOverflow", replacer?.energyOverflow);
 
-      critical: this.critical,
-      attack: this.#attack.toJSON(),
+    json.speed = toJSON(this, "speed", replacer?.speed);
+    json.stealth = toJSON(this, "stealth", replacer?.stealth);
 
-      evade: this.evade,
-      resist: this.#resist.toJSON(),
-      defense: this.#defense.toJSON()
-    };
+    json.critical = toJSON(this, "critical", replacer?.critical);
+    json.attack = toJSON(this, "attack", replacer?.attack);
+
+    json.evade = toJSON(this, "evade", replacer?.evade);
+    json.resist = toJSON(this, "resist", replacer?.resist);
+    json.defense = toJSON(this, "defense", replacer?.defense);
+
+    return json;
   }
 };
 export default Stat;

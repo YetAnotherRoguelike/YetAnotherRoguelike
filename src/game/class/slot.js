@@ -1,3 +1,4 @@
+import { fromJSON, toJSON } from "@kxirk/serialize";
 import "@kxirk/utils/array.js";
 
 import Item from "./item.js";
@@ -23,14 +24,6 @@ const Slot = class {
 
     this.#items = [];
     this.open = true;
-  }
-
-  /**
-   * @param {Object} json
-   * @returns {Slot}
-   */
-  static fromJSON (json) {
-    return new Slot().fromJSON(json);
   }
 
 
@@ -90,27 +83,34 @@ const Slot = class {
 
   /**
    * @param {Object} json
+   * @param {Function} [reviver]
    * @returns {Slot}
    */
-  fromJSON (json) {
-    this.TypeInitial = (json.TypeInitial === "Item" ? Item : Item[json.TypeInitial]);
-    this.Type = (json.Type === "Item" ? Item : Item[json.Type]);
+  fromJSON (json, reviver) {
+    this.TypeInitial = fromJSON(json, this, "TypeInitial", (reviver?.TypeInitial ?? ((constructor) => Item[constructor])));
+    this.Type = fromJSON(json, this, "Type", (reviver?.Type ?? ((constructor) => Item[constructor])));
 
-    for (const item of json.items) this.#items.push( Item.fromJSON(item) );
-    this.open = json.open;
+    fromJSON(json, this, "items", (reviver?.items ?? { value: Item.fromJSON }));
+    this.open = fromJSON(json, this, "open", reviver?.open);
 
     return this;
   }
 
-  /** @returns {Object} */
-  toJSON () {
-    return {
-      TypeInitial: this.TypeInitial.prototype.constructor.name,
-      Type: this.Type.prototype.constructor.name,
+  /**
+   * @param {string} key
+   * @param {Function} [replacer]
+   * @returns {Object}
+   */
+  toJSON (key, replacer) {
+    const json = {};
 
-      items: [...this.#items].map((item) => item.toJSON()),
-      open: this.open
-    };
+    json.TypeInitial = toJSON(this, "TypeInitial", replacer?.TypeInitial);
+    json.Type = toJSON(this, "Type", replacer?.Type);
+
+    json.items = toJSON([...this], undefined, replacer?.items);
+    json.open = toJSON(this, "open", replacer?.open);
+
+    return json;
   }
 };
 export default Slot;

@@ -1,8 +1,11 @@
+import { fromJSON, toJSON } from "@kxirk/serialize";
 import "@kxirk/utils/number.js";
 
 import Entity from "./entity.js";
+import Effect from "./effect.js";
 
 
+/** @abstract */
 const Condition = class extends Entity {
   /** @type {Effect} */
   #effect;
@@ -33,10 +36,20 @@ const Condition = class extends Entity {
 
   /**
    * @param {Object} json
+   * @param {Function} [reviver]
    * @returns {Condition}
    */
-  static fromJSON (json) {
-    return new Condition().fromJSON(json);
+  static fromJSON (json, reviver) {
+    return new Condition[json.constructor]().fromJSON(json, reviver);
+  }
+
+  /**
+   * @param {string} key
+   * @param {Function} [replacer]
+   * @returns {string}
+   */
+  static toJSON (key, replacer) {
+    return toJSON(this, "name", replacer?.name);
   }
 
 
@@ -68,33 +81,38 @@ const Condition = class extends Entity {
 
   /**
    * @param {Object} json
+   * @param {Function} [reviver]
    * @returns {Condition}
    */
-  fromJSON (json) {
-    super.fromJSON(json);
+  fromJSON (json, reviver) {
+    super.fromJSON(json, reviver);
 
-    this.effect.fromJSON(json.effect);
-    this.type = json.type;
-    this.resistible = json.resistible;
+    this.effect = fromJSON(json, this, "effect", (reviver?.effect ?? Effect.fromJSON));
+    this.type = fromJSON(json, this, "type", reviver?.type);
+    this.resistible = fromJSON(json, this, "resistible", reviver?.resistible);
 
-    this.stack = json.stack;
-    this.duration = json.duration;
-    this.tick = json.tick;
+    this.stack = fromJSON(json, this, "stack", reviver?.stack);
+    this.duration = fromJSON(json, this, "duration", reviver?.duration);
+    this.tick = fromJSON(json, this, "tick", reviver?.tick);
 
     return this;
   }
 
-  /** @returns {Object} */
-  toJSON () {
-    const json = super.toJSON();
+  /**
+   * @param {string} key
+   * @param {Function} [replacer]
+   * @returns {Object}
+   */
+  toJSON (key, replacer) {
+    const json = super.toJSON(key, replacer);
 
-    json.effect = this.effect.toJSON();
-    json.type = this.type;
-    json.resistible = this.resistible;
+    json.effect = toJSON(this, "effect", replacer?.effect);
+    json.type = toJSON(this, "type", replacer?.type);
+    json.resistible = toJSON(this, "resistible", replacer?.resistible);
 
-    json.stack = this.stack;
-    json.duration = this.duration;
-    json.tick = this.tick;
+    json.stack = toJSON(this, "stack", replacer?.stack);
+    json.duration = toJSON(this, "duration", replacer?.duration);
+    json.tick = toJSON(this, "tick", replacer?.tick);
 
     return json;
   }

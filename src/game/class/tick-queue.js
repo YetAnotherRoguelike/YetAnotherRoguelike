@@ -1,10 +1,11 @@
+import { fromJSON, toJSON } from "@kxirk/serialize";
 import "@kxirk/utils/array.js";
 
 import Condition from "./condition.js";
 import Stack from "./stack.js";
 
 
-export const TickQueue = class {
+const TickQueue = class {
   /** @type {Condition[]} */
   #stack;
   /** @type {Map<string, Condition>} */
@@ -13,14 +14,6 @@ export const TickQueue = class {
   constructor () {
     this.#stack = [];
     this.#map = new Map();
-  }
-
-  /**
-   * @param {Object} json
-   * @returns {TickQueue}
-   */
-  static fromJSON (json) {
-    return new TickQueue().fromJSON(json);
   }
 
 
@@ -115,21 +108,28 @@ export const TickQueue = class {
 
   /**
    * @param {Object} json
+   * @param {Function} [reviver]
    * @returns {TickQueue}
    */
-  fromJSON (json) {
-    this.stack.write(...json.stack.map((condition) => Condition.fromJSON(condition)));
-    for (const condition of json.map) this.map.set(condition.name, Condition.fromJSON(condition));
+  fromJSON (json, reviver) {
+    fromJSON(json, this, "stack", (reviver?.stack ?? { value: Condition.fromJSON }));
+    fromJSON(json, this, "map", (reviver?.map ?? { value: Condition.fromJSON }));
 
     return this;
   }
 
-  /** @returns {Object} */
-  toJSON () {
-    return {
-      stack: this.stack,
-      map: this.set.values()
-    };
+  /**
+   * @param {string} key
+   * @param {Function} [replacer]
+   * @returns {Object}
+   */
+  toJSON (key, replacer) {
+    const json = {};
+
+    json.stack = toJSON(this, "stack", replacer?.stack);
+    json.map = toJSON(this, "map", replacer?.map);
+
+    return json;
   }
 };
 export default TickQueue;

@@ -1,4 +1,6 @@
 import { PriorityQueue } from "@kxirk/adt";
+import { fromJSON, toJSON } from "@kxirk/serialize";
+
 import { Mob } from "@yetanotherroguelike/class";
 
 
@@ -9,10 +11,13 @@ export default initiative;
 Object.defineProperty(initiative, "fromJSON", {
   /**
    * @param {Object[]} json
-   * @returns {PriorityQueue.<Mob>}
+   * @param {Function} [reviver]
+   * @returns {PriorityQueue<Mob>}
    */
-  value (json) {
-    initiative.add(...json.map( (mob) => Mob.fromJSON(mob) ));
+  value (json, reviver) {
+    initiative.clear();
+
+    initiative.add(...fromJSON(json, [], undefined, (reviver ?? { value: Mob.fromJSON })));
 
     return initiative;
   },
@@ -20,9 +25,15 @@ Object.defineProperty(initiative, "fromJSON", {
 });
 
 Object.defineProperty(initiative, "toJSON", {
-  /** @returns {Object[]} */
-  value () {
-    return initiative.map( (mob) => mob.toJSON() );
+  /**
+   * @param {string} key
+   * @param {Function} [replacer]
+   * @returns {Object[]}
+   */
+  value (key, replacer) {
+    const json = toJSON([...initiative], undefined, replacer);
+
+    return json;
   },
   enumerable: false
 });

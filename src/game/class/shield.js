@@ -2,6 +2,7 @@ import Equip from "./equip.js";
 import Gear from "./gear.js";
 
 
+/** @abstract */
 const Shield = class extends Gear {
   constructor () {
     super();
@@ -10,6 +11,7 @@ const Shield = class extends Gear {
 };
 export default Shield;
 
+/** @abstract */
 export const Light = class extends Shield {
   constructor () {
     super();
@@ -20,6 +22,7 @@ export const Light = class extends Shield {
 };
 Shield.Light = Light;
 
+/** @abstract */
 export const Medium = class extends Shield {
   constructor () {
     super();
@@ -30,6 +33,7 @@ export const Medium = class extends Shield {
 };
 Shield.Medium = Medium;
 
+/** @abstract */
 export const Heavy = class extends Shield {
   constructor () {
     super();

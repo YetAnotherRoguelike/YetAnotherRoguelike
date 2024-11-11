@@ -1,3 +1,4 @@
+import { fromJSON, toJSON } from "@kxirk/serialize";
 import { Object } from "@kxirk/utils";
 
 
@@ -24,14 +25,6 @@ const Ability = class {
     this.all = initial;
 
     Object.assignGettersAsEnumerable(this, Ability);
-  }
-
-  /**
-   * @param {Object} json
-   * @returns {Ability}
-   */
-  static fromJSON (json) {
-    return new Ability().fromJSON(json);
   }
 
 
@@ -101,31 +94,42 @@ const Ability = class {
 
   /**
    * @param {Object} json
+   * @param {Function} [reviver]
    * @returns {Ability}
    */
-  fromJSON (json) {
-    this.strength = json.strength;
-    this.dexterity = json.dexterity;
-    this.constitution = json.constitution;
-    this.intelligence = json.intelligence;
-    this.wisdom = json.wisdom;
-    this.charisma = json.charisma;
-    this.luck = json.luck;
+  fromJSON (json, reviver) {
+    this.strength = fromJSON(json, this, "strength", reviver?.strength);
+    this.dexterity = fromJSON(json, this, "dexterity", reviver?.dexterity);
+    this.constitution = fromJSON(json, this, "constitution", reviver?.constitution);
+
+    this.intelligence = fromJSON(json, this, "intelligence", reviver?.intelligence);
+    this.wisdom = fromJSON(json, this, "wisdom", reviver?.wisdom);
+    this.charisma = fromJSON(json, this, "charisma", reviver?.charisma);
+
+    this.luck = fromJSON(json, this, "luck", reviver?.luck);
 
     return this;
   }
 
-  /** @returns {Object} */
-  toJSON () {
-    return {
-      strength: this.strength,
-      dexterity: this.dexterity,
-      constitution: this.constitution,
-      intelligence: this.intelligence,
-      wisdom: this.wisdom,
-      charisma: this.charisma,
-      luck: this.luck
-    };
+  /**
+   * @param {string} key
+   * @param {Function} [replacer]
+   * @returns {Object}
+   */
+  toJSON (key, replacer) {
+    const json = {};
+
+    json.strength = toJSON(this, "strength", replacer?.strength);
+    json.dexterity = toJSON(this, "dexterity", replacer?.dexterity);
+    json.constitution = toJSON(this, "constitution", replacer?.constitution);
+
+    json.intelligence = toJSON(this, "intelligence", replacer?.intelligence);
+    json.wisdom = toJSON(this, "wisdom", replacer?.wisdom);
+    json.charisma = toJSON(this, "charisma", replacer?.charisma);
+
+    json.luck = toJSON(this, "luck", replacer?.luck);
+
+    return json;
   }
 };
 export default Ability;

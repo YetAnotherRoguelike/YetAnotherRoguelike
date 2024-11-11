@@ -1,9 +1,11 @@
+import { fromJSON, toJSON } from "@kxirk/serialize";
 import "@kxirk/utils/number.js";
 
 import Entity from "./entity.js";
 import Equip from "./equip.js";
 
 
+/** @abstract */
 const Item = class extends Entity {
   /** @type {Equip} */
   #equip;
@@ -20,10 +22,20 @@ const Item = class extends Entity {
 
   /**
    * @param {Object} json
+   * @param {Function} [reviver]
    * @returns {Item}
    */
-  static fromJSON (json) {
-    return new Item().fromJSON(json);
+  static fromJSON (json, reviver) {
+    return new Item[json.constructor]().fromJSON(json, reviver);
+  }
+
+  /**
+   * @param {string} key
+   * @param {Function} [replacer]
+   * @returns {string}
+   */
+  static toJSON (key, replacer) {
+    return toJSON(this, "name", replacer?.name);
   }
 
 
@@ -40,23 +52,28 @@ const Item = class extends Entity {
 
   /**
    * @param {Object} json
+   * @param {Function} [reviver]
    * @returns {Item}
    */
-  fromJSON (json) {
-    super.fromJSON(json);
+  fromJSON (json, reviver) {
+    super.fromJSON(json, reviver);
 
-    this.equip = json.equip;
-    this.stack = json.stack;
+    this.equip = fromJSON(json, this, "equip", reviver?.equip);
+    this.stack = fromJSON(json, this, "stack", reviver?.stack);
 
     return this;
   }
 
-  /** @returns {Object} */
-  toJSON () {
-    const json = super.toJSON();
+  /**
+   * @param {string} key
+   * @param {Function} [replacer]
+   * @returns {Object}
+   */
+  toJSON (key, replacer) {
+    const json = super.toJSON(key, replacer);
 
-    json.equip = this.equip;
-    json.stack = this.stack;
+    json.equip = toJSON(this, "equip", replacer?.equip);
+    json.stack = toJSON(this, "stack", replacer?.stack);
 
     return json;
   }

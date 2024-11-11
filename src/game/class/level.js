@@ -1,6 +1,8 @@
+import { fromJSON, toJSON } from "@kxirk/serialize";
 import "@kxirk/utils/number.js";
 
 
+/** @abstract */
 const Level = class {
   /** @type {number} */
   #depthCount;
@@ -25,10 +27,20 @@ const Level = class {
 
   /**
    * @param {Object} json
+   * @param {Function} [reviver]
    * @returns {Level}
    */
-  static fromJSON (json) {
-    return new Level().fromJSON(json);
+  static fromJSON (json, reviver) {
+    return new Level[json.constructor]().fromJSON(json, reviver);
+  }
+
+  /**
+   * @param {string} key
+   * @param {Function} [replacer]
+   * @returns {string}
+   */
+  static toJSON (key, replacer) {
+    return toJSON(this, "name", replacer?.name);
   }
 
 
@@ -66,29 +78,37 @@ const Level = class {
 
   /**
    * @param {Object} json
+   * @param {Function} [reviver]
    * @returns {Level}
    */
-  fromJSON (json) {
-    this.depthCount = json.depthCount;
+  fromJSON (json, reviver) {
+    this.depthCount = fromJSON(json, this, "depthCount", reviver?.depthCount);
 
-    this.widthMin = json.widthMin;
-    this.widthMax = json.widthMax;
-    this.heightMin = json.heightMin;
-    this.heightMax = json.heightMax;
+    this.widthMin = fromJSON(json, this, "widthMin", reviver?.widthMin);
+    this.widthMax = fromJSON(json, this, "widthMax", reviver?.widthMax);
+    this.heightMin = fromJSON(json, this, "heightMin", reviver?.heightMin);
+    this.heightMax = fromJSON(json, this, "heightMax", reviver?.heightMax);
 
     return this;
   }
 
-  /** @returns {Object} */
-  toJSON () {
-    return {
-      depthCount: this.depthCount,
+  /**
+   * @param {string} key
+   * @param {Function} [replacer]
+   * @returns {Object}
+   */
+  toJSON (key, replacer) {
+    const json = {};
+    json.constructor = toJSON(this, "constructor", replacer?.constructor);
 
-      widthMin: this.widthMin,
-      widthMax: this.widthMax,
-      heightMin: this.heightMin,
-      heightMax: this.heightMax
-    };
+    json.depthCount = toJSON(this, "depthCount", replacer?.depthCount);
+
+    json.widthMin = toJSON(this, "widthMin", replacer?.widthMin);
+    json.widthMax = toJSON(this, "widthMax", replacer?.widthMax);
+    json.heightMin = toJSON(this, "heightMin", replacer?.heightMin);
+    json.heightMax = toJSON(this, "heightMax", replacer?.heightMax);
+
+    return json;
   }
 };
 export default Level;

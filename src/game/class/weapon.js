@@ -2,6 +2,7 @@ import Equip from "./equip.js";
 import Gear from "./gear.js";
 
 
+/** @abstract */
 const Weapon = class extends Gear {
   constructor () {
     super();
@@ -10,6 +11,7 @@ const Weapon = class extends Gear {
 };
 export default Weapon;
 
+/** @abstract */
 export const Light = class extends Weapon {
   constructor () {
     super();
@@ -20,6 +22,7 @@ export const Light = class extends Weapon {
 };
 Weapon.Light = Light;
 
+/** @abstract */
 export const Medium = class extends Weapon {
   constructor () {
     super();
@@ -30,6 +33,7 @@ export const Medium = class extends Weapon {
 };
 Weapon.Medium = Medium;
 
+/** @abstract */
 export const Heavy = class extends Weapon {
   constructor () {
     super();
@@ -40,6 +44,7 @@ export const Heavy = class extends Weapon {
 };
 Weapon.Heavy = Heavy;
 
+/** @abstract */
 export const Ranged = class extends Weapon {
   constructor () {
     super();

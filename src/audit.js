@@ -1,3 +1,4 @@
+import { fromJSON, toJSON } from "@kxirk/serialize";
 import Date from "@kxirk/utils/date.js";
 
 import { audit as settings } from "./settings.js";
@@ -6,6 +7,7 @@ import time from "./time.js";
 import { blacklisted as blacklistedAuth, whitelisted } from "./auth.js";
 
 
+/** @abstract */
 export const Violation = class {
   /** @type {string} */
   #ip;
@@ -32,18 +34,28 @@ export const Violation = class {
 
   /**
    * @param {Object} json
+   * @param {Function} [reviver]
    * @returns {Violation}
    */
-  static fromJSON (json) {
-    return new Violation().fromJSON(json);
+  static fromJSON (json, reviver) {
+    return new Violation[json.constructor](json.ip, json.name, json.duration).fromJSON(json, reviver);
+  }
+
+  /**
+   * @param {string} key
+   * @param {Function} [replacer]
+   * @returns {string}
+   */
+  static toJSON (key, replacer) {
+    return toJSON(this, "name", replacer?.name);
   }
 
 
   /** @type {string} */
-  get name () { return this.#name; }
+  get ip () { return this.#ip; }
 
   /** @type {string} */
-  get ip () { return this.#ip; }
+  get name () { return this.#name; }
 
 
   /** @type {number} */
@@ -75,59 +87,78 @@ export const Violation = class {
 
   /**
    * @param {Object} json
+   * @param {Function} [reviver]
    * @returns {Violation}
    */
-  fromJSON (json) {
-    this.#name = json.name;
-    this.#ip = json.ip;
+  fromJSON (json, reviver) {
+    this.#ip = fromJSON(json, this, "ip", reviver?.ip);
+    this.#name = fromJSON(json, this, "name", reviver?.name);
 
-    this.#created = json.created;
-    this.duration = json.duration;
+    this.#created = fromJSON(json, this, "created", reviver?.created);
+    this.duration = fromJSON(json, this, "duration", reviver?.duration);
 
     return this;
   }
 
-  /** @returns {Object} */
-  toJSON () {
-    return {
-      name: this.name,
-      ip: this.ip,
+  /**
+   * @param {string} key
+   * @param {Function} [replacer]
+   * @returns {Object}
+   */
+  toJSON (key, replacer) {
+    const json = {};
 
-      created: this.created,
-      duration: this.duration
-    };
+    json.ip = toJSON(this, "ip", replacer?.ip);
+    json.name = toJSON(this, "name", replacer?.name);
+
+    json.created = toJSON(this, "created", replacer?.created);
+    json.duration = toJSON(this, "duration", replacer?.duration);
+
+    return json;
   }
 };
+
 export const ConnectionViolation = class extends Violation {
   constructor (ip) {
     super(ip, "Connection Violation", settings.majorViolationDuration);
   }
 };
+Violation.ConnectionViolation = ConnectionViolation;
+
 export const CredentialViolation = class extends Violation {
   constructor (ip) {
     super(ip, "Credential Violation", settings.minorViolationDuration);
   }
 };
+Violation.CredentialViolation = CredentialViolation;
+
 export const MessageViolation = class extends Violation {
   constructor (ip) {
     super(ip, "Message Violation", settings.minorViolationDuration);
   }
 };
+Violation.MessageViolation = MessageViolation;
+
 export const PathViolation = class extends Violation {
   constructor (ip) {
     super(ip, "Path Violation", settings.minorViolationDuration);
   }
 };
+Violation.PathViolation = PathViolation;
+
 export const RateViolation = class extends Violation {
   constructor (ip) {
     super(ip, "Rate Violation", settings.majorViolationDuration);
   }
 };
+Violation.RateViolation = RateViolation;
+
 export const TokenViolation = class extends Violation {
   constructor (ip) {
     super(ip, "Token Violation", settings.majorViolationDuration);
   }
 };
+Violation.TokenViolation = TokenViolation;
 
 
 export const Record = class {
@@ -140,10 +171,11 @@ export const Record = class {
 
   /**
    * @param {Object} json
+   * @param {Function} [reviver]
    * @returns {Record}
    */
-  static fromJSON (json) {
-    return new Record().fromJSON(json);
+  static fromJSON (json, reviver) {
+    return new Record().fromJSON(json, reviver);
   }
 
 
@@ -166,19 +198,26 @@ export const Record = class {
 
   /**
    * @param {Object} json
+   * @param {Function} [reviver]
    * @returns {Record}
    */
-  fromJSON (json) {
-    for (const violation of json.violations) this.violations.push( Violation.fromJSON(violation) );
+  fromJSON (json, reviver) {
+    fromJSON(json, this, "violations", reviver?.violations);
 
     return this;
   }
 
-  /** @returns {Object} */
-  toJSON () {
-    return {
-      violations: this.violations.map((violation) => violation.toJSON())
-    };
+  /**
+   * @param {string} key
+   * @param {Function} [replacer]
+   * @returns {Object}
+   */
+  toJSON (key, replacer) {
+    const json = {};
+
+    json.violations = toJSON(this, "violations", replacer?.violations);
+
+    return json;
   }
 };
 
@@ -195,6 +234,18 @@ Object.defineProperty(records, "get", {
     if (!records.has(ip)) records.set(ip, new Record());
 
     return Map.prototype.get.call(records, ip);
+  },
+  enumerable: false
+});
+
+Object.defineProperty(records, "fromJSON", {
+  /**
+   * @param {Object[]} json
+   * @param {Function} [reviver]
+   * @returns {Map<string, Record>}
+   */
+  value (json, reviver) {
+    return Map.prototype.fromJSON.call(records, json, (reviver ?? { value: Record.fromJSON }), false);
   },
   enumerable: false
 });
@@ -269,6 +320,18 @@ Object.defineProperty(violations, "active", {
   /** @type {Violation[]} */
   get () {
     return violations.filter((violation) => violation.active);
+  },
+  enumerable: false
+});
+
+Object.defineProperty(violations, "fromJSON", {
+  /**
+   * @param {Object[]} json
+   * @param {Function} [reviver]
+   * @returns {Violation[]}
+   */
+  value (json, reviver) {
+    return Array.prototype.fromJSON.call(violations, json, (reviver ?? { value: Violation.fromJSON }), false);
   },
   enumerable: false
 });

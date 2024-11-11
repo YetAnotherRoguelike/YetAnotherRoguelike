@@ -1,4 +1,5 @@
 import { PriorityQueue } from "@kxirk/adt";
+import { fromJSON, toJSON } from "@kxirk/serialize";
 import "@kxirk/utils/number.js";
 
 import { time as settings } from "./settings.js";
@@ -42,6 +43,7 @@ export const Priority = class {
  * @param {number} next
  * @param {number} count
  */
+/** @abstract */
 export const Task = class {
   /** @type {string} */
   #name;
@@ -86,6 +88,24 @@ export const Task = class {
     this.#count = count.clamp(0);
 
     this.#depends = [];
+  }
+
+  /**
+   * @param {Object} json
+   * @param {Function} [reviver]
+   * @returns {Task}
+   */
+  static fromJSON (json, reviver) {
+    return new Task[json.constructor](json.name, json.callback, json.priority, json.interval, json.last, json.count).fromJSON(json, reviver);
+  }
+
+  /**
+   * @param {string} key
+   * @param {Function} [replacer]
+   * @returns {string}
+   */
+  static toJSON (key, replacer) {
+    return toJSON(this, "name", replacer?.name);
   }
 
 
@@ -150,17 +170,67 @@ export const Task = class {
 
     return this.next;
   }
+
+
+  /**
+   * @param {Object} json
+   * @param {Function} [reviver]
+   * @returns {Task}
+   */
+  fromJSON (json, reviver) {
+    this.#name = fromJSON(json, this, "name", reviver?.name);
+    this.#callback = fromJSON(json, this, "callback", reviver?.callback);
+    this.#priority = fromJSON(json, this, "priority", reviver?.priority);
+
+    this.#interval = fromJSON(json, this, "interval", reviver?.interval);
+
+    this.#last = fromJSON(json, this, "last", reviver?.last);
+    this.#next = fromJSON(json, this, "next", reviver?.next);
+    this.#count = fromJSON(json, this, "count", reviver?.count);
+
+    fromJSON(json, this, "depends", reviver?.depends);
+
+    return this;
+  }
+
+  /**
+   * @param {string} key
+   * @param {Function} [replacer]
+   * @returns {Object}
+   */
+  toJSON (key, replacer) {
+    const json = {};
+
+    json.name = toJSON(this, "name", replacer?.name);
+    json.callback = toJSON(this, "callback", replacer?.callback);
+    json.priority = toJSON(this, "priority", replacer?.priority);
+
+    json.interval = toJSON(this, "interval", replacer?.interval);
+
+    json.last = toJSON(this, "last", replacer?.last);
+    json.next = toJSON(this, "next", replacer?.next);
+
+    json.count = toJSON(this, "count", replacer?.count);
+
+    json.depends = toJSON(this, "depends", replacer?.depends);
+
+    return json;
+  }
 };
+
 export const TimeoutTask = class extends Task {
   constructor (name, callback, priority, delay, start) {
     super(name, callback, priority, delay, start, 1);
   }
 };
+Task.TimeoutTask = TimeoutTask;
+
 export const IntervalTask = class extends Task {
   constructor (name, callback, priority, interval, start) {
     super(name, callback, priority, interval, start, Infinity);
   }
 };
+Task.IntervalTask = IntervalTask;
 
 
 /** @type {PriorityQueue<Task>} */
@@ -179,6 +249,36 @@ Object.defineProperty(tasks, "add", {
    */
   value (task) {
     return PriorityQueue.prototype.add.call(tasks, task);
+  },
+  enumerable: false
+});
+
+Object.defineProperty(tasks, "fromJSON", {
+  /**
+   * @param {Object[]} json
+   * @param {Function} [reviver]
+   * @returns {PriorityQueue<Task>}
+   */
+  value (json, reviver) {
+    tasks.clear();
+
+    tasks.add(...fromJSON(json, [], undefined, (reviver ?? { value: Task.fromJSON })));
+
+    return tasks;
+  },
+  enumerable: false
+});
+
+Object.defineProperty(tasks, "toJSON", {
+  /**
+   * @param {string} key
+   * @param {Function} [replacer]
+   * @returns {Object[]}
+   */
+  value (key, replacer) {
+    const json = toJSON([...tasks], undefined, replacer);
+
+    return json;
   },
   enumerable: false
 });

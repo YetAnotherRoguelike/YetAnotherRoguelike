@@ -1,8 +1,10 @@
+import { fromJSON, toJSON } from "@kxirk/serialize";
 import "@kxirk/utils/number.js";
 
 import Item from "./item.js";
 
 
+/** @abstract */
 const Gear = class extends Item {
   /** @type {number} */
   #quality; // [-5, 15]
@@ -45,14 +47,6 @@ const Gear = class extends Item {
     this.durabilityBase = 0;
     this.durabilityQuality = 0;
     this.durability = 0;
-  }
-
-  /**
-   * @param {Object} json
-   * @returns {Gear}
-   */
-  static fromJSON (json) {
-    return new Gear().fromJSON(json);
   }
 
 
@@ -126,45 +120,50 @@ const Gear = class extends Item {
 
   /**
    * @param {Object} json
+   * @param {Function} [reviver]
    * @returns {Gear}
    */
-  fromJSON (json) {
-    super.fromJSON(json);
+  fromJSON (json, reviver) {
+    super.fromJSON(json, reviver);
 
-    this.quality = json.quality;
+    this.quality = fromJSON(json, this, "quality", reviver?.quality);
 
-    this.scaleAbility = json.scaleAbility;
-    this.scaleMin = json.scaleMin;
-    this.scaleMax = json.scaleMax;
+    this.scaleAbility = fromJSON(json, this, "scaleAbility", reviver?.scaleAbility);
+    this.scaleMin = fromJSON(json, this, "scaleMin", reviver?.scaleMin);
+    this.scaleMax = fromJSON(json, this, "scaleMax", reviver?.scaleMax);
 
-    Object.assign(this.statBase, json.statBase);
-    Object.assign(this.statQuality, json.statQuality);
-    Object.assign(this.statScale, json.statScale);
+    fromJSON(json, this, "statBase", reviver?.statBase);
+    fromJSON(json, this, "statQuality", reviver?.statQuality);
+    fromJSON(json, this, "statScale", reviver?.statScale);
 
-    this.durabilityBase = json.durabilityBase;
-    this.durabilityQuality = json.durabilityQuality;
-    this.durability = json.durability;
+    this.durabilityBase = fromJSON(json, this, "durabilityBase", reviver?.durabilityBase);
+    this.durabilityQuality = fromJSON(json, this, "durabilityQuality", reviver?.durabilityQuality);
+    this.durability = fromJSON(json, this, "durability", reviver?.durability);
 
     return this;
   }
 
-  /** @returns {Object} */
-  toJSON () {
-    const json = super.toJSON();
+  /**
+   * @param {string} key
+   * @param {Function} [replacer]
+   * @returns {Object}
+   */
+  toJSON (key, replacer) {
+    const json = super.toJSON(key, replacer);
 
-    json.quality = this.quality;
+    json.quality = toJSON(this, "quality", replacer?.quality);
 
-    json.scaleAbility = this.scaleAbility;
-    json.scaleMin = this.scaleMin;
-    json.scaleMax = this.scaleMax;
+    json.scaleAbility = toJSON(this, "quality", replacer?.quality);
+    json.scaleMin = toJSON(this, "quality", replacer?.quality);
+    json.scaleMax = toJSON(this, "quality", replacer?.quality);
 
-    json.statBase = this.statBase;
-    json.statQuality = this.statQuality;
-    json.statScale = this.statScale;
+    json.statBase = toJSON(this, "quality", replacer?.quality);
+    json.statQuality = toJSON(this, "quality", replacer?.quality);
+    json.statScale = toJSON(this, "quality", replacer?.quality);
 
-    json.durabilityBase = this.durabilityBase;
-    json.durabilityQuality = this.durabilityQuality;
-    json.durability = this.durability;
+    json.durabilityBase = toJSON(this, "quality", replacer?.quality);
+    json.durabilityQuality = toJSON(this, "quality", replacer?.quality);
+    json.durability = toJSON(this, "quality", replacer?.quality);
 
     return json;
   }

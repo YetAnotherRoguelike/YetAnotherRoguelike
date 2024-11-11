@@ -1,3 +1,5 @@
+import { fromJSON, toJSON } from "@kxirk/serialize";
+
 import { events as settings } from "./settings.js";
 
 
@@ -9,6 +11,7 @@ export const Level = class {
   static debug = 3;
 };
 
+/** @abstract */
 export const Event = class extends Error {
   /** @type {keyof Level} */
   #level;
@@ -35,15 +38,25 @@ export const Event = class extends Error {
     this.#module = module;
     this.#time = (performance.timeOrigin + performance.now());
 
-    Error.captureStackTrace(this, Event);
+    Error.captureStackTrace(this, this.constructor);
   }
 
   /**
    * @param {Object} json
+   * @param {Function} [reviver]
    * @returns {Event}
    */
-  static fromJSON (json) {
-    return new Event(json.level, json.module, json.message, { cause: json.cause }).fromJSON(json);
+  static fromJSON (json, reviver) {
+    return new Event[json.constructor](json.level, json.module, json.message, { cause: json.cause }).fromJSON(json, reviver);
+  }
+
+  /**
+   * @param {string} key
+   * @param {Function} [replacer]
+   * @returns {string}
+   */
+  static toJSON (key, replacer) {
+    return toJSON(this, "name", replacer?.name);
   }
 
 
@@ -59,39 +72,88 @@ export const Event = class extends Error {
 
   /**
    * @param {Object} json
+   * @param {Function} [reviver]
    * @returns {Event}
    */
-  fromJSON (json) {
-    this.name = json.name;
-    this.message = json.message;
-    this.stack = json.stack;
-    this.cause = json.cause;
+  fromJSON (json, reviver) {
+    this.name = fromJSON(json, this, "name", reviver?.name);
+    this.code = fromJSON(json, this, "code", reviver?.code);
+    this.message = fromJSON(json, this, "message", reviver?.message);
+    this.stack = fromJSON(json, this, "stack", reviver?.stack);
+    this.cause = fromJSON(json, this, "cause", reviver?.cause);
 
-    this.#level = json.level;
-    this.#module = json.module;
-    this.#time = json.time;
+    this.#level = fromJSON(json, this, "level", reviver?.level);
+    this.#module = fromJSON(json, this, "module", reviver?.module);
+    this.#time = fromJSON(json, this, "time", reviver?.time);
 
     return this;
   }
 
-  /** @returns {Object} */
-  toJSON () {
-    return {
-      name: this.name,
-      message: this.message,
-      stack: this.stack,
-      cause: (this.cause.toJSON?.() ?? this.cause),
+  /**
+   * @param {string} key
+   * @param {Function} [replacer]
+   * @returns {Object}
+   */
+  toJSON (key, replacer) {
+    const json = {};
 
-      level: this.level,
-      module: this.module,
-      time: this.time
-    };
+    json.name = toJSON(this, "name", replacer?.name);
+    json.code = toJSON(this, "code", replacer?.code);
+    json.message = toJSON(this, "message", replacer?.message);
+    json.stack = toJSON(this, "stack", replacer?.stack);
+    json.cause = toJSON(this, "cause", replacer?.cause);
+
+    json.level = toJSON(this, "level", replacer?.level);
+    json.module = toJSON(this, "module", replacer?.module);
+    json.time = toJSON(this, "time", replacer?.time);
+
+    return json;
   }
 };
+
+export const ErrorEvent = class extends Event {
+  constructor (module, message, options) {
+    super(Level.error, module, message, options);
+  }
+};
+Event.ErrorEvent = ErrorEvent;
+
+export const WarnEvent = class extends Event {
+  constructor (module, message, options) {
+    super(Level.warn, module, message, options);
+  }
+};
+Event.WarnEvent = WarnEvent;
+
+export const InfoEvent = class extends Event {
+  constructor (module, message, options) {
+    super(Level.info, module, message, options);
+  }
+};
+Event.InfoEvent = InfoEvent;
+
+export const DebugEvent = class extends Event {
+  constructor (module, message, options) {
+    super(Level.debug, module, message, options);
+  }
+};
+Event.DebugEvent = DebugEvent;
 
 
 /** @type {Event[]} */
 export const events = [];
+
+Object.defineProperty(events, "fromJSON", {
+  /**
+   * @param {Object[]} json
+   * @param {Function} [reviver]
+   * @returns {Event[]}
+   */
+  value (json, reviver) {
+    return Array.prototype.fromJSON.call(events, json, (reviver ?? { value: Event.fromJSON }), false);
+  },
+  enumerable: false
+});
 
 /**
  * @param {Event} event
@@ -122,6 +184,10 @@ export const log = (event, filter = () => true) => {
 export default {
   Level,
   Event,
+  ErrorEvent,
+  WarnEvent,
+  InfoEvent,
+  DebugEvent,
 
   events,
   log

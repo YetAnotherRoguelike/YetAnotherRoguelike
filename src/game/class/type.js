@@ -1,3 +1,4 @@
+import { fromJSON, toJSON } from "@kxirk/serialize";
 import { Object } from "@kxirk/utils";
 
 
@@ -45,14 +46,6 @@ const Type = class {
     this.all = initial;
 
     Object.assignGettersAsEnumerable(this, Type);
-  }
-
-  /**
-   * @param {Object} json
-   * @returns {Type}
-   */
-  static fromJSON (json) {
-    return new Type().fromJSON(json);
   }
 
 
@@ -147,49 +140,56 @@ const Type = class {
 
   /**
    * @param {Object} json
+   * @param {Function} [reviver]
    * @returns {Type}
    */
-  fromJSON (json) {
-    this.striking = json.striking;
-    this.slashing = json.slashing;
-    this.piercing = json.piercing;
+  fromJSON (json, reviver) {
+    this.striking = fromJSON(json, this, "striking", reviver?.striking);
+    this.slashing = fromJSON(json, this, "slashing", reviver?.slashing);
+    this.piercing = fromJSON(json, this, "piercing", reviver?.piercing);
 
-    this.fire = json.fire;
-    this.ice = json.ice;
-    this.lightning = json.lightning;
+    this.fire = fromJSON(json, this, "fire", reviver?.fire);
+    this.ice = fromJSON(json, this, "ice", reviver?.ice);
+    this.lightning = fromJSON(json, this, "lightning", reviver?.lightning);
 
-    this.arcane = json.arcane;
-    this.necrotic = json.necrotic;
-    this.holy = json.holy;
+    this.arcane = fromJSON(json, this, "arcane", reviver?.arcane);
+    this.necrotic = fromJSON(json, this, "necrotic", reviver?.necrotic);
+    this.holy = fromJSON(json, this, "holy", reviver?.holy);
 
-    this.bleeding = json.bleeding;
-    this.acid = json.acid;
-    this.poison = json.poison;
-    this.psychic = json.psychic;
+    this.bleeding = fromJSON(json, this, "bleeding", reviver?.bleeding);
+    this.acid = fromJSON(json, this, "acid", reviver?.acid);
+    this.poison = fromJSON(json, this, "poison", reviver?.poison);
+    this.psychic = fromJSON(json, this, "psychic", reviver?.psychic);
 
     return this;
   }
 
-  /** @returns {Object} */
-  toJSON () {
-    return {
-      striking: this.striking,
-      slashing: this.slashing,
-      piercing: this.piercing,
+  /**
+   * @param {string} key
+   * @param {Function} [replacer]
+   * @returns {Object}
+   */
+  toJSON (key, replacer) {
+    const json = {};
 
-      fire: this.fire,
-      ice: this.ice,
-      lightning: this.lightning,
+    json.striking = toJSON(this, "striking", replacer?.striking);
+    json.slashing = toJSON(this, "slashing", replacer?.slashing);
+    json.piercing = toJSON(this, "piercing", replacer?.piercing);
 
-      arcane: this.arcane,
-      necrotic: this.necrotic,
-      holy: this.holy,
+    json.fire = toJSON(this, "fire", replacer?.fire);
+    json.ice = toJSON(this, "ice", replacer?.ice);
+    json.lightning = toJSON(this, "lightning", replacer?.lightning);
 
-      bleeding: this.bleeding,
-      acid: this.acid,
-      poison: this.poison,
-      psychic: this.psychic
-    };
+    json.arcane = toJSON(this, "arcane", replacer?.arcane);
+    json.necrotic = toJSON(this, "necrotic", replacer?.necrotic);
+    json.holy = toJSON(this, "holy", replacer?.holy);
+
+    json.bleeding = toJSON(this, "bleeding", replacer?.bleeding);
+    json.acid = toJSON(this, "acid", replacer?.acid);
+    json.poison = toJSON(this, "poison", replacer?.poison);
+    json.psychic = toJSON(this, "psychic", replacer?.psychic);
+
+    return json;
   }
 };
 export default Type;

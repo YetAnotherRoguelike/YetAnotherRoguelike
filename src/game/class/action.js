@@ -1,9 +1,12 @@
 import { FrequencyMap } from "@kxirk/adt";
+import { fromJSON, toJSON } from "@kxirk/serialize";
 import "@kxirk/utils/number.js";
 
 import Accuracy from "./accuracy.js";
+import Effect from "./effect.js";
 
 
+/** @abstract */
 const Action = class {
   /** @type {FrequencyMap<Effect|Condition>} */
   #userBefore;
@@ -42,10 +45,20 @@ const Action = class {
 
   /**
    * @param {Object} json
+   * @param {Function} [reviver]
    * @returns {Action}
    */
-  static fromJSON (json) {
-    return new Action().fromJSON(json);
+  static fromJSON (json, reviver) {
+    return new Action[json.constructor]().fromJSON(json, reviver);
+  }
+
+  /**
+   * @param {string} key
+   * @param {Function} [replacer]
+   * @returns {string}
+   */
+  static toJSON (key, replacer) {
+    return toJSON(this, "name", replacer?.name);
   }
 
 
@@ -94,37 +107,45 @@ const Action = class {
 
   /**
    * @param {Object} json
+   * @param {Function} [reviver]
    * @returns {Action}
    */
-  fromJSON (json) {
-    for (const [key, value] of Object.entries(json.userBefore)) this.userBefore.set(key, value);
-    for (const [key, value] of Object.entries(json.target)) this.target.set(key, value);
-    for (const [key, value] of Object.entries(json.user)) this.user.set(key, value);
-    for (const [key, value] of Object.entries(json.userAfter)) this.userAfter.set(key, value);
+  fromJSON (json, reviver) {
+    this.userBefore = fromJSON(json, this, "userBefore", (reviver?.userBefore ?? Effect.fromJSON));
+    this.target = fromJSON(json, this, "target", (reviver?.target ?? Effect.fromJSON));
+    this.user = fromJSON(json, this, "user", (reviver?.user ?? Effect.fromJSON));
+    this.userAfter = fromJSON(json, this, "userAfter", (reviver?.userAfter ?? Effect.fromJSON));
 
-    this.energy = json.energy;
+    this.energy = fromJSON(json, this, "energy", reviver?.energy);
 
-    this.speed = json.speed;
-    this.range = json.range;
-    this.radius = json.radius;
+    this.speed = fromJSON(json, this, "speed", reviver?.speed);
+    this.range = fromJSON(json, this, "range", reviver?.range);
+    this.radius = fromJSON(json, this, "radius", reviver?.radius);
 
     return this;
   }
 
-  /** @returns {Object} */
-  toJSON () {
-    return {
-      userBefore: Object.fromEntries(this.userBefore),
-      target: Object.fromEntries(this.target),
-      user: Object.fromEntries(this.user),
-      userAfter: Object.fromEntries(this.userAfter),
+  /**
+   * @param {string} key
+   * @param {Function} [replacer]
+   * @returns {Object}
+   */
+  toJSON (key, replacer) {
+    const json = {};
+    json.constructor = toJSON(this, "constructor", replacer?.constructor);
 
-      energy: this.energy,
+    json.userBefore = toJSON(this, "userBefore", replacer?.userBefore);
+    json.target = toJSON(this, "target", replacer?.target);
+    json.user = toJSON(this, "user", replacer?.user);
+    json.userAfter = toJSON(this, "userAfter", replacer?.userAfter);
 
-      speed: this.speed,
-      range: this.range,
-      radius: this.radius
-    };
+    json.energy = toJSON(this, "energy", replacer?.energy);
+
+    json.speed = toJSON(this, "speed", replacer?.speed);
+    json.range = toJSON(this, "range", replacer?.range);
+    json.radius = toJSON(this, "radius", replacer?.radius);
+
+    return json;
   }
 };
 export default Action;

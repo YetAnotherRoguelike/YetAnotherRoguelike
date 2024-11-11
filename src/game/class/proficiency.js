@@ -1,3 +1,4 @@
+import { fromJSON, toJSON } from "@kxirk/serialize";
 import "@kxirk/utils/number.js";
 
 
@@ -35,14 +36,6 @@ const Proficiency = class {
     this.all = initial;
 
     Object.assignGettersAsEnumerable(this, Proficiency);
-  }
-
-  /**
-   * @param {Object} json
-   * @returns {Proficiency}
-   */
-  static fromJSON (json) {
-    return new Proficiency().fromJSON(json);
   }
 
 
@@ -149,45 +142,52 @@ const Proficiency = class {
 
   /**
    * @param {Object} json
+   * @param {Function} [reviver]
    * @returns {Proficiency}
    */
-  fromJSON (json) {
-    this.armorLight = json.armorLight;
-    this.armorMedium = json.armorMedium;
-    this.armorHeavy = json.armorHeavy;
+  fromJSON (json, reviver) {
+    this.armorLight = fromJSON(json, this, "armorLight", reviver?.armorLight);
+    this.armorMedium = fromJSON(json, this, "armorMedium", reviver?.armorMedium);
+    this.armorHeavy = fromJSON(json, this, "armorHeavy", reviver?.armorHeavy);
 
-    this.weaponLight = json.weaponLight;
-    this.weaponMedium = json.weaponMedium;
-    this.weaponHeavy = json.weaponHeavy;
-    this.weaponRanged = json.weaponRanged;
+    this.weaponLight = fromJSON(json, this, "weaponLight", reviver?.weaponLight);
+    this.weaponMedium = fromJSON(json, this, "weaponMedium", reviver?.weaponMedium);
+    this.weaponHeavy = fromJSON(json, this, "weaponHeavy", reviver?.weaponHeavy);
+    this.weaponRanged = fromJSON(json, this, "weaponRanged", reviver?.weaponRanged);
 
-    this.shieldLight = json.shieldLight;
-    this.shieldMedium = json.shieldMedium;
-    this.shieldHeavy = json.shieldHeavy;
+    this.shieldLight = fromJSON(json, this, "shieldLight", reviver?.shieldLight);
+    this.shieldMedium = fromJSON(json, this, "shieldMedium", reviver?.shieldMedium);
+    this.shieldHeavy = fromJSON(json, this, "shieldHeavy", reviver?.shieldHeavy);
 
-    this.accessory = json.accessory;
+    this.accessory = fromJSON(json, this, "accessory", reviver?.accessory);
 
     return this;
   }
 
-  /** @returns {Object} */
-  toJSON () {
-    return {
-      armorLight: this.armorLight,
-      armorMedium: this.armorMedium,
-      armorHeavy: this.armorHeavy,
+  /**
+   * @param {string} key
+   * @param {Function} [replacer]
+   * @returns {Object}
+   */
+  toJSON (key, replacer) {
+    const json = {};
 
-      weaponLight: this.weaponLight,
-      weaponMedium: this.weaponMedium,
-      weaponHeavy: this.weaponHeavy,
-      weaponRanged: this.weaponRanged,
+    json.armorLight = toJSON(this, "armorLight", replacer?.armorLight);
+    json.armorMedium = toJSON(this, "armorMedium", replacer?.armorMedium);
+    json.armorHeavy = toJSON(this, "armorHeavy", replacer?.armorHeavy);
 
-      shieldLight: this.shieldLight,
-      shieldMedium: this.shieldMedium,
-      shieldHeavy: this.shieldHeavy,
+    json.weaponLight = toJSON(this, "weaponLight", replacer?.weaponLight);
+    json.weaponMedium = toJSON(this, "weaponMedium", replacer?.weaponMedium);
+    json.weaponHeavy = toJSON(this, "weaponHeavy", replacer?.weaponHeavy);
+    json.weaponRanged = toJSON(this, "weaponRanged", replacer?.weaponRanged);
 
-      accessory: this.accessory
-    };
+    json.shieldLight = toJSON(this, "shieldLight", replacer?.shieldLight);
+    json.shieldMedium = toJSON(this, "shieldMedium", replacer?.shieldMedium);
+    json.shieldHeavy = toJSON(this, "shieldHeavy", replacer?.shieldHeavy);
+
+    json.accessory = toJSON(this, "accessory", replacer?.accessory);
+
+    return json;
   }
 };
 export default Proficiency;

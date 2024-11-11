@@ -1,3 +1,6 @@
+import { fromJSON, toJSON } from "@kxirk/serialize";
+
+
 const Point = class {
   /** @type {number} */
   #x;
@@ -13,14 +16,6 @@ const Point = class {
    */
   constructor (x = 0, y = 0, z = 0) {
     this.set(x, y, z);
-  }
-
-  /**
-   * @param {Object} json
-   * @returns {Point}
-   */
-  static fromJSON (json) {
-    return new Point().fromJSON(json);
   }
 
 
@@ -58,23 +53,30 @@ const Point = class {
 
   /**
    * @param {Object} json
+   * @param {Function} [reviver]
    * @returns {Point}
    */
-  fromJSON (json) {
-    this.x = json.x;
-    this.y = json.y;
-    this.z = json.z;
+  fromJSON (json, reviver) {
+    this.x = fromJSON(json, this, "x", reviver?.x);
+    this.y = fromJSON(json, this, "y", reviver?.y);
+    this.z = fromJSON(json, this, "z", reviver?.z);
 
     return this;
   }
 
-  /** @returns {Object} */
-  toJSON () {
-    return {
-      x: this.x,
-      y: this.y,
-      z: this.z
-    };
+  /**
+   * @param {string} key
+   * @param {Function} [replacer]
+   * @returns {Object}
+   */
+  toJSON (key, replacer) {
+    const json = {};
+
+    json.x = toJSON(this, "x", replacer?.x);
+    json.y = toJSON(this, "y", replacer?.y);
+    json.z = toJSON(this, "z", replacer?.z);
+
+    return json;
   }
 };
 export default Point;

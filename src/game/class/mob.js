@@ -1,3 +1,4 @@
+import { fromJSON, toJSON } from "@kxirk/serialize";
 import "@kxirk/utils/number.js";
 
 import Ability from "./ability.js";
@@ -16,6 +17,7 @@ import Tick from "./tick.js";
 import Type from "./type.js";
 
 
+/** @abstract */
 const Mob = class extends Entity {
   /** @type {number} */
   #reach; // ft
@@ -243,10 +245,20 @@ const Mob = class extends Entity {
 
   /**
    * @param {Object} json
+   * @param {Function} [reviver]
    * @returns {Mob}
    */
-  static fromJSON (json) {
-    return new Mob().fromJSON(json);
+  static fromJSON (json, reviver) {
+    return new Mob[json.constructor]().fromJSON(json, reviver);
+  }
+
+  /**
+   * @param {string} key
+   * @param {Function} [replacer]
+   * @returns {string}
+   */
+  static toJSON (key, replacer) {
+    return toJSON(this, "name", replacer?.name);
   }
 
 
@@ -516,63 +528,68 @@ const Mob = class extends Entity {
 
   /**
    * @param {Object} json
+   * @param {Function} [reviver]
    * @returns {Mob}
    */
-  fromJSON (json) {
-    super.fromJSON(json);
+  fromJSON (json, reviver) {
+    super.fromJSON(json, reviver);
 
-    this.reach = json.reach;
+    this.reach = fromJSON(json, this, "reach", reviver?.reach);
 
-    this.at.fromJSON(json.at);
-    this.looking.fromJSON(json.looking);
-    this.facing.fromJSON(json.facing);
+    fromJSON(json, this, "at", reviver?.at);
+    fromJSON(json, this, "looking", reviver?.looking);
+    fromJSON(json, this, "facing", reviver?.facing);
 
-    this.experience = json.experience;
-    this.level = json.level;
+    this.experience = fromJSON(json, this, "experience", reviver?.experience);
+    this.level = fromJSON(json, this, "level", reviver?.level);
 
-    this.abilityBase.fromJSON(json.abilityBase);
+    fromJSON(json, this, "abilityBase", reviver?.abilityBase);
 
-    this.proficiencyBase.fromJSON(json.proficiencyBase);
+    fromJSON(json, this, "proficiencyBase", reviver?.proficiencyBase);
 
-    this.armor.fromJSON(json.armor);
-    this.hand.fromJSON(json.hand);
-    this.side.fromJSON(json.side);
-    this.accessories.fromJSON(json.accessories);
-    this.inventory.fromJSON(json.inventory);
+    fromJSON(json, this, "armor", reviver?.armor);
+    fromJSON(json, this, "hand", reviver?.hand);
+    fromJSON(json, this, "side", reviver?.side);
+    fromJSON(json, this, "accessories", reviver?.accessories);
+    fromJSON(json, this, "inventory", reviver?.inventory);
 
-    this.conditions.fromJSON(json.conditions);
+    fromJSON(json, this, "conditions", reviver?.conditions);
 
-    for (const action of json.turn) this.turn.push( Action.fromJSON(action) );
+    fromJSON(json, this, "turn", reviver?.turn);
 
     return this;
   }
 
-  /** @returns {Object} */
-  toJSON () {
-    const json = super.toJSON();
+  /**
+   * @param {string} key
+   * @param {Function} [replacer]
+   * @returns {Object}
+   */
+  toJSON (key, replacer) {
+    const json = super.toJSON(key, replacer);
 
-    json.reach = this.reach;
+    json.reach = toJSON(this, "reach", replacer?.reach);
 
-    json.at = this.at.toJSON();
-    json.looking = this.looking.toJSON();
-    json.facing = this.facing.toJSON();
+    json.at = toJSON(this, "at", replacer?.at);
+    json.looking = toJSON(this, "looking", replacer?.looking);
+    json.facing = toJSON(this, "facing", replacer?.facing);
 
-    json.experience = this.experience;
-    json.level = this.level;
+    json.experience = toJSON(this, "experience", replacer?.experience);
+    json.level = toJSON(this, "level", replacer?.level);
 
-    json.abilityBase = this.abilityBase.toJSON();
+    json.abilityBase = toJSON(this, "abilityBase", replacer?.abilityBase);
 
-    json.proficiencyBase = this.proficiencyBase.toJSON();
+    json.proficiencyBase = toJSON(this, "proficiencyBase", replacer?.proficiencyBase);
 
-    json.armor = this.armor.toJSON();
-    json.hand = this.hand.toJSON();
-    json.side = this.side.toJSON();
-    json.accessories = this.accessories.toJSON();
-    json.inventory = this.inventory.toJSON();
+    json.armor = toJSON(this, "armor", replacer?.armor);
+    json.hand = toJSON(this, "hand", replacer?.hand);
+    json.side = toJSON(this, "side", replacer?.side);
+    json.accessories = toJSON(this, "accessories", replacer?.accessories);
+    json.inventory = toJSON(this, "inventory", replacer?.inventory);
 
-    json.conditions = this.conditions.toJSON();
+    json.conditions = toJSON(this, "conditions", replacer?.conditions);
 
-    json.turn = this.turn.map((action) => action.toJSON());
+    json.turn = toJSON(this, "turn", replacer?.turn);
 
     return json;
   }

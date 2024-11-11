@@ -1,3 +1,5 @@
+import { fromJSON, toJSON } from "@kxirk/serialize";
+
 import TickQueue from "./tick-queue.js";
 
 
@@ -13,14 +15,6 @@ const Conditions = class {
     this.#before = new TickQueue();
     this.#after = new TickQueue();
     this.#persist = new TickQueue();
-  }
-
-  /**
-   * @param {Object} json
-   * @returns {Conditions}
-   */
-  static fromJSON (json) {
-    return new Conditions().fromJSON(json);
   }
 
 
@@ -87,23 +81,30 @@ const Conditions = class {
 
   /**
    * @param {Object} json
+   * @param {Function} [reviver]
    * @returns {Conditions}
    */
-  fromJSON (json) {
-    this.before.fromJSON(json.before);
-    this.after.fromJSON(json.after);
-    this.persist.fromJSON(json.persist);
+  fromJSON (json, reviver) {
+    fromJSON(json, this, "before", reviver?.before);
+    fromJSON(json, this, "after", reviver?.after);
+    fromJSON(json, this, "persist", reviver?.persist);
 
     return this;
   }
 
-  /** @returns {Object} */
-  toJSON () {
-    return {
-      before: this.before.toJSON(),
-      after: this.after.toJSON(),
-      persist: this.persist.toJSON()
-    };
+  /**
+   * @param {string} key
+   * @param {Function} [replacer]
+   * @returns {Object}
+   */
+  toJSON (key, replacer) {
+    const json = {};
+
+    json.before = toJSON(this, "before", replacer?.before);
+    json.after = toJSON(this, "after", replacer?.after);
+    json.persist = toJSON(this, "persist", replacer?.persist);
+
+    return json;
   }
 };
 export default Conditions;

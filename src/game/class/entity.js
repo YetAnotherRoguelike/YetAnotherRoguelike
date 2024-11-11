@@ -1,9 +1,11 @@
+import { fromJSON, toJSON } from "@kxirk/serialize";
 import "@kxirk/utils/array.js";
 import "@kxirk/utils/number.js";
 
 import Size from "./size.js";
 
 
+/** @abstract */
 const Entity = class {
   /** @type {string} */
   #name;
@@ -40,14 +42,6 @@ const Entity = class {
     this.volumeFactor = 0.0;
 
     this.density = 0;
-  }
-
-  /**
-   * @param {Object} json
-   * @returns {Entity}
-   */
-  static fromJSON (json) {
-    return new Entity().fromJSON(json);
   }
 
 
@@ -118,41 +112,49 @@ const Entity = class {
 
   /**
    * @param {Object} json
+   * @param {Function} [reviver]
    * @returns {Entity}
    */
-  fromJSON (json) {
-    this.name = json.name;
-    this.description = json.description;
+  fromJSON (json, reviver) {
+    this.name = fromJSON(json, this, "name", reviver?.name);
+    this.description = fromJSON(json, this, "description", reviver?.description);
 
-    this.display.write(...json.display);
-    this.color = json.color;
+    fromJSON(json, this, "display", reviver?.display);
+    this.color = fromJSON(json, this, "color", reviver?.color);
 
-    this.length = json.length;
-    this.width = json.width;
-    this.height = json.height;
-    this.volumeFactor = json.volumeFactor;
+    this.length = fromJSON(json, this, "length", reviver?.length);
+    this.width = fromJSON(json, this, "width", reviver?.width);
+    this.height = fromJSON(json, this, "height", reviver?.height);
+    this.volumeFactor = fromJSON(json, this, "volumeFactor", reviver?.volumeFactor);
 
-    this.density = json.density;
+    this.density = fromJSON(json, this, "density", reviver?.density);
 
     return this;
   }
 
-  /** @returns {Object} */
-  toJSON () {
-    return {
-      name: this.name,
-      description: this.description,
+  /**
+   * @param {string} key
+   * @param {Function} [replacer]
+   * @returns {Object}
+   */
+  toJSON (key, replacer) {
+    const json = {};
+    json.constructor = toJSON(this, "constructor", replacer?.constructor);
 
-      display: this.display,
-      color: this.color,
+    json.name = toJSON(this, "name", replacer?.name);
+    json.description = toJSON(this, "description", replacer?.description);
 
-      length: this.length,
-      width: this.width,
-      height: this.height,
-      volumeFactor: this.volumeFactor,
+    json.display = toJSON(this, "display", replacer?.display);
+    json.color = toJSON(this, "color", replacer?.color);
 
-      density: this.density
-    };
+    json.length = toJSON(this, "length", replacer?.length);
+    json.width = toJSON(this, "width", replacer?.width);
+    json.height = toJSON(this, "height", replacer?.height);
+    json.volumeFactor = toJSON(this, "volumeFactor", replacer?.volumeFactor);
+
+    json.density = toJSON(this, "density", replacer?.density);
+
+    return json;
   }
 };
 export default Entity;
