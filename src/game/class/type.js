@@ -22,22 +22,18 @@ const Type = class {
   #lightning;
 
   /** @type {string[]} */
-  static magical = ["arcane", "necrotic", "holy"];
+  static magical = ["arcane", "dark", "holy"];
   /** @type {*} */
   #arcane;
   /** @type {*} */
-  #necrotic;
+  #dark;
   /** @type {*} */
   #holy;
 
   /** @type {*} */
   #bleeding;
   /** @type {*} */
-  #acid;
-  /** @type {*} */
   #poison;
-  /** @type {*} */
-  #psychic;
 
   /**
    * @param {*} [initial]
@@ -94,8 +90,8 @@ const Type = class {
   set arcane (arcane) { this.#arcane = arcane; }
 
   /** @type {*} */
-  get necrotic () { return this.#necrotic; }
-  set necrotic (necrotic) { this.#necrotic = necrotic; }
+  get dark () { return this.#dark; }
+  set dark (dark) { this.#dark = dark; }
 
   /** @type {*} */
   get holy () { return this.#holy; }
@@ -104,7 +100,7 @@ const Type = class {
   /** @type {*} */
   set magical (magical) {
     this.arcane = magical;
-    this.necrotic = magical;
+    this.dark = magical;
     this.holy = magical;
   }
 
@@ -114,17 +110,8 @@ const Type = class {
   set bleeding (bleeding) { this.#bleeding = bleeding; }
 
   /** @type {*} */
-  get acid () { return this.#acid; }
-  set acid (acid) { this.#acid = acid; }
-
-  /** @type {*} */
   get poison () { return this.#poison; }
   set poison (poison) { this.#poison = poison; }
-
-  /** @type {*} */
-  get psychic () { return this.#psychic; }
-  set psychic (psychic) { this.#psychic = psychic; }
-
 
   /** @type {*} */
   set all (value) {
@@ -132,9 +119,7 @@ const Type = class {
     this.elemental = value;
     this.magical = value;
     this.bleeding = value;
-    this.acid = value;
     this.poison = value;
-    this.psychic = value;
   }
 
 
@@ -153,13 +138,11 @@ const Type = class {
     this.lightning = fromJSON(json, this, "lightning", reviver?.lightning);
 
     this.arcane = fromJSON(json, this, "arcane", reviver?.arcane);
-    this.necrotic = fromJSON(json, this, "necrotic", reviver?.necrotic);
+    this.dark = fromJSON(json, this, "dark", reviver?.dark);
     this.holy = fromJSON(json, this, "holy", reviver?.holy);
 
     this.bleeding = fromJSON(json, this, "bleeding", reviver?.bleeding);
-    this.acid = fromJSON(json, this, "acid", reviver?.acid);
     this.poison = fromJSON(json, this, "poison", reviver?.poison);
-    this.psychic = fromJSON(json, this, "psychic", reviver?.psychic);
 
     return this;
   }
@@ -181,13 +164,11 @@ const Type = class {
     json.lightning = toJSON(this, "lightning", replacer?.lightning);
 
     json.arcane = toJSON(this, "arcane", replacer?.arcane);
-    json.necrotic = toJSON(this, "necrotic", replacer?.necrotic);
+    json.dark = toJSON(this, "dark", replacer?.dark);
     json.holy = toJSON(this, "holy", replacer?.holy);
 
     json.bleeding = toJSON(this, "bleeding", replacer?.bleeding);
-    json.acid = toJSON(this, "acid", replacer?.acid);
     json.poison = toJSON(this, "poison", replacer?.poison);
-    json.psychic = toJSON(this, "psychic", replacer?.psychic);
 
     return json;
   }
