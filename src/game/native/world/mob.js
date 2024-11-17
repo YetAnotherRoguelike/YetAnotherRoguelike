@@ -10,32 +10,22 @@ import { line } from "./fov.js";
 
 /**
  * @param {Entity} entity
- * @param {FrequencyMap<Effect|Condition>} effects
- * @param {number} [proc]
- * @returns {Array<Effect|Condition>}
+ * @param {Effect|Condition} effect
+ * @returns {boolean}
  */
-export const applyEffects = (entity, effects, proc = Math.random()) => {
-  const applied = [];
+export const applyEffect = (entity, effect) => {
+  if (effect instanceof Effect && entity.effect) {
+    entity.effect(effect);
 
-  for (const effect of effects.keysGreater(proc)) {
-    if (effect instanceof Effect && entity.effect) {
-      entity.effect(effect);
+    return true;
+  }
+  if (effect instanceof Condition && entity.conditions) {
+    entity.conditions.add(effect);
 
-      applied.push(effect);
-    }
-
-    if (effect instanceof Condition && entity.conditions) {
-      const chance = effects.get(effect);
-      const resist = (effect.resistible ? (entity?.stat[`${effect.type}Resist`] ?? 0) : 0) * chance;
-      if ((chance - resist) > proc) {
-        entity.conditions.add(effect);
-
-        applied.push(effect);
-      }
-    }
+    return true;
   }
 
-  return applied;
+  return false;
 };
 
 /**
@@ -71,7 +61,7 @@ export const act = (depths, user, action, target) => {
   else return hit;
 
 
-  applyEffects(user, action.userBefore);
+  applyEffect(user, action.userBefore);
 
   for (const entity of targets) {
     const distance = tileDistance(origin, entity.at);
@@ -88,13 +78,12 @@ export const act = (depths, user, action, target) => {
 
 
     // critical
-    const proc = Math.random();
 
-    applyEffects(entity, action.target, proc);
-    applyEffects(user, action.user, proc);
+    applyEffect(entity, action.target); entity.turn.push(action);
+    applyEffect(user, action.user);
   }
 
-  applyEffects(user, action.userAfter);
+  applyEffect(user, action.userAfter);
 
 
   return hit;

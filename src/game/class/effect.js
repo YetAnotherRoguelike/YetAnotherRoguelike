@@ -22,6 +22,13 @@ const Effect = class {
   /** @type {Type} */
   #damageFactorMax;
 
+  /** @type {Type} */
+  #buildup;
+  /** @type {Type} */
+  #buildupFactor;
+  /** @type {Type} */
+  #buildupFactorMax;
+
   constructor () {
     this.#ability = {};
     this.#abilityFactor = {};
@@ -33,6 +40,10 @@ const Effect = class {
     this.#damage = {};
     this.#damageFactor = {};
     this.#damageFactorMax = {};
+
+    this.#buildup = {};
+    this.#buildupFactor = {};
+    this.#buildupFactorMax = {};
   }
 
   /**
@@ -81,6 +92,16 @@ const Effect = class {
   get damageFactorMax () { return this.#damageFactorMax; }
 
 
+  /** @type {Type} */
+  get buildup () { return this.#buildup; }
+
+  /** @type {Type} */
+  get buildupFactor () { return this.#buildupFactor; }
+
+  /** @type {Type} */
+  get buildupFactorMax () { return this.#buildupFactorMax; }
+
+
   /**
    * @param {Object} json
    * @param {Function} [reviver]
@@ -97,6 +118,10 @@ const Effect = class {
     fromJSON(json, this, "damage", reviver?.damage);
     fromJSON(json, this, "damageFactor", reviver?.damageFactor);
     fromJSON(json, this, "damageFactorMax", reviver?.damageFactorMax);
+
+    fromJSON(json, this, "buildup", reviver?.buildup);
+    fromJSON(json, this, "buildupFactor", reviver?.buildupFactor);
+    fromJSON(json, this, "buildupFactorMax", reviver?.buildupFactorMax);
 
     return this;
   }
@@ -120,6 +145,10 @@ const Effect = class {
     json.damage = toJSON(this, "damage", replacer?.damage);
     json.damageFactor = toJSON(this, "damageFactor", replacer?.damageFactor);
     json.damageFactorMax = toJSON(this, "damageFactorMax", replacer?.damageFactorMax);
+
+    json.buildup = toJSON(this, "buildup", replacer?.buildup);
+    json.buildupFactor = toJSON(this, "buildupFactor", replacer?.buildupFactor);
+    json.buildupFactorMax = toJSON(this, "buildupFactorMax", replacer?.buildupFactorMax);
 
     return json;
   }

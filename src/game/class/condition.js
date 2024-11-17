@@ -7,12 +7,13 @@ import Effect from "./effect.js";
 
 /** @abstract */
 const Condition = class extends Entity {
+  /** @type {Map<keyof Type, Condition>} */
+  static buildup = new Map();
+
   /** @type {Effect} */
   #effect;
   /** @type {keyof Type} */
   #type;
-  /** @type {boolean} */
-  #resistible;
 
   /** @type {Stack} */
   #stack;
@@ -27,7 +28,6 @@ const Condition = class extends Entity {
 
     this.effect = null;
     this.type = null;
-    this.resistible = false;
 
     this.stack = null;
     this.duration = 0;
@@ -61,10 +61,6 @@ const Condition = class extends Entity {
   get type () { return this.#type; }
   set type (type) { this.#type = type; }
 
-  /** @type {boolean} */
-  get resistible () { return this.#resistible; }
-  set resistible (resistible) { this.#resistible = resistible; }
-
 
   /** @type {keyof Stack} */
   get stack () { return this.#stack; }
@@ -89,7 +85,6 @@ const Condition = class extends Entity {
 
     this.effect = fromJSON(json, this, "effect", (reviver?.effect ?? Effect.fromJSON));
     this.type = fromJSON(json, this, "type", reviver?.type);
-    this.resistible = fromJSON(json, this, "resistible", reviver?.resistible);
 
     this.stack = fromJSON(json, this, "stack", reviver?.stack);
     this.duration = fromJSON(json, this, "duration", reviver?.duration);
@@ -108,7 +103,6 @@ const Condition = class extends Entity {
 
     json.effect = toJSON(this, "effect", replacer?.effect);
     json.type = toJSON(this, "type", replacer?.type);
-    json.resistible = toJSON(this, "resistible", replacer?.resistible);
 
     json.stack = toJSON(this, "stack", replacer?.stack);
     json.duration = toJSON(this, "duration", replacer?.duration);

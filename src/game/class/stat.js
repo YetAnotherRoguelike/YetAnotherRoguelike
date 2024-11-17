@@ -7,7 +7,7 @@ import Type from "./type.js";
 
 const Stat = class {
   /** @type {string[]} */
-  static types = ["Attack", "Resist", "Defense"];
+  static types = ["Attack", "Resist", "Defense", "Buildup", "Tolerance"];
 
   /** @type {number} */
   #weightMax; // lbs
@@ -38,18 +38,23 @@ const Stat = class {
   #speed; // ft/turn
   /** @type {number} */
   #stealth;
+  /** @type {number} */
+  #evade;
 
   /** @type {number} */
   #critical; // % chance to deal additional damage: [0.0, 1.0]
   /** @type {Type<number>} */
   #attack;
 
-  /** @type {number} */
-  #evade;
   /** @type {Type<number>} */
-  #resist; // % damage reduction before defense: weak (-Infinity, 0.0), neutral [0.0], resist (0.0, 1.0), immune [1.0], absorb (1.0, Infinity)
+  #resist; // % type reduction: weak (-Infinity, 0.0), neutral [0.0], resist (0.0, 1.0), immune [1.0], absorb (1.0, Infinity)
   /** @type {Type<number>} */
   #defense;
+
+  /** @type {Type<number>} */
+  #buildup; // damage sustained before applying type-specific condition
+  /** @type {Type<number>} */
+  #tolerance; // buildup threshold
 
   /**
    * @param {number} [initial]
@@ -72,13 +77,16 @@ const Stat = class {
 
     this.speed = initial;
     this.stealth = initial;
+    this.evade = initial;
 
     this.critical = initial;
     this.#attack = new Type(initial); Object.assignGettersSettersAs(this, this.#attack, (type) => `${type}Attack`);
 
-    this.evade = initial;
     this.#resist = new Type(initial); Object.assignGettersSettersAs(this, this.#resist, (type) => `${type}Resist`);
     this.#defense = new Type(initial); Object.assignGettersSettersAs(this, this.#defense, (type) => `${type}Defense`);
+
+    this.#buildup = new Type(initial); Object.assignGettersSettersAs(this, this.#buildup, (type) => `${type}Buildup`);
+    this.#tolerance = new Type(initial); Object.assignGettersSettersAs(this, this.#tolerance, (type) => `${type}Tolerance`);
 
 
     Object.assignGettersAsEnumerable(this, Stat);
@@ -162,6 +170,12 @@ const Stat = class {
     this.#stealth = stealth.clamp(0);
   }
 
+  /** @type {number} */
+  get evade () { return this.#evade; }
+  set evade (evade) {
+    this.#evade = evade.clamp(0);
+  }
+
 
   /** @type {number} */
   get critical () { return this.#critical; }
@@ -186,12 +200,6 @@ const Stat = class {
     this.#attack.all = attack.clamp(0);
   }
 
-
-  /** @type {number} */
-  get evade () { return this.#evade; }
-  set evade (evade) {
-    this.#evade = evade.clamp(0);
-  }
 
   /** @type {number} */
   set physicalResist (physicalResist) {
@@ -228,6 +236,41 @@ const Stat = class {
   }
 
 
+  /** @type {number} */
+  set physicalBuildup (physicalBuildup) {
+    this.#buildup.physical = physicalBuildup.clamp(0);
+  }
+  /** @type {number} */
+  set elementalBuildup (elementalBuildup) {
+    this.#buildup.elemental = elementalBuildup.clamp(0);
+  }
+  /** @type {number} */
+  set magicalBuildup (magicalBuildup) {
+    this.#buildup.magical = magicalBuildup.clamp(0);
+  }
+  /** @type {number} */
+  set buildup (buildup) {
+    this.#buildup.all = buildup.clamp(0);
+  }
+
+  /** @type {number} */
+  set physicalTolerance (physicalTolerance) {
+    this.#tolerance.physical = physicalTolerance.clamp(0);
+  }
+  /** @type {number} */
+  set elementalTolerance (elementalTolerance) {
+    this.#tolerance.elemental = elementalTolerance.clamp(0);
+  }
+  /** @type {number} */
+  set magicalTolerance (magicalTolerance) {
+    this.#tolerance.magical = magicalTolerance.clamp(0);
+  }
+  /** @type {number} */
+  set tolerance (tolerance) {
+    this.#tolerance.all = tolerance.clamp(0);
+  }
+
+
   /**
    * @param {Object} json
    * @param {Function} [reviver]
@@ -251,13 +294,16 @@ const Stat = class {
 
     this.speed = fromJSON(json, this, "speed", reviver?.speed);
     this.stealth = fromJSON(json, this, "stealth", reviver?.stealth);
+    this.evade = fromJSON(json, this, "evade", reviver?.evade);
 
     this.critical = fromJSON(json, this, "critical", reviver?.critical);
     fromJSON(json, this, "attack", reviver?.attack);
 
-    this.evade = fromJSON(json, this, "evade", reviver?.evade);
     fromJSON(json, this, "resist", reviver?.resist);
     fromJSON(json, this, "defense", reviver?.defense);
+
+    fromJSON(json, this, "buildup", reviver?.buildup);
+    fromJSON(json, this, "tolerance", reviver?.tolerance);
 
     return this;
   }
@@ -287,13 +333,16 @@ const Stat = class {
 
     json.speed = toJSON(this, "speed", replacer?.speed);
     json.stealth = toJSON(this, "stealth", replacer?.stealth);
+    json.evade = toJSON(this, "evade", replacer?.evade);
 
     json.critical = toJSON(this, "critical", replacer?.critical);
     json.attack = toJSON(this, "attack", replacer?.attack);
 
-    json.evade = toJSON(this, "evade", replacer?.evade);
     json.resist = toJSON(this, "resist", replacer?.resist);
     json.defense = toJSON(this, "defense", replacer?.defense);
+
+    json.buildup = toJSON(this, "buildup", replacer?.buildup);
+    json.tolerance = toJSON(this, "tolerance", replacer?.tolerance);
 
     return json;
   }

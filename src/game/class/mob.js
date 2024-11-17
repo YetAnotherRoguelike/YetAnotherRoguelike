@@ -5,6 +5,7 @@ import Ability from "./ability.js";
 import Accessory from "./accessory.js";
 import Action from "./action.js";
 import Armor from "./armor.js";
+import Condition from "./condition.js";
 import Conditions from "./conditions.js";
 import Entity from "./entity.js";
 import Inventory from "./inventory.js";
@@ -143,11 +144,11 @@ const Mob = class extends Entity {
 
       speed: { get: () => (this.ability.dexterity / 2) + 1 },
       stealth: { get: () => this.ability.dexterity },
+      evade: { get: () => this.ability.dexterity / 2 },
 
       critical: { get: () => this.ability.luck / 200 },
       strikingAttack: { get: () => this.ability.strength },
 
-      evade: { get: () => this.ability.dexterity / 2 },
       physicalDefense: { get: () => this.ability.strength / 2 }
     });
     this.#stat = new Proxy({}, {
@@ -464,17 +465,17 @@ const Mob = class extends Entity {
 
 
   /**
-   * @param {Type} damage
+   * @param {Type<number>} damage
    * @param {boolean} [factor]
    * @param {boolean} [max]
-   * @returns {Type}
+   * @returns {Type<number>}
    */
   damage (damage, factor = false, max = false) {
-    const healthMax = (max ? this.stat.healthMax : this.stat.health);
+    const healthFactor = (max ? this.stat.healthMax : this.stat.health);
 
     const dealt = new Type(0);
     for (const [type, value] of Object.entries(damage)) {
-      const base = (factor ? (healthMax * value) : value);
+      const base = (factor ? (healthFactor * value) : value);
       const resist = this.stat[`${type}Resist`] * base;
       const defense = this.stat[`${type}Defense`];
 
@@ -487,6 +488,37 @@ const Mob = class extends Entity {
     const dealtTotal = Object.values(dealt).reduce((total, type) => total + type, 0);
     this.stat.health -= dealtTotal;
     if (dealtTotal > 0) this.stat.regen = this.stat.regenMax;
+
+    return dealt;
+  }
+
+  /**
+   * @param {Type<number>} buildup
+   * @param {boolean} [factor]
+   * @param {boolean} [max]
+   * @returns {Type<number>}
+   */
+  buildup (buildup, factor = false, max = false) {
+    const dealt = new Type(0);
+    for (const [type, value] of Object.entries(buildup)) {
+      const tolerence = this.stat[`${type}Tolerence`];
+      const buildupFactor = (max ? tolerence : this.stat[`${type}Buildup`]);
+
+      const base = (factor ? (buildupFactor * value) : value);
+      const resist = this.stat[`${type}Resist`] * base;
+      const total = base - resist;
+
+      this.stat[`${type}Buildup`] += total;
+      if (this.stat[`${type}Buildup`] > tolerence) {
+        const BuildupCondition = Condition.buildup.get(type);
+        const condition = new BuildupCondition();
+
+        this.conditions.add(condition);
+        this.stat[`${type}Buildup`] = 0;
+      }
+
+      dealt[type] = total;
+    }
 
     return dealt;
   }
@@ -519,9 +551,18 @@ const Mob = class extends Entity {
       return total;
     }, {});
 
+    const buildup = this.buildup(effect.buildup);
+    const buildupFactor = this.buildup(effect.buildupFactor, true);
+    const buildupFactorMax = this.buildup(effect.buildupFactorMax, true, true);
+    const buildupTotal = Object.keys({...buildup, ...buildupFactor, ...buildupFactorMax}).reduce((total, type) => {
+      total[type] = buildup[type] + buildupFactor[type] + buildupFactorMax[type];
+      return total;
+    }, {});
+
     return {
       stat: statTotal,
-      damage: damageTotal
+      damage: damageTotal,
+      buildup: buildupTotal
     };
   }
 

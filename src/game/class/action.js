@@ -1,4 +1,3 @@
-import { FrequencyMap } from "@kxirk/adt";
 import { fromJSON, toJSON } from "@kxirk/serialize";
 import "@kxirk/utils/number.js";
 
@@ -8,13 +7,13 @@ import Effect from "./effect.js";
 
 /** @abstract */
 const Action = class {
-  /** @type {FrequencyMap<Effect|Condition>} */
+  /** @type {Effect} */
   #userBefore;
-  /** @type {FrequencyMap<Effect|Condition>} */
+  /** @type {Effect} */
   #target;
-  /** @type {FrequencyMap<Effect|Condition>} */
+  /** @type {Effect} */
   #user;
-  /** @type {FrequencyMap<Effect|Condition>} */
+  /** @type {Effect} */
   #userAfter;
 
   /** @type {number} */
@@ -30,10 +29,10 @@ const Action = class {
   #accuracy;
 
   constructor () {
-    this.#userBefore = new FrequencyMap();
-    this.#target = new FrequencyMap();
-    this.#user = new FrequencyMap();
-    this.#userAfter = new FrequencyMap();
+    this.#userBefore = null;
+    this.#target = null;
+    this.#user = null;
+    this.#userAfter = null;
 
     this.energy = 0;
 
@@ -62,17 +61,21 @@ const Action = class {
   }
 
 
-  /** @type {FrequencyMap<Effect|Condition>} */
+  /** @type {Effect} */
   get userBefore () { return this.#userBefore; }
+  set userBefore (userBefore) { this.#userBefore = userBefore; }
 
-  /** @type {FrequencyMap<Effect|Condition>} */
+  /** @type {Effect} */
   get target () { return this.#target; }
+  set target (target) { this.#target = target; }
 
-  /** @type {FrequencyMap<Effect|Condition>} */
+  /** @type {Effect} */
   get user () { return this.#user; }
+  set user (user) { this.#user = user; }
 
-  /** @type {FrequencyMap<Effect|Condition>} */
+  /** @type {Effect} */
   get userAfter () { return this.#userAfter; }
+  set userAfter (userAfter) { this.#userAfter = userAfter; }
 
 
   /** @type {number} */
