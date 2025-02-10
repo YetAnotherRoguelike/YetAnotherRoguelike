@@ -57,8 +57,8 @@ const Gear = class extends Item {
   }
 
   /** @type {number} */
-  get qualityFactor () {
-    return (1 + (0.05 * this.quality));
+  get qualityModifier () {
+    return (this.quality / 5);
   }
 
 
@@ -105,7 +105,7 @@ const Gear = class extends Item {
 
   /** @type {number} */
   get durabilityMax () {
-    return (this.durabilityBase + (this.qualityFactor * this.durabilityQuality));
+    return (this.durabilityBase + (this.qualityModifier * this.durabilityQuality)).clamp(1);
   }
 
   /** @type {number} */

@@ -13,10 +13,10 @@ import Wall from "../tile/wall.js";
  * @returns {Depth}
  */
 export const generateDepth = (random, level, depthBase, depthLevel) => {
-  const depthFactor = Math.log(depthBase + depthLevel + 1);
+  const depthModifier = Math.log(depthBase + depthLevel + 1);
 
-  const width = ((3 * depthFactor) + 45).round().clamp(level.widthMin, level.widthMax);
-  const height = ((2 * depthFactor) + 30).round().clamp(level.heightMin, level.heightMax);
+  const width = ((3 * depthModifier) + 45).round().clamp(level.widthMin, level.widthMax);
+  const height = ((2 * depthModifier) + 30).round().clamp(level.heightMin, level.heightMax);
 
   /** @type {Room} */
   const depth = new Room(height, width);

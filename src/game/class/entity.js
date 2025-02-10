@@ -1,8 +1,9 @@
 import { fromJSON, toJSON } from "@kxirk/serialize";
 import "@kxirk/utils/array.js";
+import Math from "@kxirk/utils/math.js";
 import "@kxirk/utils/number.js";
 
-import Size from "./size.js";
+import Size, { DimensionMax } from "./size.js";
 
 
 /** @abstract */
@@ -75,6 +76,11 @@ const Entity = class {
   set height (height) { this.#height = height.round(0.01).clamp(0); }
 
   /** @type {number} */
+  get heightFactor () {
+    return this.height / Math.average(DimensionMax.small, DimensionMax.medium);
+  }
+
+  /** @type {number} */
   get dimensionMax () {
     return Math.max(this.length, this.#width, this.height);
   }
@@ -85,7 +91,7 @@ const Entity = class {
 
   /** @type {number} */
   get volume () {
-    return (this.volumeFactor * this.length * this.width * this.height).round(0.01);
+    return (this.volumeFactor * this.length * this.width * this.height);
   }
 
   /** @type {keyof Size} */
@@ -97,6 +103,21 @@ const Entity = class {
     }
 
     return null;
+  }
+
+  /** @type {number} */
+  get sizeFactor () {
+    return this.dimensionMax / Math.average(DimensionMax.small, DimensionMax.medium);
+  }
+
+  /** @type {number} */
+  get sizeModifier () {
+    return Math.log2(this.sizeFactor);
+  }
+
+  /** @type {number} */
+  get sizeModifierFactor () {
+    return Math.log2(this.sizeFactor + 1);
   }
 
 

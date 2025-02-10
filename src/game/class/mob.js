@@ -18,6 +18,157 @@ import Tick from "./tick.js";
 import Type from "./type.js";
 
 
+/**
+ * @param {number} level
+ * @returns {number} experience
+ */
+export const experienceNext = (level) => (5 * level) + 5;
+
+/**
+ * @param {number} level
+ * @returns {number} experience
+ */
+export const experienceCumulative = (level) => ((level / 2) * experienceNext(level)) - 5;
+
+
+/**
+ * @param {Mob} mob
+ * @returns {ProxyHandler<Ability<number>>}
+ */
+export const abilityHandler = (mob) => ({
+  /**
+   * @param {Ability<number>} target
+   * @param {string} ability
+   * @returns {number}
+   */
+  get (target, ability) {
+    let value = mob.abilityBase[ability] ?? 0;
+
+
+    // factor
+    for (const condition of mob.conditions) {
+      value *= condition?.effect.abilityFactor?.[ability] ?? 1.0;
+    }
+
+    // flat
+    for (const condition of mob.conditions) {
+      value += condition?.effect.ability?.[ability] ?? 0;
+    }
+
+
+    // round
+    return value.round();
+  }
+});
+
+/**
+ * @param {Mob} mob
+ * @returns {ProxyHandler<Proficiency<number>>}
+ */
+export const proficiencyHandler = (mob) => ({
+  /**
+   * @param {Proficiency<number>} target
+   * @param {string} proficiency
+   * @returns {number}
+   */
+  get (target, proficiency) {
+    const value = mob.proficiencyBase[proficiency] ?? 0;
+    const bonus = Math.floor(mob.level / 4) + 2;
+
+    return (bonus * value).round();
+  }
+});
+
+/**
+ * @param {Mob} mob
+ * @returns {ProxyHandler<Stat>}
+ */
+export const statHandler = (mob) => ({
+  /**
+   * @param {Stat} target
+   * @param {string} stat
+   * @returns {number}
+   */
+  get (target, stat) {
+    const [statUniversal, statGroup] = Stat.type(stat);
+
+    let value = mob.statBase[stat] ?? mob.statBase[statGroup] ?? mob.statBase[statUniversal] ?? 0;
+    if (["health", "regen", "energy", "energyOverflow"].includes(stat) || statUniversal === "buildup") {
+      value = target[stat];
+    }
+
+
+    // factor
+    for (const condition of mob.conditions) {
+      value *= condition?.effect.statFactor?.[stat] ?? 1.0;
+    }
+
+    // flat
+    for (const slot of [...mob.armor, ...mob.hand, ...mob.side, ...mob.accessories]) {
+      for (const item of slot) {
+        const ability = (mob.ability?.[item.scaleAbility] ?? 0) - item.scaleMin;
+        const scaleFactor = ability.clamp(0, item.scaleMax);
+
+        const base = item.statBase?.[stat] ?? 0;
+        const quality = item.qualityModifier * (item.statQuality?.[stat] ?? 0);
+        const scale = scaleFactor * (item.statScale?.[stat] ?? 0);
+
+        value += (base + quality + scale);
+      }
+    }
+    for (const condition of mob.conditions) {
+      value += condition?.effect.stat?.[stat] ?? 0;
+    }
+
+
+    // round
+    if (["critical"].includes(stat) || statUniversal === "resist") {
+      value = value.round(0.01);
+    }
+    else {
+      value = value.round();
+    }
+
+    return value;
+  },
+  /**
+   * @param {Stat} target
+   * @param {string} stat
+   * @param {number} value
+   * @returns {boolean}
+   */
+  set (target, stat, value) {
+    const [statUniversal] = Stat.type(stat);
+    let statMax;
+    let statOverflow;
+
+
+    if (["health", "regen"].includes(stat)) {
+      statMax = `${stat}Max`;
+
+      target[stat] = value.clamp(0, mob.stat[statMax]);
+
+      return true;
+    }
+    if (["energy"].includes(stat)) {
+      statMax = `${stat}Max`;
+      statOverflow = `${stat}Overflow`;
+
+      target[stat] = value.clamp(0, mob.stat[statMax]);
+      target[statOverflow] += (value - mob.stat[statMax]).clamp(0);
+
+      return true;
+    }
+    if (["energyOverflow"].includes(stat) || statUniversal === "buildup") {
+      target[stat] = value.clamp(0);
+
+      return true;
+    }
+
+    return false;
+  }
+});
+
 /** @abstract */
 const Mob = class extends Entity {
   /** @type {number} */
@@ -83,154 +234,35 @@ const Mob = class extends Entity {
     this.#level = 1;
 
     this.#abilityBase = new Ability(1);
-    this.#ability = new Proxy({}, {
-      get: (target, ability) => {
-        let value = this.abilityBase[ability] ?? 0;
-
-
-        // size
-        if (["strength"].includes(ability)) {
-          value *= this.sizeMod;
-        }
-        if (["dexterity"].includes(ability)) {
-          value *= (1 / this.sizeMod);
-        }
-
-        // weight
-        if (["dexterity"].includes(ability)) {
-          value *= this.weightMod;
-        }
-
-
-        // factor
-        for (const condition of this.conditions) {
-          value *= condition?.effect.abilityFactor?.[ability] ?? 1.0;
-        }
-
-        // flat
-        for (const condition of this.conditions) {
-          value += condition?.effect.ability?.[ability] ?? 0;
-        }
-
-
-        // round
-        value = value.round();
-
-        return Object.defineProperty(new Number(value), "modifier", { value: Math.floor((value - 10) / 2) });
-      }
-    });
+    this.#ability = new Proxy(new Ability(0), abilityHandler(this));
 
     this.#proficiencyBase = new Proficiency(0.0);
-    this.#proficiency = new Proxy(new Proficiency(), {
-      get: (target, proficiency) => {
-        const value = this.proficiencyBase[proficiency] ?? 0;
+    this.#proficiency = new Proxy(new Proficiency(0.0), proficiencyHandler(this));
 
-        return value.round();
-      }
-    });
-
-    this.#statBase = new Stat();
+    this.#statBase = new Stat(0);
     Object.defineProperties(this.statBase, {
-      weightMax: { get: () => ((0.15 * super.weight) + (10 * this.ability.strength)) },
+      weightMax: { get: () => this.sizeFactor * 10 * this.ability.strength },
 
-      view: { value: 8 },
+      view: { get: () => this.heightFactor * 60 },
       perception: { get: () => this.ability.wisdom },
 
-      healthMax: { get: () => (this.level * ((this.ability.constitution / 2) + this.ability.strength.modifier).clamp(0)) + this.ability.strength },
+      healthMax: { get: () => (this.sizeModifierFactor * this.ability.constitution) + (this.level * (this.ability.constitution / 2)) },
 
-      regenMax: { value: 10 },
+      regenMax: { get: () => 15 - (this.ability.constitution / 2) },
 
-      energyMax: { get: () => Math.max(10 * this.stat.speed, 50) },
+      energyMax: { get: () => (10 * this.stat.speed).clamp(50) },
 
-      speed: { get: () => (this.ability.dexterity / 2) + 1 },
-      stealth: { get: () => this.ability.dexterity },
-      evade: { get: () => this.ability.dexterity / 2 },
+      speed: { get: () => this.ability.dexterity / 2 },
+      stealth: { get: () => this.ability.dexterity - (4 * this.sizeModifier) },
+      evade: { get: () => (this.ability.dexterity / 2) - (2 * this.sizeModifier) },
 
       critical: { get: () => this.ability.luck / 200 },
-      strikingAttack: { get: () => this.ability.strength },
+      physicalAttack: { get: () => (this.sizeModifierFactor * ((this.ability.strength / 2) - 4)).clamp(1) },
 
-      physicalDefense: { get: () => this.ability.strength / 2 }
+      physicalDefense: { get: () => this.ability.constitution / 4 },
+      tolerance: { get: () => this.stat.healthMax / 2 }
     });
-    this.#stat = new Proxy({}, {
-      get: (target, stat) => {
-        let statType;
-        let statGroup;
-
-        const [type, suffix] = stat.split(new RegExp(`(${Stat.types.join("|")})`, "g"));
-        if (suffix) {
-          statType = suffix.toLowerCase();
-
-          const group = ["physical", "elemental", "magical"].find((g) => Type[g].includes(type));
-          if (group) {
-            statGroup = `${group}${suffix}`;
-          }
-        }
-
-
-        const equipped = [...this.armor, ...this.hand, ...this.side, ...this.accessories];
-
-        let value = this.statBase[stat] ?? this.statBase[statGroup] ?? this.statBase[statType] ?? 0;
-        if (["health", "regen", "energy", "energyOverflow"].includes(stat)) {
-          value = target[stat];
-        }
-
-
-        // factor
-        for (const condition of this.conditions) {
-          value *= condition?.effect.statFactor?.[stat] ?? 1.0;
-        }
-
-        // flat
-        for (const item of equipped) {
-          const ability = (this.ability?.[item.scaleAbility] ?? 0) - item.scaleMin;
-          const scaleFactor = 1 + (0.02 * ability.clamp(0, item.scaleMax));
-
-          const base = item.statBase?.[stat] ?? 0;
-          const quality = item.qualityFactor * (item.statQuality?.[stat] ?? 0);
-          const scale = scaleFactor * (item.statScale?.[stat] ?? 0);
-
-          value += (base + quality + scale);
-        }
-        for (const condition of this.conditions) {
-          value += condition?.effect.stat?.[stat] ?? 0;
-        }
-
-
-        // round
-        if (["critical"].includes(stat) || ["resist"].includes(statType)) {
-          value = value.round(0.01);
-        }
-        else {
-          value = value.round();
-        }
-
-        return value;
-      },
-      set: (target, stat, value) => {
-        if (["health", "regen"].includes(stat)) {
-          const statMax = `${stat}Max`;
-
-          target[stat] = value.clamp(0, this.stat[statMax]);
-
-          return true;
-        }
-        if (["energy"].includes(stat)) {
-          const statMax = `${stat}Max`;
-          const statOverflow = `${stat}Overflow`;
-
-          target[stat] = value.clamp(0, this.stat[statMax]);
-          target[statOverflow] += (value - this.stat[statMax]).clamp(0);
-
-          return true;
-        }
-        if (["energyOverflow"].includes(stat)) {
-          target[stat] = value.clamp(0);
-
-          return true;
-        }
-        return false;
-      }
-    });
+    this.#stat = new Proxy(new Stat(0), statHandler(this));
 
     this.#armor = new Slot(Armor);
     this.#hand = new Slot(Item);
@@ -264,12 +296,6 @@ const Mob = class extends Entity {
 
 
   /** @type {number} */
-  get sizeMod () {
-    return (this.dimensionMax / 6);
-  }
-
-
-  /** @type {number} */
   get weight () {
     let weight = super.weight;
 
@@ -283,11 +309,8 @@ const Mob = class extends Entity {
   }
 
   /** @type {number} */
-  get weightMod () {
-    const use = (this.weight - super.weight);
-    const useFactor = (use / this.stat.weightMax);
-
-    return 1 - (useFactor / 2);
+  get weightFactor () {
+    return (this.weight - super.weight) / this.stat.weightMax;
   }
 
 
@@ -309,21 +332,29 @@ const Mob = class extends Entity {
   /** @type {number} */
   get experience () { return this.#experience; }
   set experience (experience) {
-    this.#experience += experience;
+    const current = this.experience;
+    if (experience <= current) return;
 
-    let next = Infinity;
-    do {
-      next = 5 * (this.level + 1);
-      if (this.experience >= next) {
-        this.#level++;
-        this.#experience -= next;
-      }
-    } while (this.experience >= next);
+    const next = experienceCumulative(this.level + 1);
+    if (experience >= next) {
+      this.#level++;
+      this.experience = experience;
+    }
+    else {
+      this.#experience = experience;
+    }
   }
 
   /** @type {number} */
   get level () { return this.#level; }
-  set level (level) { this.#level = level; }
+  set level (level) {
+    const min = experienceCumulative(level);
+    this.experience = this.experience.clamp(min);
+  }
+
+
+  /** @type {Memories} */
+  get memories () { return this.#memories; }
 
 
   /** @type {Ability<number>} */
@@ -581,8 +612,8 @@ const Mob = class extends Entity {
     fromJSON(json, this, "looking", reviver?.looking);
     fromJSON(json, this, "facing", reviver?.facing);
 
+    this.#level = fromJSON(json, this, "level", reviver?.level);
     this.experience = fromJSON(json, this, "experience", reviver?.experience);
-    this.level = fromJSON(json, this, "level", reviver?.level);
 
     fromJSON(json, this, "abilityBase", reviver?.abilityBase);
 

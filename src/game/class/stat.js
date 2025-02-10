@@ -92,6 +92,27 @@ const Stat = class {
     Object.assignGettersAsEnumerable(this, Stat);
   }
 
+  /**
+   * @param {string} stat
+   * @returns {string[]} [universal, group, stat]
+   */
+  static type (stat) {
+    let universal;
+    let group;
+
+    const [type, suffix] = stat.split(new RegExp(`(${Stat.types.join("|")})`, "g"));
+    if (suffix) {
+      universal = suffix.toLowerCase();
+
+      const typeGroup = Type.groups.find((g) => Type[g].includes(type));
+      if (typeGroup) {
+        group = `${typeGroup}${suffix}`;
+      }
+    }
+
+    return [universal, group, stat];
+  }
+
 
   /** @type {number} */
   get weightMax () { return this.#weightMax; }
@@ -283,7 +304,7 @@ const Stat = class {
     this.perception = fromJSON(json, this, "perception", reviver?.perception);
 
     this.healthMax = fromJSON(json, this, "healthMax", reviver?.healthMax);
-    this.healh = fromJSON(json, this, "healh", reviver?.healh);
+    this.health = fromJSON(json, this, "health", reviver?.health);
 
     this.regenMax = fromJSON(json, this, "regenMax", reviver?.regenMax);
     this.regen = fromJSON(json, this, "regen", reviver?.regen);
@@ -322,7 +343,7 @@ const Stat = class {
     json.perception = toJSON(this, "perception", replacer?.perception);
 
     json.healthMax = toJSON(this, "healthMax", replacer?.healthMax);
-    json.healh = toJSON(this, "healh", replacer?.healh);
+    json.health = toJSON(this, "health", replacer?.health);
 
     json.regenMax = toJSON(this, "regenMax", replacer?.regenMax);
     json.regen = toJSON(this, "regen", replacer?.regen);

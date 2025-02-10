@@ -1,6 +1,24 @@
 import { fromJSON, toJSON } from "@kxirk/serialize";
-import { Object } from "@kxirk/utils";
+import "@kxirk/utils/number.js";
+import Object from "@kxirk/utils/object.js";
 
+
+/**
+ * @param {number} score
+ * @returns {number}
+ */
+export const costScore = (score) => (Math.floor((score - 4) / 10) + 1).clamp(1);
+
+/**
+ * @param {number} score
+ * @returns {number}
+ */
+export const cost = (score) => {
+  const base = score - 8;
+  const next = costScore(score + 1);
+
+  return (base * next) + (5 * (-(next ** 2) + (2 * next) - 1));
+};
 
 const Ability = class {
   /** @type {*} */

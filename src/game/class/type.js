@@ -4,6 +4,9 @@ import { Object } from "@kxirk/utils";
 
 const Type = class {
   /** @type {string[]} */
+  static groups = ["physical", "elemental", "magical"];
+
+  /** @type {string[]} */
   static physical = ["striking", "slashing", "piercing"];
   /** @type {*} */
   #striking;
