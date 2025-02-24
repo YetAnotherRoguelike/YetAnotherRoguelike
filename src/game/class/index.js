@@ -27,4 +27,5 @@ export { default as Tick } from "./tick.js";
 export { default as TickQueue } from "./tick-queue.js";
 export { default as Tile } from "./tile.js";
 export { default as Type } from "./type.js";
+export { default as Vital } from "./vital.js";
 export { default as Weapon } from "./weapon.js";

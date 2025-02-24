@@ -7,7 +7,7 @@ import Type from "./type.js";
 
 const Stat = class {
   /** @type {string[]} */
-  static types = ["Attack", "Resist", "Defense", "Buildup", "Tolerance"];
+  static types = ["Attack", "Resist", "Defense", "Tolerance"];
 
   /** @type {number} */
   #weightMax; // lbs
@@ -19,20 +19,12 @@ const Stat = class {
 
   /** @type {number} */
   #healthMax;
-  /** @type {number} */
-  #health;
 
   /** @type {number} */
   #regenMax; // turns to regen 1 health
-  /** @type {number} */
-  #regen; // reset on taking damage
 
   /** @type {number} */
   #energyMax;
-  /** @type {number} */
-  #energy;
-  /** @type {number} */
-  #energyOverflow;
 
   /** @type {number} */
   #speed; // ft/turn
@@ -50,9 +42,6 @@ const Stat = class {
   #resist; // % type reduction: weak (-Infinity, 0.0), neutral [0.0], resist (0.0, 1.0), immune [1.0], absorb (1.0, Infinity)
   /** @type {Type<number>} */
   #defense;
-
-  /** @type {Type<number>} */
-  #buildup; // damage sustained before applying type-specific condition
   /** @type {Type<number>} */
   #tolerance; // buildup threshold
 
@@ -66,14 +55,10 @@ const Stat = class {
     this.perception = initial;
 
     this.healthMax = initial;
-    this.health = initial;
 
     this.regenMax = initial;
-    this.regen = initial;
 
     this.energyMax = initial;
-    this.energy = initial;
-    this.energyOverflow = initial;
 
     this.speed = initial;
     this.stealth = initial;
@@ -84,8 +69,6 @@ const Stat = class {
 
     this.#resist = new Type(initial); Object.assignGettersSettersAs(this, this.#resist, (type) => `${type}Resist`);
     this.#defense = new Type(initial); Object.assignGettersSettersAs(this, this.#defense, (type) => `${type}Defense`);
-
-    this.#buildup = new Type(initial); Object.assignGettersSettersAs(this, this.#buildup, (type) => `${type}Buildup`);
     this.#tolerance = new Type(initial); Object.assignGettersSettersAs(this, this.#tolerance, (type) => `${type}Tolerance`);
 
 
@@ -94,7 +77,10 @@ const Stat = class {
 
   /**
    * @param {string} stat
-   * @returns {string[]} [universal, group, stat]
+   * @typedef {string} universal
+   * @typedef {string} group
+   * @typedef {string} stat
+   * @returns {[universal, group, stat]}
    */
   static type (stat) {
     let universal;
@@ -140,12 +126,6 @@ const Stat = class {
     this.#healthMax = healthMax.clamp(0);
   }
 
-  /** @type {number} */
-  get health () { return this.#health; }
-  set health (health) {
-    this.#health = health.clamp(0);
-  }
-
 
   /** @type {number} */
   get regenMax () { return this.#regenMax; }
@@ -153,29 +133,11 @@ const Stat = class {
     this.#regenMax = regenMax.clamp(0);
   }
 
-  /** @type {number} */
-  get regen () { return this.#regen; }
-  set regen (regen) {
-    this.#regen = regen.clamp(0);
-  }
-
 
   /** @type {number} */
   get energyMax () { return this.#energyMax; }
   set energyMax (energyMax) {
     this.#energyMax = energyMax.clamp(0);
-  }
-
-  /** @type {number} */
-  get energy () { return this.#energy; }
-  set energy (energy) {
-    this.#energy = energy.clamp(0);
-  }
-
-  /** @type {number} */
-  get energyOverflow () { return this.#energyOverflow; }
-  set energyOverflow (energy) {
-    this.#energyOverflow = energy.clamp(0);
   }
 
 
@@ -204,6 +166,12 @@ const Stat = class {
     this.#critical = critical.clamp(0.0, 1.0);
   }
 
+  /** @type {Type} */
+  get attack () { return this.#attack; }
+  /** @type {number} */
+  set attack (attack) {
+    this.#attack.all = attack.clamp(0);
+  }
   /** @type {number} */
   set physicalAttack (physicalAttack) {
     this.#attack.physical = physicalAttack.clamp(0);
@@ -216,12 +184,14 @@ const Stat = class {
   set magicalAttack (magicalAttack) {
     this.#attack.magical = magicalAttack.clamp(0);
   }
+
+
+  /** @type {Type} */
+  get resist () { return this.#resist; }
   /** @type {number} */
-  set attack (attack) {
-    this.#attack.all = attack.clamp(0);
+  set resist (resist) {
+    this.#resist.all = resist;
   }
-
-
   /** @type {number} */
   set physicalResist (physicalResist) {
     this.#resist.physical = physicalResist;
@@ -234,11 +204,13 @@ const Stat = class {
   set magicalResist (magicalResist) {
     this.#resist.magical = magicalResist;
   }
-  /** @type {number} */
-  set resist (resist) {
-    this.#resist.all = resist;
-  }
 
+  /** @type {Type} */
+  get defense () { return this.#defense; }
+  /** @type {number} */
+  set defense (defense) {
+    this.#defense.all = defense.clamp(0);
+  }
   /** @type {number} */
   set physicalDefense (physicalDefense) {
     this.#defense.physical = physicalDefense.clamp(0);
@@ -251,29 +223,13 @@ const Stat = class {
   set magicalDefense (magicalDefense) {
     this.#defense.magical = magicalDefense.clamp(0);
   }
-  /** @type {number} */
-  set defense (defense) {
-    this.#defense.all = defense.clamp(0);
-  }
 
-
+  /** @type {Type} */
+  get tolerance () { return this.#tolerance; }
   /** @type {number} */
-  set physicalBuildup (physicalBuildup) {
-    this.#buildup.physical = physicalBuildup.clamp(0);
+  set tolerance (tolerance) {
+    this.#tolerance.all = tolerance.clamp(0);
   }
-  /** @type {number} */
-  set elementalBuildup (elementalBuildup) {
-    this.#buildup.elemental = elementalBuildup.clamp(0);
-  }
-  /** @type {number} */
-  set magicalBuildup (magicalBuildup) {
-    this.#buildup.magical = magicalBuildup.clamp(0);
-  }
-  /** @type {number} */
-  set buildup (buildup) {
-    this.#buildup.all = buildup.clamp(0);
-  }
-
   /** @type {number} */
   set physicalTolerance (physicalTolerance) {
     this.#tolerance.physical = physicalTolerance.clamp(0);
@@ -285,10 +241,6 @@ const Stat = class {
   /** @type {number} */
   set magicalTolerance (magicalTolerance) {
     this.#tolerance.magical = magicalTolerance.clamp(0);
-  }
-  /** @type {number} */
-  set tolerance (tolerance) {
-    this.#tolerance.all = tolerance.clamp(0);
   }
 
 
@@ -304,14 +256,10 @@ const Stat = class {
     this.perception = fromJSON(json, this, "perception", reviver?.perception);
 
     this.healthMax = fromJSON(json, this, "healthMax", reviver?.healthMax);
-    this.health = fromJSON(json, this, "health", reviver?.health);
 
     this.regenMax = fromJSON(json, this, "regenMax", reviver?.regenMax);
-    this.regen = fromJSON(json, this, "regen", reviver?.regen);
 
     this.energyMax = fromJSON(json, this, "energyMax", reviver?.energyMax);
-    this.energy = fromJSON(json, this, "energy", reviver?.energy);
-    this.energyOverflow = fromJSON(json, this, "energyOverflow", reviver?.energyOverflow);
 
     this.speed = fromJSON(json, this, "speed", reviver?.speed);
     this.stealth = fromJSON(json, this, "stealth", reviver?.stealth);
@@ -322,8 +270,6 @@ const Stat = class {
 
     fromJSON(json, this, "resist", reviver?.resist);
     fromJSON(json, this, "defense", reviver?.defense);
-
-    fromJSON(json, this, "buildup", reviver?.buildup);
     fromJSON(json, this, "tolerance", reviver?.tolerance);
 
     return this;
@@ -343,14 +289,10 @@ const Stat = class {
     json.perception = toJSON(this, "perception", replacer?.perception);
 
     json.healthMax = toJSON(this, "healthMax", replacer?.healthMax);
-    json.health = toJSON(this, "health", replacer?.health);
 
     json.regenMax = toJSON(this, "regenMax", replacer?.regenMax);
-    json.regen = toJSON(this, "regen", replacer?.regen);
 
     json.energyMax = toJSON(this, "energyMax", replacer?.energyMax);
-    json.energy = toJSON(this, "energy", replacer?.energy);
-    json.energyOverflow = toJSON(this, "energyOverflow", replacer?.energyOverflow);
 
     json.speed = toJSON(this, "speed", replacer?.speed);
     json.stealth = toJSON(this, "stealth", replacer?.stealth);
@@ -361,8 +303,6 @@ const Stat = class {
 
     json.resist = toJSON(this, "resist", replacer?.resist);
     json.defense = toJSON(this, "defense", replacer?.defense);
-
-    json.buildup = toJSON(this, "buildup", replacer?.buildup);
     json.tolerance = toJSON(this, "tolerance", replacer?.tolerance);
 
     return json;

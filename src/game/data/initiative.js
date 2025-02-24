@@ -5,7 +5,7 @@ import { Mob } from "@yetanotherroguelike/class";
 
 
 /** @type {PriorityQueue<Mob>} */
-const initiative = new PriorityQueue((a, b) => ((a.stat.energy + a.stat.energyOverflow) > (b.stat.energy + b.stat.energyOverflow)));
+const initiative = new PriorityQueue((a, b) => ((a.vital.energy + a.vital.energyOverflow) > (b.vital.energy + b.vital.energyOverflow)));
 export default initiative;
 
 Object.defineProperty(initiative, "fromJSON", {

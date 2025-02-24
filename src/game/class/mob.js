@@ -16,6 +16,7 @@ import Slot from "./slot.js";
 import Stat from "./stat.js";
 import Tick from "./tick.js";
 import Type from "./type.js";
+import Vital from "./vital.js";
 
 
 /**
@@ -93,9 +94,6 @@ export const statHandler = (mob) => ({
     const [statUniversal, statGroup] = Stat.type(stat);
 
     let value = mob.statBase[stat] ?? mob.statBase[statGroup] ?? mob.statBase[statUniversal] ?? 0;
-    if (["health", "regen", "energy", "energyOverflow"].includes(stat) || statUniversal === "buildup") {
-      value = target[stat];
-    }
 
 
     // factor
@@ -130,6 +128,23 @@ export const statHandler = (mob) => ({
     }
 
     return value;
+  }
+});
+
+/**
+ * @param {Mob} mob
+ * @returns {ProxyHandler<Vital>}
+ */
+export const vitalHandler = (mob) => ({
+  /**
+   * @param {Vital} target
+   * @param {string} proficiency
+   * @returns {number}
+   */
+  get (target, vital) {
+    const value = target[vital];
+
+    return value;
   },
   /**
    * @param {Stat} target
@@ -137,30 +152,25 @@ export const statHandler = (mob) => ({
    * @param {number} value
    * @returns {boolean}
    */
-  set (target, stat, value) {
-    const [statUniversal] = Stat.type(stat);
-    let statMax;
-    let statOverflow;
+  set (target, vital, value) {
+    const [vitalUniversal] = Vital.type(vital);
+    const vitalMax = `${vital}Max`;
+    const vitalOverflow = `${vital}Overflow`;
 
 
-    if (["health", "regen"].includes(stat)) {
-      statMax = `${stat}Max`;
-
-      target[stat] = value.clamp(0, mob.stat[statMax]);
+    if (["health", "regen"].includes(vital)) {
+      target[vital] = value.clamp(0, mob.stat[vitalMax]);
 
       return true;
     }
-    if (["energy"].includes(stat)) {
-      statMax = `${stat}Max`;
-      statOverflow = `${stat}Overflow`;
-
-      target[stat] = value.clamp(0, mob.stat[statMax]);
-      target[statOverflow] += (value - mob.stat[statMax]).clamp(0);
+    if (["energy"].includes(vital)) {
+      target[vital] = value.clamp(0, mob.stat[vitalMax]);
+      target[vitalOverflow] += (value - mob.stat[vitalMax]).clamp(0);
 
       return true;
     }
-    if (["energyOverflow"].includes(stat) || statUniversal === "buildup") {
-      target[stat] = value.clamp(0);
+    if (["energyOverflow"].includes(vital) || ["buildup"].includes(vitalUniversal)) {
+      target[vital] = value.clamp(0);
 
       return true;
     }
@@ -201,6 +211,9 @@ const Mob = class extends Entity {
   /** @type {Stat} */
   #stat;
 
+  /** @type {Vital} */
+  #vital;
+
   /** @type {Slot<Armor>} */
   #armor;
   /** @type {Slot<Item>} */
@@ -239,8 +252,7 @@ const Mob = class extends Entity {
     this.#proficiencyBase = new Proficiency(0.0);
     this.#proficiency = new Proxy(new Proficiency(0.0), proficiencyHandler(this));
 
-    this.#statBase = new Stat(0);
-    Object.defineProperties(this.statBase, {
+    this.#statBase = Object.defineProperties({}, {
       weightMax: { get: () => this.sizeFactor * 10 * this.ability.strength },
 
       view: { get: () => this.heightFactor * 60 },
@@ -263,6 +275,8 @@ const Mob = class extends Entity {
       tolerance: { get: () => this.stat.healthMax / 2 }
     });
     this.#stat = new Proxy(new Stat(0), statHandler(this));
+
+    this.#vital = new Proxy(new Vital(0), vitalHandler(this));
 
     this.#armor = new Slot(Armor);
     this.#hand = new Slot(Item);
@@ -376,6 +390,10 @@ const Mob = class extends Entity {
 
   /** @type {Stat} */
   get stat () { return this.#stat; }
+
+
+  /** @type {Vital} */
+  get vital () { return this.#vital; }
 
 
   /** @type {Slot<Armor>} */
@@ -517,8 +535,8 @@ const Mob = class extends Entity {
     }
 
     const dealtTotal = Object.values(dealt).reduce((total, type) => total + type, 0);
-    this.stat.health -= dealtTotal;
-    if (dealtTotal > 0) this.stat.regen = this.stat.regenMax;
+    this.vital.health -= dealtTotal;
+    if (dealtTotal > 0) this.vital.regen = this.stat.regenMax;
 
     return dealt;
   }
@@ -533,19 +551,19 @@ const Mob = class extends Entity {
     const dealt = new Type(0);
     for (const [type, value] of Object.entries(buildup)) {
       const tolerence = this.stat[`${type}Tolerence`];
-      const buildupFactor = (max ? tolerence : this.stat[`${type}Buildup`]);
+      const buildupFactor = (max ? tolerence : this.vital[`${type}Buildup`]);
 
       const base = (factor ? (buildupFactor * value) : value);
       const resist = this.stat[`${type}Resist`] * base;
       const total = base - resist;
 
-      this.stat[`${type}Buildup`] += total;
-      if (this.stat[`${type}Buildup`] > tolerence) {
+      this.vital[`${type}Buildup`] += total;
+      if (this.vital[`${type}Buildup`] > tolerence) {
         const BuildupCondition = Condition.buildup.get(type);
         const condition = new BuildupCondition();
 
         this.conditions.add(condition);
-        this.stat[`${type}Buildup`] = 0;
+        this.vital[`${type}Buildup`] = 0;
       }
 
       dealt[type] = total;
@@ -619,6 +637,10 @@ const Mob = class extends Entity {
 
     fromJSON(json, this, "proficiencyBase", reviver?.proficiencyBase);
 
+    fromJSON(json, this, "statBase", reviver?.statBase);
+
+    fromJSON(json, this, "vital", reviver?.vital);
+
     fromJSON(json, this, "armor", reviver?.armor);
     fromJSON(json, this, "hand", reviver?.hand);
     fromJSON(json, this, "side", reviver?.side);
@@ -652,6 +674,10 @@ const Mob = class extends Entity {
     json.abilityBase = toJSON(this, "abilityBase", replacer?.abilityBase);
 
     json.proficiencyBase = toJSON(this, "proficiencyBase", replacer?.proficiencyBase);
+
+    json.statBase = toJSON(this, "statBase", replacer?.statBase);
+
+    json.vital = toJSON(this, "vital", replacer?.vital);
 
     json.armor = toJSON(this, "armor", replacer?.armor);
     json.hand = toJSON(this, "hand", replacer?.hand);
