@@ -44,7 +44,7 @@ const Vital = class {
    * @param {string} vital
    * @typedef {string} universal
    * @typedef {string} group
-   * @typedef {string} stat
+   * @typedef {string} vital
    * @returns {[universal, group, vital]}
    */
   static type (vital) {
