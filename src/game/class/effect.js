@@ -1,5 +1,101 @@
 import { fromJSON, toJSON } from "@kxirk/serialize";
+import "@kxirk/utils/number.js";
 
+import EffectRange from "./effect-range.js";
+
+
+/**
+ * @param {Effect} effect
+ * @returns {ProxyHandler<Object>}
+ */
+export const handler = (effect) => ({
+  /**
+   * @param {Object} target
+   * @param {string} property
+   * @returns {EffectRange}
+   */
+  get (target, property) {
+    return target[property];
+  },
+  /**
+   * @typedef {Object} EffectRangeLike
+   * @property {number} [min]
+   * @property {number} [max]
+   * @property {number} avg
+   */
+  /**
+   * @typedef {number} min
+   * @typedef {number} max
+   * @typedef {number} avg
+   * @typedef {[?min, ?max, ?avg]} EffectRangeOrdered
+   */
+  /**
+   * @param {Object} target
+   * @param {string} property
+   * @param {EffectRange | EffectRangeLike | EffectRangeOrdered | Number | number} value
+   * @returns {boolean}
+   */
+  set (target, property, value) {
+    target[property] ??= new EffectRange();
+
+    if (value instanceof EffectRange) {
+      target[property] = value;
+
+      return true;
+    }
+    if (value instanceof Array) {
+      target[property].set(...value);
+
+      return true;
+    }
+    if (value instanceof Number) {
+      target[property].min = undefined;
+      target[property].avg = value.valueOf();
+      target[property].max = undefined;
+
+      return true;
+    }
+    if (value instanceof Object) {
+      target[property].set(value.min, value.max, value.avg);
+
+      return true;
+    }
+    if (Number.isFinite(value)) {
+      target[property].min = undefined;
+      target[property].avg = value;
+      target[property].max = undefined;
+
+      return true;
+    }
+
+    return false;
+  }
+});
+
+/**
+ * @param {Effect} effect
+ * @returns {ProxyHandler<Effect>}
+ */
+export const critical = (effect) => ({
+  /**
+   * @param {Effect} target
+   * @param {string} property
+   * @returns {Object}
+   */
+  get (target, property) {
+    if (["damage", "buildup"].includes(property)) {
+      const base = target[property];
+      const crit = {};
+      for (const [type, value] of Object.entries(base)) {
+        crit[type] = (value.max ?? value.avg) + value;
+      }
+
+      return crit;
+    }
+
+    return target[property];
+  }
+});
 
 /** @abstract */
 const Effect = class {
@@ -30,20 +126,20 @@ const Effect = class {
   #buildupFactorMax;
 
   constructor () {
-    this.#ability = {};
-    this.#abilityFactor = {};
+    this.#ability = new Proxy({}, handler(this));
+    this.#abilityFactor = new Proxy({}, handler(this));
 
-    this.#stat = {};
-    this.#statFactor = {};
-    this.#statFactorMax = {};
+    this.#stat = new Proxy({}, handler(this));
+    this.#statFactor = new Proxy({}, handler(this));
+    this.#statFactorMax = new Proxy({}, handler(this));
 
-    this.#damage = {};
-    this.#damageFactor = {};
-    this.#damageFactorMax = {};
+    this.#damage = new Proxy({}, handler(this));
+    this.#damageFactor = new Proxy({}, handler(this));
+    this.#damageFactorMax = new Proxy({}, handler(this));
 
-    this.#buildup = {};
-    this.#buildupFactor = {};
-    this.#buildupFactorMax = {};
+    this.#buildup = new Proxy({}, handler(this));
+    this.#buildupFactor = new Proxy({}, handler(this));
+    this.#buildupFactorMax = new Proxy({}, handler(this));
   }
 
   /**
@@ -100,6 +196,10 @@ const Effect = class {
 
   /** @type {Type} */
   get buildupFactorMax () { return this.#buildupFactorMax; }
+
+
+  /** @type {Effect} */
+  get critical () { return new Proxy(this, critical(this)); }
 
 
   /**

@@ -1,3 +1,4 @@
+import Random from "@kxirk/random";
 import "@kxirk/utils/array.js";
 import Math from "@kxirk/utils/math.js";
 import "@kxirk/utils/number.js";
@@ -10,7 +11,7 @@ import { line } from "./fov.js";
 
 /**
  * @param {Entity} entity
- * @param {Effect|Condition} effect
+ * @param {Effect | Condition} effect
  * @returns {boolean}
  */
 export const applyEffect = (entity, effect) => {
@@ -32,7 +33,7 @@ export const applyEffect = (entity, effect) => {
  * @param {Tile[][][]} depths
  * @param {Mob} user
  * @param {Action} action
- * @param {Entity|Point} target
+ * @param {Entity | Point} target
  * @returns {Entity[]}
  */
 export const act = (depths, user, action, target) => {
@@ -73,14 +74,19 @@ export const act = (depths, user, action, target) => {
     const occupancies = pointsAdjacent(entity.at, Math.SQRT2, true).map((point) => tileAt(depths[entity.at.z], point).occupancy.clamp(0, 1));
     const moveFactor = 1 - Math.average(...occupancies);
 
-    if (Math.random() <= (evadeFactor * moveFactor)) continue;
+    if (Random.shared.next() <= (evadeFactor * moveFactor)) continue;
     hit.push(entity);
 
 
-    // critical
-
-    applyEffect(entity, action.target); entity.turn.push(action);
-    applyEffect(user, action.user);
+    if (Random.shared.next() <= (action.criticalFactor * user.stat.critical)) {
+      applyEffect(entity, action.target.critical);
+      applyEffect(user, action.user.critical);
+    }
+    else {
+      applyEffect(entity, action.target);
+      applyEffect(user, action.user);
+    }
+    entity.turn.push(action);
   }
 
   applyEffect(user, action.userAfter);

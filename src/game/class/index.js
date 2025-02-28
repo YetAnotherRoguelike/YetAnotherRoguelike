@@ -8,6 +8,7 @@ export { default as Condition } from "./condition.js";
 export { default as Conditions } from "./conditions.js";
 export { default as Decoration } from "./decoration.js";
 export { default as Effect } from "./effect.js";
+export { default as EffectRange } from "./effect-range.js";
 export { default as Entity } from "./entity.js";
 export { default as Equip } from "./equip.js";
 export { default as Gear } from "./gear.js";

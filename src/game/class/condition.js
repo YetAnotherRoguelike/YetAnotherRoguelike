@@ -3,12 +3,13 @@ import "@kxirk/utils/number.js";
 
 import Entity from "./entity.js";
 import Effect from "./effect.js";
+import Type from "./type.js";
 
 
 /** @abstract */
 const Condition = class extends Entity {
-  /** @type {Map<keyof Type, Condition>} */
-  static buildup = new Map();
+  /** @type {Type<Condition>} */
+  static buildup = new Type();
 
   /** @type {Effect} */
   #effect;

@@ -28,6 +28,9 @@ const Action = class {
   /** @type {Accuracy} */
   #accuracy;
 
+  /** @type {number} */
+  #criticalFactor;
+
   constructor () {
     this.#userBefore = null;
     this.#target = null;
@@ -40,6 +43,8 @@ const Action = class {
     this.range = 0;
     this.radius = 0;
     this.accuracy = Accuracy.standard;
+
+    this.criticalFactor = 1.0;
   }
 
   /**
@@ -108,6 +113,13 @@ const Action = class {
   set accuracy (accuracy) { this.#accuracy = accuracy; }
 
 
+  /** @type {number} */
+  get criticalFactor () { return this.#criticalFactor; }
+  set criticalFactor (factor) {
+    this.#criticalFactor = factor.clamp(0.0);
+  }
+
+
   /**
    * @param {Object} json
    * @param {Function} [reviver]
@@ -124,6 +136,8 @@ const Action = class {
     this.speed = fromJSON(json, this, "speed", reviver?.speed);
     this.range = fromJSON(json, this, "range", reviver?.range);
     this.radius = fromJSON(json, this, "radius", reviver?.radius);
+
+    this.criticalFactor = fromJSON(json, this, "criticalFactor", reviver?.criticalFactor);
 
     return this;
   }
@@ -147,6 +161,8 @@ const Action = class {
     json.speed = toJSON(this, "speed", replacer?.speed);
     json.range = toJSON(this, "range", replacer?.range);
     json.radius = toJSON(this, "radius", replacer?.radius);
+
+    json.criticalFactor = toJSON(this, "criticalFactor", replacer?.criticalFactor);
 
     return json;
   }

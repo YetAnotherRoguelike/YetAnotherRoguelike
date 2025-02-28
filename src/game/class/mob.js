@@ -120,7 +120,7 @@ export const statHandler = (mob) => ({
 
 
     // round
-    if (["critical"].includes(stat) || statUniversal === "resist") {
+    if (["critical"].includes(stat) || ["resist"].includes(statUniversal)) {
       value = value.round(0.01);
     }
     else {
@@ -559,7 +559,7 @@ const Mob = class extends Entity {
 
       this.vital[`${type}Buildup`] += total;
       if (this.vital[`${type}Buildup`] > tolerence) {
-        const BuildupCondition = Condition.buildup.get(type);
+        const BuildupCondition = Condition.buildup[type];
         const condition = new BuildupCondition();
 
         this.conditions.add(condition);
