@@ -159,18 +159,18 @@ export const vitalHandler = (mob) => ({
 
 
     if (["health", "regen"].includes(vital)) {
-      target[vital] = value.clamp(0, mob.stat[vitalMax]);
+      target[vital] = value.clamp(0, mob.stat[vitalMax]).round();
 
       return true;
     }
     if (["energy"].includes(vital)) {
-      target[vital] = value.clamp(0, mob.stat[vitalMax]);
-      target[vitalOverflow] += (value - mob.stat[vitalMax]).clamp(0);
+      target[vital] = value.clamp(0, mob.stat[vitalMax]).round();
+      target[vitalOverflow] += (value - mob.stat[vitalMax]).clamp(0).round();
 
       return true;
     }
     if (["energyOverflow"].includes(vital) || ["buildup"].includes(vitalUniversal)) {
-      target[vital] = value.clamp(0);
+      target[vital] = value.clamp(0).round();
 
       return true;
     }
@@ -524,11 +524,11 @@ const Mob = class extends Entity {
 
     const dealt = new Type(0);
     for (const [type, value] of Object.entries(damage)) {
-      const base = (factor ? (healthFactor * value) : value);
+      const base = (factor ? (healthFactor * value) : value.valueOf());
       const resist = this.stat[`${type}Resist`] * base;
       const defense = this.stat[`${type}Defense`];
 
-      let total = base - resist;
+      let total = (base - resist).round();
       if (total > 0) total -= defense.clamp(0, total);
 
       dealt[type] = total;
@@ -553,9 +553,9 @@ const Mob = class extends Entity {
       const tolerence = this.stat[`${type}Tolerence`];
       const buildupFactor = (max ? tolerence : this.vital[`${type}Buildup`]);
 
-      const base = (factor ? (buildupFactor * value) : value);
+      const base = (factor ? (buildupFactor * value) : value.valueOf());
       const resist = this.stat[`${type}Resist`] * base;
-      const total = base - resist;
+      const total = (base - resist).round();
 
       this.vital[`${type}Buildup`] += total;
       if (this.vital[`${type}Buildup`] > tolerence) {
@@ -577,21 +577,6 @@ const Mob = class extends Entity {
    * @returns {Object} result
    */
   effect (effect) {
-    const statTotal = {
-      health: 0,
-      regen: 0,
-      energy: 0
-    };
-    for (const stat of Object.keys(statTotal)) {
-      const base = (effect.stat[stat] ?? 0);
-      const factor = this.stat[stat] * (effect.statFactor[stat] ?? 0);
-      const factorMax = this.stat[`${stat}Max`] * (effect.statFactorMax[stat] ?? 0);
-      const total = base + factor + factorMax;
-
-      statTotal[stat] = total;
-      this.stat[stat] += total;
-    }
-
     const damage = this.damage(effect.damage);
     const damageFactor = this.damage(effect.damageFactor, true);
     const damageFactorMax = this.damage(effect.damageFactorMax, true, true);

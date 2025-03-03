@@ -43,6 +43,15 @@ const EffectRange = class {
   get avg () { return this.#avg; }
   set avg (avg) { this.#avg = avg; }
 
+  /** @type {number} */
+  get range () {
+    if (Number.isFinite(this.min) && Number.isFinite(this.max)) {
+      return this.max - this.min;
+    }
+
+    return 0;
+  }
+
   /**
    * @param {number} min
    * @param {number} max
@@ -58,10 +67,10 @@ const EffectRange = class {
 
   /** @type {number} */
   valueOf () {
-    if (Number.isFinite(this.min) && Number.isFinite(this.max)) {
-      return Random.shared.nextTriangular(this.min, this.max, this.avg).round();
+    if (this.range > 0) {
+      return Random.shared.nextTriangular(this.min, this.max, this.avg);
     }
-    return this.avg.round();
+    return this.avg;
   }
 
   /** @type {Iterator<number>} */

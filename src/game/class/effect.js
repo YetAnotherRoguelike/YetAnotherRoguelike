@@ -87,7 +87,12 @@ export const critical = (effect) => ({
       const base = target[property];
       const crit = {};
       for (const [type, value] of Object.entries(base)) {
-        crit[type] = (value.max ?? value.avg) + value;
+        if (value.range > 0) {
+          crit[type] = value.avg + value;
+        }
+        else {
+          crit[type] = 2 * value.avg;
+        }
       }
 
       return crit;
