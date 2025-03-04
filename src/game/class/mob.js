@@ -585,16 +585,15 @@ const Mob = class extends Entity {
       return total;
     }, {});
 
-    const buildup = this.buildup(effect.buildup);
+    const buildup = this.buildup({ ...damageTotal, ...effect.buildup });
     const buildupFactor = this.buildup(effect.buildupFactor, true);
     const buildupFactorMax = this.buildup(effect.buildupFactorMax, true, true);
-    const buildupTotal = Object.keys({...buildup, ...buildupFactor, ...buildupFactorMax}).reduce((total, type) => {
+    const buildupTotal = Object.keys({ ...buildup, ...buildupFactor, ...buildupFactorMax }).reduce((total, type) => {
       total[type] = buildup[type] + buildupFactor[type] + buildupFactorMax[type];
       return total;
     }, {});
 
     return {
-      stat: statTotal,
       damage: damageTotal,
       buildup: buildupTotal
     };
