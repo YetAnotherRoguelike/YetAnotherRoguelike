@@ -8,57 +8,36 @@ import { Point } from "@yetanotherroguelike/class";
  * @param {Point} b
  * @returns {number}
  */
-export const pointDistance = (a, b) => Math.sqrt(Math.abs(a.x - b.x) ** 2 + Math.abs(a.y - b.y) ** 2);
+export const pointDistance = (a, b) => Math.sqrt((a.x - b.x) ** 2 + (a.y - b.y) ** 2 + (a.z - b.z) ** 2);
 
 /**
- * @param {Point} start
- * @param {Point} stop
- * @param {boolean} [excludeStart]
- * @returns {Point[]}
+ * @param {Point} point
+ * @param {Point} to
+ * @param {boolean} [relative]
+ * @returns {Point}
  */
-export const pointLine = (start, stop, excludeStart = false) => {
-  const points = [];
+export const pointOffset = (point, to, relative = false) => {
+  const offset = new Point((to.x - point.x), (to.y - point.y), (to.z - point.z));
 
-  let x = start.x; const dx = Math.abs(stop.x - x); const sx = ((x < stop.x) ? 1 : -1);
-  let y = start.y; const dy = Math.abs(stop.y - y); const sy = ((y < stop.y) ? 1 : -1);
+  if (relative) {
+    const distance = pointDistance(point, to);
 
-  let error = (dx - dy);
-  while (true) {
-    points.push(new Point(x, y));
-
-    if (x === stop.x && y === stop.y) break;
-
-    const e2 = (2 * error);
-    if (e2 > -dy) { error -= dy; x += sx; }
-    if (e2 < dx) { error += dx; y += sy; }
+    if (distance === 0) return offset;
+    return new Point((offset.x / distance), (offset.y / distance), (offset.z / distance));
   }
 
-  if (excludeStart) points.shift();
-
-  return points;
+  return offset;
 };
 
-
 /**
- * @param {Point[]} center
- * @param {number} radius
- * @param {boolean} [excludeCenter]
- * @returns {Point[]}
+ * @param {Point} point
+ * @param {Point} to
+ * @returns {Point}
  */
-export const pointsAdjacent = (center, radius, excludeCenter = false) => {
-  const points = [];
+export const pointHeading = (point, to) => {
+  const offset = pointOffset(point, to);
 
-  const r = radius.round();
-  for (let y = -r; y <= r; y++) {
-    for (let x = -r; x <= r; x++) {
-      if (excludeCenter && x === 0 && y === 0) continue;
-
-      const point = new Point((center.x + x), (center.y + y));
-      if (pointDistance(center, point) <= radius) points.push(point);
-    }
-  }
-
-  return points;
+  return new Point(offset.x.clamp(-1, 1), offset.y.clamp(-1, 1), offset.z.clamp(-1, 1));
 };
 
 /**
@@ -74,4 +53,62 @@ export const pointsEqual = (...points) => {
   }
 
   return true;
+};
+
+/**
+ * @param {Point[]} center
+ * @param {number} radius
+ * @param {boolean} [excludeCenter]
+ * @returns {Point[]}
+ */
+export const pointsAdjacent = (center, radius, excludeCenter = false) => {
+  const points = [];
+
+  const r = radius.round();
+  for (let y = -r; y <= r; y++) {
+    for (let x = -r; x <= r; x++) {
+      if (excludeCenter && x === 0 && y === 0) continue;
+
+      const point = new Point((center.x + x), (center.y + y), center.z);
+      if (pointDistance(center, point) <= radius) points.push(point);
+    }
+  }
+
+  return points;
+};
+
+/**
+ * @param {Point} start
+ * @param {Point} stop
+ * @param {boolean} [excludeStart]
+ * @returns {Point[]}
+ */
+export const pointLine = (start, stop, excludeStart = false) => {
+  const points = [];
+
+  let x = start.x; const dx = Math.abs(stop.x - x); const sx = ((x < stop.x) ? 1 : -1);
+  let y = start.y; const dy = Math.abs(stop.y - y); const sy = ((y < stop.y) ? 1 : -1);
+  const z = start.z;
+
+  let error = (dx - dy);
+  while (true) {
+    const point = new Point(x, y, z);
+
+    if (pointsEqual(start, point)) {
+      if (!excludeStart) {
+        points.push(point);
+      }
+    }
+    else {
+      points.push(point);
+    }
+
+    if (x === stop.x && y === stop.y) break;
+
+    const e2 = (2 * error);
+    if (e2 > -dy) { error -= dy; x += sx; }
+    if (e2 < dx) { error += dx; y += sy; }
+  }
+
+  return points;
 };

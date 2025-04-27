@@ -5,6 +5,7 @@ import Ability from "./ability.js";
 import Accessory from "./accessory.js";
 import Action from "./action.js";
 import Armor from "./armor.js";
+import Attack from "./attack.js";
 import Condition from "./condition.js";
 import Conditions from "./conditions.js";
 import Entity from "./entity.js";
@@ -228,6 +229,9 @@ const Mob = class extends Entity {
   /** @type {Conditions} */
   #conditions;
 
+  /** @type {Attack[]} */
+  #attacks;
+
   /** @type {Action[]} */
   #turn;
   /** @type {Function} */
@@ -285,6 +289,8 @@ const Mob = class extends Entity {
     this.#inventory = new Inventory(Item, 5);
 
     this.#conditions = new Conditions();
+
+    this.#attacks = [];
 
     this.#turn = [];
     this.act = null;
@@ -505,6 +511,10 @@ const Mob = class extends Entity {
   }
 
 
+  /** @type {Attack[]} */
+  get attacks () { return this.#attacks; }
+
+
   /** @type {Action[]} */
   get turn () { return this.#turn; }
 
@@ -574,9 +584,11 @@ const Mob = class extends Entity {
 
   /**
    * @param {Effect} effect
-   * @returns {Object} result
+   * @returns {Affect}
    */
   effect (effect) {
+    const affect = {};
+
     const damage = this.damage(effect.damage);
     const damageFactor = this.damage(effect.damageFactor, true);
     const damageFactorMax = this.damage(effect.damageFactorMax, true, true);
@@ -584,6 +596,7 @@ const Mob = class extends Entity {
       total[type] = damage[type] + damageFactor[type] + damageFactorMax[type];
       return total;
     }, {});
+    affect.damage = damageTotal;
 
     const buildup = this.buildup({ ...damageTotal, ...effect.buildup });
     const buildupFactor = this.buildup(effect.buildupFactor, true);
@@ -592,11 +605,9 @@ const Mob = class extends Entity {
       total[type] = buildup[type] + buildupFactor[type] + buildupFactorMax[type];
       return total;
     }, {});
+    affect.buildup = buildupTotal;
 
-    return {
-      damage: damageTotal,
-      buildup: buildupTotal
-    };
+    return affect;
   }
 
 
@@ -633,7 +644,9 @@ const Mob = class extends Entity {
 
     fromJSON(json, this, "conditions", reviver?.conditions);
 
-    fromJSON(json, this, "turn", reviver?.turn);
+    fromJSON(json, this, "attacks", (reviver?.attacks ?? { value: Attack.fromJSON }));
+
+    fromJSON(json, this, "turn", (reviver?.turn ?? { value: Action.fromJSON }));
 
     return this;
   }
@@ -670,6 +683,8 @@ const Mob = class extends Entity {
     json.inventory = toJSON(this, "inventory", replacer?.inventory);
 
     json.conditions = toJSON(this, "conditions", replacer?.conditions);
+
+    json.attacks = toJSON(this, "attacks", replacer?.attacks);
 
     json.turn = toJSON(this, "turn", replacer?.turn);
 

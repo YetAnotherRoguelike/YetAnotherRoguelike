@@ -6,8 +6,38 @@ const Type = class {
   /** @type {string[]} */
   static groups = ["physical", "elemental", "magical"];
 
+  /** @type {string} */
+  static striking = "striking";
+  /** @type {string} */
+  static slashing = "slashing";
+  /** @type {string} */
+  static piercing = "piercing";
   /** @type {string[]} */
-  static physical = ["striking", "slashing", "piercing"];
+  static physical = [this.striking, this.slashing, this.piercing];
+
+  /** @type {string} */
+  static fire = "fire";
+  /** @type {string} */
+  static ice = "ice";
+  /** @type {string} */
+  static lightning = "lightning";
+  /** @type {string[]} */
+  static elemental = [this.fire, this.ice, this.lightning];
+
+  /** @type {string} */
+  static arcane = "arcane";
+  /** @type {string} */
+  static dark = "dark";
+  /** @type {string} */
+  static holy = "holy";
+  /** @type {string[]} */
+  static magical = [this.arcane, this.dark, this.holy];
+
+  /** @type {string} */
+  static bleeding = "bleeding";
+  /** @type {string} */
+  static poison = "poison";
+
   /** @type {*} */
   #striking;
   /** @type {*} */
@@ -15,8 +45,6 @@ const Type = class {
   /** @type {*} */
   #piercing;
 
-  /** @type {string[]} */
-  static elemental = ["fire", "ice", "lightning"];
   /** @type {*} */
   #fire;
   /** @type {*} */
@@ -24,8 +52,6 @@ const Type = class {
   /** @type {*} */
   #lightning;
 
-  /** @type {string[]} */
-  static magical = ["arcane", "dark", "holy"];
   /** @type {*} */
   #arcane;
   /** @type {*} */
@@ -62,9 +88,9 @@ const Type = class {
 
   /** @type {*} */
   set physical (physical) {
-    this.striking = physical;
-    this.slashing = physical;
-    this.piercing = physical;
+    for (const type of Type.physical) {
+      this[type] = physical;
+    }
   }
 
 
@@ -82,9 +108,9 @@ const Type = class {
 
   /** @type {*} */
   set elemental (elemental) {
-    this.fire = elemental;
-    this.ice = elemental;
-    this.lightning = elemental;
+    for (const type of Type.elemental) {
+      this[type] = elemental;
+    }
   }
 
 
@@ -102,9 +128,9 @@ const Type = class {
 
   /** @type {*} */
   set magical (magical) {
-    this.arcane = magical;
-    this.dark = magical;
-    this.holy = magical;
+    for (const type of Type.magical) {
+      this[type] = magical;
+    }
   }
 
 
@@ -115,6 +141,7 @@ const Type = class {
   /** @type {*} */
   get poison () { return this.#poison; }
   set poison (poison) { this.#poison = poison; }
+
 
   /** @type {*} */
   set all (value) {

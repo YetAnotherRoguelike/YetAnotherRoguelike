@@ -34,7 +34,7 @@ const Stat = class {
   #evade;
 
   /** @type {number} */
-  #critical; // % chance to deal additional damage: [0.0, 1.0]
+  #critical; // % chance [0.0, 1.0] to deal additional damage
   /** @type {Type<number>} */
   #attack;
 

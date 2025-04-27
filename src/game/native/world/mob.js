@@ -2,134 +2,143 @@ import Random from "@kxirk/random";
 import "@kxirk/utils/array.js";
 import Math from "@kxirk/utils/math.js";
 import "@kxirk/utils/number.js";
-import { Condition, Effect, Point, Tick } from "@yetanotherroguelike/class";
 
-import { pointDistance, pointLine, pointsAdjacent, pointsEqual } from "./point.js";
-import { tileAt, tileDistance } from "./tile.js";
+import { Point, Tick, Tile } from "@yetanotherroguelike/class";
+import { depths, initiative } from "@yetanotherroguelike/data";
+
+import { pointDistance, pointHeading, pointsEqual, pointsAdjacent, pointLine } from "./point.js";
+import { tileAt, tileDistance, tilesAt, tilesExist } from "./tile.js";
 import { line } from "./fov.js";
+import Target from "../shape/target.js";
+
+
+/**
+ * @param {Tile[]} tiles
+ * @returns {Mob[]}
+ */
+export const mobsOn = (tiles) => tiles.flatMap((tile) => [...tile.mobs]);
+
+/**
+ * @param {Point[]} points
+ * @returns {Mob[]}
+ */
+export const mobsAt = (points) => mobsOn(tilesAt(points));
 
 
 /**
  * @param {Entity} entity
- * @param {Effect | Condition} effect
- * @returns {boolean}
+ * @param {Effect} effect
+ * @returns {Affect}
  */
 export const applyEffect = (entity, effect) => {
-  if (effect instanceof Effect && entity.effect) {
-    entity.effect(effect);
-
-    return true;
-  }
-  if (effect instanceof Condition && entity.conditions) {
-    entity.conditions.add(effect);
-
-    return true;
+  if (entity.effect instanceof Function) {
+    return entity.effect(effect);
   }
 
-  return false;
+  return null;
 };
 
 /**
- * @param {Tile[][][]} depths
  * @param {Mob} user
  * @param {Action} action
  * @param {Entity | Point} target
- * @returns {Entity[]}
+ * @returns {[Entity, Affect][]}
  */
-export const act = (depths, user, action, target) => {
+export const act = (user, action, target) => {
   user.turn.push(action);
   user.vital.energy -= action.energy;
 
 
   const targets = [];
-  const hit = [];
 
-  const origin = (target instanceof Point ? target : user.at);
-  const offset = (target instanceof Point ? 0 : user.reach);
-  const distanceTarget = tileDistance(user.at, target.at ?? target);
-
-  const distanceFactor = action.range / (distanceTarget - offset).clamp(0);
-  if (distanceFactor >= 1.0) {
-    if (action.radius > 0) {
-      const points = pointsAdjacent(target, action.radius);
-      const tiles = points.map((point) => tileAt(depths[target.z], point));
-      const mobs = []; for (const tile of tiles) mobs.push(...tile.mobs.values());
-
-      targets.push(...tiles, ...mobs);
-    }
-    else targets.push(target);
+  if (action.shape instanceof Target) {
+    const entities = action.shape.entities(user, target, user.reach);
+    targets.push(...entities);
   }
-  else return hit;
+  else {
+    const points = action.shape.points(user.at, (target.at ?? target), user.reach);
+    if (action.shape.tiles) targets.push(...tilesAt(points));
+    if (action.shape.mobs) targets.push(...mobsAt(points));
+  }
 
 
-  applyEffect(user, action.userBefore);
+  const affects = [];
 
+  if (action.userBefore) affects.push([user, applyEffect(user, action.userBefore)]);
+
+  const affectPairs = [];
   for (const entity of targets) {
-    const distance = tileDistance(origin, entity.at);
-    const accuracy = action.accuracy(distance - offset);
+    const distance = tileDistance(user.at, entity.at);
+    const accuracy = action.accuracy(distance - user.reach);
 
     const speedFactor = action.speed / (action.speed + (entity.stat?.evade ?? 0));
     const evadeFactor = (1 - speedFactor) / accuracy;
 
-    const occupancies = pointsAdjacent(entity.at, Math.SQRT2, true).map((point) => tileAt(depths[entity.at.z], point).occupancy.clamp(0, 1));
+    const occupancies = tilesAt(tilesExist(pointsAdjacent(entity.at, Math.SQRT2, true))).map((tile) => tile.occupancy.clamp(0, 1));
     const moveFactor = 1 - Math.average(...occupancies);
 
     if (Random.shared.next() <= (evadeFactor * moveFactor)) continue;
-    hit.push(entity);
 
 
-    if (Random.shared.next() <= (action.criticalFactor * user.stat.critical)) {
-      applyEffect(entity, action.target.critical);
-      applyEffect(user, action.user.critical);
+    let effectTarget;
+    let effectUser;
+    let critical = false;
+    if (Random.shared.next() <= (action.critical ?? user.stat.critical)) {
+      effectTarget = action.target?.critical;
+      effectUser = action.user?.critical;
+      critical = true;
     }
-    else {
-      applyEffect(entity, action.target);
-      applyEffect(user, action.user);
+    effectTarget ??= action.target;
+    effectUser ??= action.user;
+
+    const affectTarget = applyEffect(entity, effectTarget);
+    if (affectTarget) {
+      let affectUser;
+      if (action.user) {
+        affectUser = applyEffect(user, (effectUser instanceof Function ? effectUser(affectTarget, critical) : effectUser));
+        affects.push([user, affectUser]);
+      }
+
+      affectPairs.push([affectTarget, affectUser, critical]);
     }
-    entity.turn.push(action);
+
+    entity.turn?.push(action);
+    affects.push([entity, affectTarget]);
   }
 
-  applyEffect(user, action.userAfter);
+  const effectAfter = action.userAfter;
+  if (effectAfter) affects.push([user, applyEffect(user, (effectAfter instanceof Function ? effectAfter(affectPairs) : effectAfter))]);
 
-
-  return hit;
+  return affects;
 };
 
+
 /**
- * @param {Tile[][][]} depths
  * @param {Mob} mob
  * @param {Point} point
  * @returns {boolean}
  */
-export const look = (depths, mob, point) => {
-  const depth = depths[mob.at.z];
+export const look = (mob, point) => {
+  const los = line(mob.at, point, Tile.transparent, true);
+  if (!los.empty) {
+    mob.facing.set(...los.first);
+    mob.looking.set(...los.last);
+  }
 
-  const los = line(depth, mob.at, point, { transparent: true }, true);
-  const facing = los[1] ?? new Point(mob.at.x + 1, mob.at.y, mob.at.z);
-  const last = los.last;
-
-  mob.facing.set(...facing);
-  mob.looking.set(...last);
-
-  if (pointsEqual(last, point)) return true;
-  return false;
+  return pointsEqual(mob.looking, point);
 };
 
 /**
- * @param {Tile[][][]} depths
  * @param {Mob} mob
  * @param {Point} point
  * @returns {boolean}
  */
-export const move = (depths, mob, point) => {
-  const z = mob.at.z; point.z = z;
-  const depth = depths[z];
-
-  const relative = new Point((point.x - mob.at.x), (point.y - mob.at.y), (point.z - mob.at.z));
-
+export const move = (mob, point) => {
   if (pointDistance(mob.at, point) === 1) {
-    const prev = tileAt(depth, mob.at);
-    const tile = tileAt(depth, point);
+    const direction = pointHeading(mob.at, point);
+
+    const prev = tileAt(mob.at);
+    const tile = tileAt(point);
 
     if (tile.walkable && tile.occupancy < 1.0) {
       prev.mobs.delete(mob);
@@ -137,8 +146,8 @@ export const move = (depths, mob, point) => {
       tile.mobs.add(mob);
       mob.at.set(...point);
 
-      const los = pointLine(mob.at, mob.looking);
-      const facing = los[1] ?? new Point((mob.at.x + relative.x), (mob.at.y + relative.y));
+      const los = pointLine(mob.at, mob.looking, true);
+      const facing = los.first ?? new Point((mob.at.x + direction.x), (mob.at.y + direction.y), (mob.at.z + direction.z));
       mob.facing.set(...facing);
 
       return true;
@@ -149,26 +158,22 @@ export const move = (depths, mob, point) => {
 };
 
 /**
- * @param {Tile[][][]} depths
  * @param {Mob} mob
  * @param {Point} at
  * @param {Point} looking
  * @returns {boolean}
  */
-export const place = (depths, mob, at, looking) => {
+export const place = (mob, at, looking) => {
   depths[at.z][at.y][at.x].mobs.add(mob);
 
   mob.at.set(...at);
-  look(depths, mob, looking);
+  look(mob, looking);
 
   return true;
 };
 
-/**
- * @param {PriorityQueue<Mob>} initiative
- * @returns {undefined}
- */
-export const tick = async (initiative) => {
+
+export const tick = async () => {
   const actor = initiative.remove();
   actor.vital.energyOverflow = 0;
   actor.turn.clear();

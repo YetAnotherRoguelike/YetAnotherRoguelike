@@ -3,6 +3,7 @@ import "@kxirk/utils/number.js";
 
 import Accuracy from "./accuracy.js";
 import Effect from "./effect.js";
+import Shape from "./shape.js";
 
 
 /** @abstract */
@@ -21,15 +22,10 @@ const Action = class {
 
   /** @type {number} */
   #speed; // ft
-  /** @type {number} */
-  #range; // ft: self 0, melee (0, 5√2), ranged 5√2+
-  /** @type {number} */
-  #radius; // tiles: entity 0, tile (0, 1), aoe 1+
+  /** @type {Shape} */
+  #shape;
   /** @type {Accuracy} */
   #accuracy;
-
-  /** @type {number} */
-  #criticalFactor;
 
   constructor () {
     this.#userBefore = null;
@@ -40,11 +36,8 @@ const Action = class {
     this.energy = 0;
 
     this.speed = 0;
-    this.range = 0;
-    this.radius = 0;
-    this.accuracy = Accuracy.standard;
-
-    this.criticalFactor = 1.0;
+    this.shape = null;
+    this.accuracy = null;
   }
 
   /**
@@ -96,28 +89,13 @@ const Action = class {
     this.#speed = speed.clamp(0);
   }
 
-  /** @type {number} */
-  get range () { return this.#range; }
-  set range (range) {
-    this.#range = range.clamp(0);
-  }
-
-  /** @type {number} */
-  get radius () { return this.#radius; }
-  set radius (radius) {
-    this.#radius = radius.clamp(0);
-  }
+  /** @type {Shape} */
+  get shape () { return this.#shape; }
+  set shape (shape) { this.#shape = shape; }
 
   /** @type {Accuracy} */
   get accuracy () { return this.#accuracy; }
   set accuracy (accuracy) { this.#accuracy = accuracy; }
-
-
-  /** @type {number} */
-  get criticalFactor () { return this.#criticalFactor; }
-  set criticalFactor (factor) {
-    this.#criticalFactor = factor.clamp(0.0);
-  }
 
 
   /**
@@ -126,18 +104,16 @@ const Action = class {
    * @returns {Action}
    */
   fromJSON (json, reviver) {
-    this.userBefore = fromJSON(json, this, "userBefore", (reviver?.userBefore ?? Effect.fromJSON));
-    this.target = fromJSON(json, this, "target", (reviver?.target ?? Effect.fromJSON));
-    this.user = fromJSON(json, this, "user", (reviver?.user ?? Effect.fromJSON));
-    this.userAfter = fromJSON(json, this, "userAfter", (reviver?.userAfter ?? Effect.fromJSON));
+    if (json.userBefore !== undefined) this.userBefore = fromJSON(json, this, "userBefore", (reviver?.userBefore ?? Effect.fromJSON));
+    if (json.target !== undefined) this.target = fromJSON(json, this, "target", (reviver?.target ?? Effect.fromJSON));
+    if (json.user !== undefined) this.user = fromJSON(json, this, "user", (reviver?.user ?? Effect.fromJSON));
+    if (json.userAfter !== undefined) this.userAfter = fromJSON(json, this, "userAfter", (reviver?.userAfter ?? Effect.fromJSON));
 
     this.energy = fromJSON(json, this, "energy", reviver?.energy);
 
     this.speed = fromJSON(json, this, "speed", reviver?.speed);
-    this.range = fromJSON(json, this, "range", reviver?.range);
-    this.radius = fromJSON(json, this, "radius", reviver?.radius);
-
-    this.criticalFactor = fromJSON(json, this, "criticalFactor", reviver?.criticalFactor);
+    this.shape = fromJSON(json, this, "shape", (reviver?.shape ?? Shape.fromJSON));
+    this.accuracy = fromJSON(json, this, "accuracy", (reviver?.accuracy ?? Accuracy.fromJSON));
 
     return this;
   }
@@ -151,18 +127,16 @@ const Action = class {
     const json = {};
     json.constructor = toJSON(this, "constructor", replacer?.constructor);
 
-    json.userBefore = toJSON(this, "userBefore", replacer?.userBefore);
-    json.target = toJSON(this, "target", replacer?.target);
-    json.user = toJSON(this, "user", replacer?.user);
-    json.userAfter = toJSON(this, "userAfter", replacer?.userAfter);
+    if (this.userBefore !== null) json.userBefore = toJSON(this, "userBefore", replacer?.userBefore);
+    if (this.target !== null) json.target = toJSON(this, "target", replacer?.target);
+    if (this.user !== null) json.user = toJSON(this, "user", replacer?.user);
+    if (this.userAfter !== null) json.userAfter = toJSON(this, "userAfter", replacer?.userAfter);
 
     json.energy = toJSON(this, "energy", replacer?.energy);
 
     json.speed = toJSON(this, "speed", replacer?.speed);
-    json.range = toJSON(this, "range", replacer?.range);
-    json.radius = toJSON(this, "radius", replacer?.radius);
-
-    json.criticalFactor = toJSON(this, "criticalFactor", replacer?.criticalFactor);
+    json.shape = toJSON(this, "shape", replacer?.shape);
+    json.accuracy = toJSON(this, "accuracy", (replacer?.accuracy ?? Accuracy.toJSON));
 
     return json;
   }

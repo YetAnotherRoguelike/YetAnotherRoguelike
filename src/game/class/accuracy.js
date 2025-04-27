@@ -6,6 +6,22 @@
 
 /** @enum {AccuracyFunction} */
 const Accuracy = class {
+  /**
+   * @param {string} json
+   * @returns {AccuracyFunction}
+   */
+  static fromJSON (name) {
+    return Accuracy[name];
+  }
+
+  /**
+   * @returns {string}
+   */
+  static toJSON () {
+    return this.name;
+  }
+
+
   static standard = () => 1;
 
   static guaranteed = () => Infinity;

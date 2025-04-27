@@ -10,11 +10,11 @@ const Point = class {
   #z;
 
   /**
-   * @param {number} [x]
-   * @param {number} [y]
-   * @param {number} [z]
+   * @param {number} x
+   * @param {number} y
+   * @param {number} z
    */
-  constructor (x = 0, y = 0, z = 0) {
+  constructor (x, y, z) {
     this.set(x, y, z);
   }
 
@@ -42,6 +42,7 @@ const Point = class {
     this.y = y ?? this.y;
     this.z = z ?? this.z;
   }
+
 
   /** @type {Iterator<number>} */
   [Symbol.iterator] () {

@@ -83,12 +83,20 @@ export const critical = (effect) => ({
    * @returns {Object}
    */
   get (target, property) {
+    if (["critical"].includes(property)) {
+      return null;
+    }
+
     if (["damage", "buildup"].includes(property)) {
       const base = target[property];
-      const crit = {};
+      const crit = new Proxy({}, handler(this));
       for (const [type, value] of Object.entries(base)) {
         if (value.range > 0) {
-          crit[type] = value.avg + value;
+          crit[type] = new EffectRange(
+            (value.min + value.avg),
+            (value.max + value.avg),
+            (2 * value.avg)
+          );
         }
         else {
           crit[type] = 2 * value.avg;
@@ -104,6 +112,9 @@ export const critical = (effect) => ({
 
 /** @abstract */
 const Effect = class {
+  /** @type {Effect} */
+  #critical;
+
   /** @type {Ability} */
   #ability;
   /** @type {Ability} */
@@ -131,6 +142,8 @@ const Effect = class {
   #buildupFactorMax;
 
   constructor () {
+    this.critical = new Proxy(this, critical(this));
+
     this.#ability = new Proxy({}, handler(this));
     this.#abilityFactor = new Proxy({}, handler(this));
 
@@ -164,6 +177,11 @@ const Effect = class {
   static toJSON (key, replacer) {
     return toJSON(this, "name", replacer?.name);
   }
+
+
+  /** @type {Effect} */
+  get critical () { return this.#critical; }
+  set critical (value) { this.#critical = value; }
 
 
   /** @type {Ability} */
@@ -203,16 +221,14 @@ const Effect = class {
   get buildupFactorMax () { return this.#buildupFactorMax; }
 
 
-  /** @type {Effect} */
-  get critical () { return new Proxy(this, critical(this)); }
-
-
   /**
    * @param {Object} json
    * @param {Function} [reviver]
    * @returns {Effect}
    */
   fromJSON (json, reviver) {
+    fromJSON(json, this, "critical", reviver?.critical);
+
     fromJSON(json, this, "ability", reviver?.ability);
     fromJSON(json, this, "abilityFactor", reviver?.abilityFactor);
 
@@ -239,6 +255,8 @@ const Effect = class {
   toJSON (key, replacer) {
     const json = {};
     json.constructor = toJSON(this, "constructor", replacer?.constructor);
+
+    json.critical = toJSON(this, "critical", replacer?.critical);
 
     json.ability = toJSON(this, "ability", replacer?.ability);
     json.abilityFactor = toJSON(this, "abilityFactor", replacer?.abilityFactor);

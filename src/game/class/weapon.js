@@ -1,12 +1,51 @@
+import { fromJSON, toJSON } from "@kxirk/serialize";
+
+import Attack from "./attack.js";
 import Equip from "./equip.js";
 import Gear from "./gear.js";
 
 
 /** @abstract */
 const Weapon = class extends Gear {
+  /** @type {Attack[]} */
+  #attacks;
+
   constructor () {
     super();
     this.display.push("weapon");
+
+    this.#attacks = [];
+  }
+
+
+  /** @type {Attack[]} */
+  get attacks () { return this.#attacks; }
+
+
+  /**
+   * @param {Object} json
+   * @param {Function} [reviver]
+   * @returns {Weapon}
+   */
+  fromJSON (json, reviver) {
+    super.fromJSON(json, reviver);
+
+    fromJSON(json, this, "attacks", (reviver?.attacks ?? { value: Attack.fromJSON }));
+
+    return this;
+  }
+
+  /**
+   * @param {string} key
+   * @param {Function} [replacer]
+   * @returns {Object}
+   */
+  toJSON (key, replacer) {
+    const json = super.toJSON(key, replacer);
+
+    json.attacks = toJSON(this, "attacks", replacer?.attacks);
+
+    return json;
   }
 };
 export default Weapon;

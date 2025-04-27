@@ -9,7 +9,7 @@ import Type from "./type.js";
 /** @abstract */
 const Condition = class extends Entity {
   /** @type {Type<Condition>} */
-  static buildup = new Type();
+  static buildup = new Type(null);
 
   /** @type {Effect} */
   #effect;

@@ -8,8 +8,22 @@ import Mob from "./mob.js";
 import Point from "./point.js";
 
 
+/**
+ * @typedef {Object} TileProperties
+ * @property {boolean} [destructible]
+ * @property {boolean} [transparent]
+ * @property {boolean} [walkable]
+ */
+
 /** @abstract */
 const Tile = class extends Entity {
+  /** @type {TileProperties} */
+  static destructible = { destructible: true };
+  /** @type {TileProperties} */
+  static transparent = { transparent: true };
+  /** @type {TileProperties} */
+  static walkable = { walkable: true };
+
   /** @type {Point} */
   #at;
 
