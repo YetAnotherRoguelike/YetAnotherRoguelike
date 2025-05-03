@@ -6,7 +6,6 @@ import Accessory from "./accessory.js";
 import Action from "./action.js";
 import Armor from "./armor.js";
 import Attack from "./attack.js";
-import Condition from "./condition.js";
 import Conditions from "./conditions.js";
 import Entity from "./entity.js";
 import Inventory from "./inventory.js";
@@ -226,6 +225,8 @@ const Mob = class extends Entity {
   /** @type {Inventory<Item>} */
   #inventory;
 
+  /** @type {Type<Class<Condition>>} */
+  #condition;
   /** @type {Conditions} */
   #conditions;
 
@@ -288,6 +289,7 @@ const Mob = class extends Entity {
     this.#accessories = new Inventory(Accessory, 2);
     this.#inventory = new Inventory(Item, 5);
 
+    this.#condition = new Type(null);
     this.#conditions = new Conditions();
 
     this.#attacks = [];
@@ -483,6 +485,9 @@ const Mob = class extends Entity {
   }
 
 
+  /** @type {Type<Class<Condition>>} */
+  get condition () { return this.#condition; }
+
   /** @type {Conditions} */
   get conditions () { return this.#conditions; }
 
@@ -569,10 +574,13 @@ const Mob = class extends Entity {
 
       this.vital[`${type}Buildup`] += total;
       if (this.vital[`${type}Buildup`] > tolerence) {
-        const BuildupCondition = Condition.buildup[type];
-        const condition = new BuildupCondition();
+        const BuildupCondition = this.condition[type];
+        if (BuildupCondition) {
+          const condition = new BuildupCondition();
 
-        this.conditions.add(condition);
+          this.conditions.add(condition);
+        }
+
         this.vital[`${type}Buildup`] = 0;
       }
 
@@ -642,6 +650,7 @@ const Mob = class extends Entity {
     fromJSON(json, this, "accessories", reviver?.accessories);
     fromJSON(json, this, "inventory", reviver?.inventory);
 
+    fromJSON(json, this, "condition", reviver?.condition);
     fromJSON(json, this, "conditions", reviver?.conditions);
 
     fromJSON(json, this, "attacks", (reviver?.attacks ?? { value: Attack.fromJSON }));
@@ -682,6 +691,7 @@ const Mob = class extends Entity {
     json.accessories = toJSON(this, "accessories", replacer?.accessories);
     json.inventory = toJSON(this, "inventory", replacer?.inventory);
 
+    json.condition = toJSON(this, "condition", replacer?.condition);
     json.conditions = toJSON(this, "conditions", replacer?.conditions);
 
     json.attacks = toJSON(this, "attacks", replacer?.attacks);

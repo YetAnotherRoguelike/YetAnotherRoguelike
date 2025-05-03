@@ -11,10 +11,11 @@ const Cone = class extends AOE {
 
   /**
    * @param {number} range
+   * @param {number} decay
    * @param {number} [angle]
    */
-  constructor (range, angle = 60) {
-    super(range);
+  constructor (range, decay, angle = 60) {
+    super(range, decay);
 
     this.angle = angle;
   }
@@ -34,7 +35,7 @@ const Cone = class extends AOE {
    * @return {Point[]}
    */
   points (origin, target, offset) {
-    const points = tilesExist(fov(origin, target, this.range, this.angle, (this.collide ? Tile.walkable : {})));
+    const points = tilesExist(fov(origin, target, this.range, this.angle, (this.collide ? Tile.walkable : {}), true));
 
     return points;
   }

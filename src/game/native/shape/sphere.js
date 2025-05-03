@@ -12,11 +12,12 @@ const Sphere = class extends AOE {
   #radius;
 
   /**
+   * @param {number} range
+   * @param {number} decay
    * @param {number} radius
-   * @param {number} [range]
    */
-  constructor (radius, range = Infinity) {
-    super(range);
+  constructor (range, decay, radius) {
+    super(range, decay);
 
     this.radius = radius;
   }

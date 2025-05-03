@@ -3,13 +3,13 @@ import "@kxirk/utils/array.js";
 import Math from "@kxirk/utils/math.js";
 import "@kxirk/utils/number.js";
 
-import { Point, Tick, Tile } from "@yetanotherroguelike/class";
+import { Mob, Point, Tick, Tile } from "@yetanotherroguelike/class";
 import { depths, initiative } from "@yetanotherroguelike/data";
 
-import { pointDistance, pointHeading, pointsEqual, pointsAdjacent, pointLine } from "./point.js";
-import { tileAt, tileDistance, tilesAt, tilesExist } from "./tile.js";
-import { line } from "./fov.js";
 import Target from "../shape/target.js";
+import { pointDistance, pointHeading, pointsEqual, pointsAdjacent, pointLine } from "./point.js";
+import { tileAt, tileDistance, tileMatch, tilesAt, tilesExist, tilesMatch } from "./tile.js";
+import { line } from "./fov.js";
 
 
 /**
@@ -49,7 +49,7 @@ export const act = (user, action, target) => {
   user.vital.energy -= action.energy;
 
 
-  const targets = [];
+  let targets = [];
 
   if (action.shape instanceof Target) {
     const entities = action.shape.entities(user, target, user.reach);
@@ -61,6 +61,8 @@ export const act = (user, action, target) => {
     if (action.shape.mobs) targets.push(...mobsAt(points));
   }
 
+  targets = new Set(targets);
+
 
   const affects = [];
 
@@ -68,28 +70,33 @@ export const act = (user, action, target) => {
 
   const affectPairs = [];
   for (const entity of targets) {
+    let evade = 0;
+    if (entity instanceof Mob) {
+      const occupancies = tilesAt(tilesMatch(tilesExist(pointsAdjacent(entity.at, Math.SQRT2, true)), { walkable: true, not: { has: targets } })).map((tile) => tile.occupancy.clamp(0, 1));
+      const occupancyFactor = 1 - Math.average(...occupancies);
+
+      evade = (occupancyFactor * entity.stat.evade);
+    }
+
     const distance = tileDistance(user.at, entity.at);
-    const accuracy = action.accuracy(distance - user.reach);
+    const accuracy = action.accuracy((distance - user.reach), action.shape.decay);
+    const speedFactor = action.speed / (evade + action.speed);
+    const hit = (speedFactor * accuracy);
 
-    const speedFactor = action.speed / (action.speed + (entity.stat?.evade ?? 0));
-    const evadeFactor = (1 - speedFactor) / accuracy;
-
-    const occupancies = tilesAt(tilesExist(pointsAdjacent(entity.at, Math.SQRT2, true))).map((tile) => tile.occupancy.clamp(0, 1));
-    const moveFactor = 1 - Math.average(...occupancies);
-
-    if (Random.shared.next() <= (evadeFactor * moveFactor)) continue;
+    const proc = Random.shared.next();
+    if (proc >= hit) continue;
 
 
-    let effectTarget;
-    let effectUser;
+    let effectTarget = action.target;
+    let effectUser = action.user;
     let critical = false;
-    if (Random.shared.next() <= (action.critical ?? user.stat.critical)) {
+    const criticalThreshold = (action.critical ?? user.stat.critical);
+    if (proc < criticalThreshold || (1 - speedFactor) < criticalThreshold) {
       effectTarget = action.target?.critical;
       effectUser = action.user?.critical;
       critical = true;
     }
-    effectTarget ??= action.target;
-    effectUser ??= action.user;
+
 
     const affectTarget = applyEffect(entity, effectTarget);
     if (affectTarget) {

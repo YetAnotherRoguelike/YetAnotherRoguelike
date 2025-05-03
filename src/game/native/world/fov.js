@@ -64,11 +64,12 @@ const directionToOctants = (() => {
  * @param {Point} heading
  * @param {number} [radius]
  * @param {number} [angle] degrees
- * @param {TileProperties} properties
+ * @param {TileProperties} [properties]
+ * @param {boolean} [excludeCenter]
  * @param {boolean} [reverse]
  * @returns {Point[]}
  */
-export const fov = (center, heading, radius = Infinity, angle = 210, properties = Tile.transparent, reverse = false) => {
+export const fov = (center, heading, radius = Infinity, angle = 210, properties = Tile.transparent, excludeCenter = false, reverse = false) => {
   const direction = pointHeading(center, heading);
   const arc = Math.ceil(angle / 90);
   const oct = (angle % 90);
@@ -76,7 +77,7 @@ export const fov = (center, heading, radius = Infinity, angle = 210, properties 
   const bevel = 0.375;
 
   const visible = new Points();
-  visible.add(...center);
+  if (!excludeCenter) visible.add(...center);
 
   /**
    * @param {number} y
@@ -138,7 +139,7 @@ export const fov = (center, heading, radius = Infinity, angle = 210, properties 
  * @param {boolean} [excludeFirstException]
  * @returns {Point[]}
  */
-export const line = (start, stop, properties = {}, excludeStart = false, excludeFirstException = false) => {
+export const line = (start, stop, properties = Tile.transparent, excludeStart = false, excludeFirstException = false) => {
   const points = pointLine(start, stop, excludeStart);
   const match = new Set(tilesMatch(points, properties));
 

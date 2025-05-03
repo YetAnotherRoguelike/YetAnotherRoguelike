@@ -1,6 +1,7 @@
 /**
  * @callback AccuracyFunction
  * @param {number} distance ft
+ * @param {number} [decay]
  * @returns {number} [0, 1]
  */
 
@@ -28,11 +29,11 @@ const Accuracy = class {
 
   static melee = (distance) => 5 / distance;
 
-  static ranged = (distance) => {
+  static ranged = (distance, decay) => {
     if (distance < 10) return distance / 10;
-    return 1 / (1.02 ** (distance - 10));
+    return 1 / ((1 + decay) ** (distance - 10));
   };
 
-  static area = (distance) => 1 / (1.02 ** (distance - 5));
+  static area = (distance, decay) => 1 / ((1 + decay) ** (distance - 5));
 };
 export default Accuracy;
