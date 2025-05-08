@@ -3,14 +3,10 @@ import "@kxirk/utils/number.js";
 
 import Entity from "./entity.js";
 import Effect from "./effect.js";
-import Type from "./type.js";
 
 
 /** @abstract */
 const Condition = class extends Entity {
-  /** @type {Type<Condition>} */
-  static buildup = new Type(null);
-
   /** @type {Effect} */
   #effect;
   /** @type {keyof Type} */
