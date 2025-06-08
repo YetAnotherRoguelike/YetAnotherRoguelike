@@ -17,12 +17,12 @@ const Level = class {
   #heightMax;
 
   constructor () {
-    this.depthCount = 0;
+    this.#depthCount = 0;
 
-    this.widthMin = 0;
-    this.widthMax = Infinity;
-    this.heightMin = 0;
-    this.heightMax = Infinity;
+    this.#widthMin = 0;
+    this.#widthMax = Infinity;
+    this.#heightMin = 0;
+    this.#heightMax = Infinity;
   }
 
   /**

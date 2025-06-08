@@ -21,10 +21,10 @@ const AOE = class extends Shape {
   constructor (range, decay) {
     super(range, decay);
 
-    this.collide = true;
+    this.#collide = true;
 
-    this.mobs = true;
-    this.tiles = true;
+    this.#mobs = true;
+    this.#tiles = true;
   }
 
 

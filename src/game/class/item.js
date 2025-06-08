@@ -16,8 +16,8 @@ const Item = class extends Entity {
     super();
     this.display.push("item");
 
-    this.equip = Equip.item;
-    this.stack = 1;
+    this.#equip = Equip.item;
+    this.#stack = 1;
   }
 
   /**

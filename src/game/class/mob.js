@@ -242,7 +242,7 @@ const Mob = class extends Entity {
     super();
     this.display.push("mob");
 
-    this.reach = 0;
+    this.#reach = 0;
 
     this.#at = new Point();
     this.#looking = new Point();
@@ -295,7 +295,7 @@ const Mob = class extends Entity {
     this.#attacks = [];
 
     this.#turn = [];
-    this.act = null;
+    this.#act = null;
   }
 
   /**

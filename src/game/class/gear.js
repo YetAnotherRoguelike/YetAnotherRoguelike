@@ -34,19 +34,19 @@ const Gear = class extends Item {
     super();
     this.equip = null;
 
-    this.quality = 0;
+    this.#quality = 0;
 
-    this.scaleAbility = null;
-    this.scaleMin = 0;
-    this.scaleMax = 0;
+    this.#scaleAbility = null;
+    this.#scaleMin = 0;
+    this.#scaleMax = 0;
 
     this.#statBase = {};
     this.#statQuality = {};
     this.#statScale = {};
 
-    this.durabilityBase = 0;
-    this.durabilityQuality = 0;
-    this.durability = 0;
+    this.#durabilityBase = 0;
+    this.#durabilityQuality = 0;
+    this.#durability = 0;
   }
 
 

@@ -15,7 +15,7 @@ const Client = class {
     this.#id = id;
     this.#socket = socket;
 
-    this.player = null;
+    this.#player = null;
   }
 
 

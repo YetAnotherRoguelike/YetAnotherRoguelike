@@ -142,7 +142,7 @@ const Effect = class {
   #buildupFactorMax;
 
   constructor () {
-    this.critical = new Proxy(this, critical(this));
+    this.#critical = new Proxy(this, critical(this));
 
     this.#ability = new Proxy({}, handler(this));
     this.#abilityFactor = new Proxy({}, handler(this));

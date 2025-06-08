@@ -31,18 +31,18 @@ const Entity = class {
   #density; // lb/ft3
 
   constructor () {
-    this.name = null;
-    this.description = null;
+    this.#name = null;
+    this.#description = null;
 
     this.#display = [];
-    this.color = null;
+    this.#color = null;
 
-    this.length = 0;
-    this.width = 0;
-    this.height = 0;
-    this.volumeFactor = 0.0;
+    this.#length = 0;
+    this.#width = 0;
+    this.#height = 0;
+    this.#volumeFactor = 0.0;
 
-    this.density = 0;
+    this.#density = 0;
   }
 
 
@@ -82,7 +82,7 @@ const Entity = class {
 
   /** @type {number} */
   get dimensionMax () {
-    return Math.max(this.length, this.#width, this.height);
+    return Math.max(this.length, this.width, this.height);
   }
 
   /** @type {number} */

@@ -23,12 +23,12 @@ const Condition = class extends Entity {
     super();
     this.display.push("condition");
 
-    this.effect = null;
-    this.type = null;
+    this.#effect = null;
+    this.#type = null;
 
-    this.stack = null;
-    this.duration = 0;
-    this.tick = null;
+    this.#stack = null;
+    this.#duration = 0;
+    this.#tick = null;
   }
 
   /**

@@ -17,7 +17,7 @@ const Inventory = class {
    */
   constructor (Type = Item, size = 1) {
     this.#slots = [];
-    this.Type = Type;
+    this.#Type = Type;
     this.size = size;
   }
 

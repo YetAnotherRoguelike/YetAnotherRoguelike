@@ -57,12 +57,12 @@ const Tile = class extends Entity {
 
     this.#at = new Point();
 
-    this.masked = false;
-    this.mask = null;
+    this.#masked = false;
+    this.#mask = null;
 
-    this.destructible = false;
-    this.transparent = false;
-    this.walkable = false;
+    this.#destructible = false;
+    this.#transparent = false;
+    this.#walkable = false;
 
     this.#mobs = new Set();
     this.#items = new Set();

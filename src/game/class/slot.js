@@ -19,11 +19,11 @@ const Slot = class {
    * @argument {Class<Item>} [Type]
    */
   constructor (Type = Item) {
-    this.TypeInitial = Type;
-    this.Type = Type;
+    this.#TypeInitial = Type;
+    this.#Type = Type;
 
     this.#items = [];
-    this.open = true;
+    this.#open = true;
   }
 
 

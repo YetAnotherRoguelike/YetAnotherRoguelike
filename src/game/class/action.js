@@ -33,11 +33,11 @@ const Action = class {
     this.#user = null;
     this.#userAfter = null;
 
-    this.energy = 0;
+    this.#energy = 0;
 
-    this.speed = 0;
-    this.shape = null;
-    this.accuracy = null;
+    this.#speed = 0;
+    this.#shape = null;
+    this.#accuracy = null;
   }
 
   /**

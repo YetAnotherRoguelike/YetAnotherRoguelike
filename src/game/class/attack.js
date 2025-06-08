@@ -12,7 +12,7 @@ const Attack = class extends Action {
   constructor () {
     super();
 
-    this.critical = null;
+    this.#critical = null;
   }
 
   /**
