@@ -3,7 +3,7 @@ import "@kxirk/utils/array.js";
 import Math from "@kxirk/utils/math.js";
 import "@kxirk/utils/number.js";
 
-import Size, { DimensionMax } from "./size.js";
+import { DimensionMax, VolumeRange } from "./size.js";
 
 
 /** @abstract */
@@ -98,7 +98,7 @@ const Entity = class {
   get size () {
     const volumeMax = this.dimensionMax ** 3;
 
-    for (const [size, range] of Object.entries(Size)) {
+    for (const [size, range] of Object.entries(VolumeRange)) {
       if (range.includes(volumeMax)) return size;
     }
 

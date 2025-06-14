@@ -1,46 +1,91 @@
 import { fromJSON, toJSON } from "@kxirk/serialize";
-import "@kxirk/utils/array.js";
+import Object from "@kxirk/utils/object.js";
 
 import Item from "./item.js";
 
 
+/** @enum {string} */
 const Slot = class {
-  /** @type {Class<Item>} */
-  #TypeInitial;
+  /** @type {string} */
+  static armor = "armor";
+
+  /** @type {string} */
+  static hand = "hand";
+  /** @type {string} */
+  static side = "side";
+  /** @type {string} */
+  static both = "both";
+
+  /** @type {string} */
+  static accessories = "accessories";
+
+  /** @type {Item} */
+  #item;
+  /** @type {keyof Equip} */
+  #equip;
+  /** @type {keyof Slot} */
+  #slot;
+
   /** @type {Class<Item>} */
   #Type;
-
-  /** @type {Item[]} */
-  #items;
+  /** @type {number} */
+  #dimensionMax;
+  /** @type {number} */
+  #volumeMax;
   /** @type {boolean} */
   #open;
 
   /**
-   * @argument {Class<Item>} [Type]
+   * @param {Class<Item>} [Type]
+   * @param {number} [dimensionMax]
+   * @param {number} [volumeMax]
+   * @param {boolean} [open]
    */
-  constructor (Type = Item) {
-    this.#TypeInitial = Type;
-    this.#Type = Type;
+  constructor (Type = Item, dimensionMax = Infinity, volumeMax = Infinity, open = true) {
+    this.clear();
 
-    this.#items = [];
-    this.#open = true;
+    this.Type = Type;
+    this.dimensionMax = dimensionMax;
+    this.volumeMax = volumeMax;
+    this.open = open;
+
+    Object.assignGettersAsEnumerable(this, Slot);
   }
 
 
-  /** @type {Class<Item>} */
-  get TypeInitial () { return this.#TypeInitial; }
-  set TypeInitial (Type) { this.#TypeInitial = Type; }
+  /** @type {Item} */
+  get item () { return this.#item; }
+  set item (item) { this.#item = item; }
+
+  /** @type {boolean} */
+  get empty () { return (this.#item === null); }
+
+  /** @type {number} */
+  get weight () { return (this.item?.weight ?? 0); }
+
+  /** @type {keyof Equip} */
+  get equip () { return this.#equip; }
+
+  /** @type {keyof Slot} */
+  get slot () { return this.#slot; }
+  set slot (slot) { this.#slot = slot; }
+
 
   /** @type {Class<Item>} */
   get Type () { return this.#Type; }
   set Type (Type) { this.#Type = Type; }
 
+  /** @type {number} */
+  get dimensionMax () { return this.#dimensionMax; }
+  set dimensionMax (dimensionMax) {
+    this.#dimensionMax = dimensionMax.clamp(0);
+  }
 
   /** @type {number} */
-  get count () { return this.#items.length; }
-
-  /** @type {number} */
-  get weight () { return (this.count * (this.#items[0]?.weight ?? 0)); }
+  get volumeMax () { return this.#volumeMax; }
+  set volumeMax (volumeMax) {
+    this.#volumeMax = volumeMax.clamp(0);
+  }
 
   /** @type {boolean} */
   get open () { return this.#open; }
@@ -48,36 +93,61 @@ const Slot = class {
 
 
   /**
-   * @argument {Item} item
+   * @param {Item} item
+   * @param {keyof Equip} equip
+   * @param {keyof Slot} slot
+   * @returns {Slot}
+   */
+  set (item, equip, slot) {
+    this.#item = item;
+    this.#equip = equip;
+    this.slot = slot;
+
+    return this;
+  }
+
+  /**
+   * @param {Item} item
+   * @param {keyof Equip} equip
+   * @param {keyof Slot} slot
    * @returns {boolean}
    */
-  add (item) {
-    if (this.open && (item instanceof this.Type) && (this.count < item.stack)) {
-      this.#items.push(item);
-      this.Type = item.constructor;
+  add (item, equip, slot) {
+    if (!this.empty) return false;
 
-      return true;
-    }
+    if (!(item instanceof this.Type)) return false;
+    if (item.dimensionMax > this.dimensionMax) return false;
+    if (item.volume > this.volumeMax) return false;
+    if (!this.open) return false;
 
-    return false;
+    this.set(item, equip, slot);
+    return true;
   }
 
   /**
    * @returns {Item}
    */
   remove () {
-    const item = this.#items.pop();
-    if (this.count === 0) {
-      this.Type = this.TypeInitial;
+    let item;
+    if (!this.empty) {
+      item = this.#item;
+      this.set(null, null, null);
     }
 
     return item;
   }
 
+  /**
+   * @returns {undefined}
+   */
+  clear () {
+    this.set(null, null, null);
+  }
+
 
   /** @type {Iterator<Item>} */
   [Symbol.iterator] () {
-    return this.#items[Symbol.iterator]();
+    return (this.empty ? [] : [this.item])[Symbol.iterator]();
   }
 
 
@@ -87,10 +157,13 @@ const Slot = class {
    * @returns {Slot}
    */
   fromJSON (json, reviver) {
-    this.TypeInitial = fromJSON(json, this, "TypeInitial", (reviver?.TypeInitial ?? ((constructor) => Item[constructor])));
-    this.Type = fromJSON(json, this, "Type", (reviver?.Type ?? ((constructor) => Item[constructor])));
+    this.item = fromJSON(json, this, "item", (reviver?.item ?? Item.fromJSON));
+    this.equip = fromJSON(json, this, "equip", reviver?.equip);
+    this.slot = fromJSON(json, this, "slot", reviver?.slot);
 
-    fromJSON(json, this, "items", (reviver?.items ?? { value: Item.fromJSON }));
+    this.Type = fromJSON(json, this, "Type", (reviver?.Type ?? ((constructor) => Item[constructor])));
+    this.dimensionMax = fromJSON(json, this, "dimensionMax", reviver?.dimensionMax);
+    this.volumeMax = fromJSON(json, this, "volumeMax", reviver?.volumeMax);
     this.open = fromJSON(json, this, "open", reviver?.open);
 
     return this;
@@ -104,10 +177,13 @@ const Slot = class {
   toJSON (key, replacer) {
     const json = {};
 
-    json.TypeInitial = toJSON(this, "TypeInitial", replacer?.TypeInitial);
-    json.Type = toJSON(this, "Type", replacer?.Type);
+    json.item = toJSON(this, "item", replacer?.item);
+    json.equip = toJSON(this, "equip", replacer?.equip);
+    json.slot = toJSON(this, "slot", replacer?.slot);
 
-    json.items = toJSON([...this], undefined, replacer?.items);
+    json.Type = toJSON(this, "Type", replacer?.Type);
+    json.dimensionMax = toJSON(this, "dimensionMax", replacer?.dimensionMax);
+    json.volumeMax = toJSON(this, "volumeMax", replacer?.volumeMax);
     json.open = toJSON(this, "open", replacer?.open);
 
     return json;

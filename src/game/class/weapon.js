@@ -56,7 +56,7 @@ export const Light = class extends Weapon {
     super();
     this.display.push("light");
 
-    this.equip = Equip.weaponLight;
+    this.equip = Equip.light;
   }
 };
 Weapon.Light = Light;
@@ -67,10 +67,21 @@ export const Medium = class extends Weapon {
     super();
     this.display.push("medium");
 
-    this.equip = Equip.weaponMedium;
+    this.equip = Equip.medium;
   }
 };
 Weapon.Medium = Medium;
+
+/** @abstract */
+export const Versatile = class extends Weapon {
+  constructor () {
+    super();
+    this.display.push("versatile");
+
+    this.equip = Equip.versatile;
+  }
+};
+Weapon.Versatile = Versatile;
 
 /** @abstract */
 export const Heavy = class extends Weapon {
@@ -78,7 +89,7 @@ export const Heavy = class extends Weapon {
     super();
     this.display.push("heavy");
 
-    this.equip = Equip.weaponHeavy;
+    this.equip = Equip.heavy;
   }
 };
 Weapon.Heavy = Heavy;
@@ -89,7 +100,7 @@ export const Ranged = class extends Weapon {
     super();
     this.display.push("ranged");
 
-    this.equip = Equip.weaponRanged;
+    this.equip = Equip.light;
   }
 };
 Weapon.Ranged = Ranged;

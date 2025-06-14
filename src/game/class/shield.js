@@ -17,7 +17,7 @@ export const Light = class extends Shield {
     super();
     this.display.push("light");
 
-    this.equip = Equip.shieldLight;
+    this.equip = Equip.light;
   }
 };
 Shield.Light = Light;
@@ -28,7 +28,7 @@ export const Medium = class extends Shield {
     super();
     this.display.push("medium");
 
-    this.equip = Equip.shieldMedium;
+    this.equip = Equip.light;
   }
 };
 Shield.Medium = Medium;
@@ -39,7 +39,7 @@ export const Heavy = class extends Shield {
     super();
     this.display.push("heavy");
 
-    this.equip = Equip.shieldHeavy;
+    this.equip = Equip.medium;
   }
 };
 Shield.Heavy = Heavy;

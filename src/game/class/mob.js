@@ -8,10 +8,12 @@ import Armor from "./armor.js";
 import Attack from "./attack.js";
 import Conditions from "./conditions.js";
 import Entity from "./entity.js";
+import Equip from "./equip.js";
 import Inventory from "./inventory.js";
 import Item from "./item.js";
 import Point from "./point.js";
 import Proficiency from "./proficiency.js";
+import Size from "./size.js";
 import Slot from "./slot.js";
 import Stat from "./stat.js";
 import Tick from "./tick.js";
@@ -102,17 +104,15 @@ export const statHandler = (mob) => ({
     }
 
     // flat
-    for (const slot of [...mob.armor, ...mob.hand, ...mob.side, ...mob.accessories]) {
-      for (const item of slot) {
-        const ability = (mob.ability?.[item.scaleAbility] ?? 0) - item.scaleMin;
-        const scaleFactor = ability.clamp(0, item.scaleMax);
+    for (const item of [...mob.armor, ...mob.hand, ...mob.side, ...mob.accessories]) {
+      const ability = (mob.ability?.[item.scaleAbility] ?? 0) - item.scaleMin;
+      const scaleFactor = ability.clamp(0, item.scaleMax);
 
-        const base = item.statBase?.[stat] ?? 0;
-        const quality = item.qualityModifier * (item.statQuality?.[stat] ?? 0);
-        const scale = scaleFactor * (item.statScale?.[stat] ?? 0);
+      const base = item.statBase?.[stat] ?? 0;
+      const quality = item.qualityModifier * (item.statQuality?.[stat] ?? 0);
+      const scale = scaleFactor * (item.statScale?.[stat] ?? 0);
 
-        value += (base + quality + scale);
-      }
+      value += (base + quality + scale);
     }
     for (const condition of mob.conditions) {
       value += condition?.effect.stat?.[stat] ?? 0;
@@ -214,6 +214,8 @@ const Mob = class extends Entity {
   /** @type {Vital} */
   #vital;
 
+  /** @type {Equip<Slot[]>} */
+  #slots;
   /** @type {Slot<Armor>} */
   #armor;
   /** @type {Slot<Item>} */
@@ -283,11 +285,19 @@ const Mob = class extends Entity {
 
     this.#vital = new Proxy(new Vital(0), vitalHandler(this));
 
+    this.#slots = new Equip();
+    this.slots.armor = [Slot.armor];
+    this.slots.light = [Slot.hand, Slot.side];
+    this.slots.medium = [Slot.hand];
+    this.slots.versatile = [Slot.both, Slot.hand];
+    this.slots.heavy = [Slot.both];
+    this.slots.accessory = [Slot.accessories];
+
     this.#armor = new Slot(Armor);
     this.#hand = new Slot(Item);
     this.#side = new Slot(Item);
     this.#accessories = new Inventory(Accessory, 2);
-    this.#inventory = new Inventory(Item, 5);
+    this.#inventory = new Inventory(Item);
 
     this.#condition = new Type(null);
     this.#conditions = new Conditions();
@@ -317,6 +327,51 @@ const Mob = class extends Entity {
   }
 
 
+  #sizeUpdate () {
+    this.hand.dimensionMax = 1.5 * this.height;
+    this.hand.volumeMax = this.sizeFactor / 4;
+    this.side.dimensionMax = 1.5 * this.height;
+    this.side.volumeMax = this.sizeFactor / 4;
+
+    this.inventory.sizeMax = 20 * this.sizeFactor;
+    this.inventory.volumeMax = this.sizeFactor;
+    this.inventory.itemDimensionMax = 1.5 * this.reach;
+    this.inventory.itemVolumeMax = this.sizeFactor;
+  }
+
+  /** @type {number} */
+  get length () { return super.length; }
+  set length (length) {
+    super.length = length;
+
+    this.#sizeUpdate();
+  }
+
+  /** @type {number} */
+  get width () { return super.width; }
+  set width (width) {
+    super.width = width;
+
+    this.#sizeUpdate();
+  }
+
+  /** @type {number} */
+  get height () { return super.height; }
+  set height (height) {
+    super.height = height;
+
+    this.#sizeUpdate();
+  }
+
+  /** @type {number} */
+  get volumeFactor () { return super.volumeFactor; }
+  set volumeFactor (factor) {
+    super.volumeFactor = factor;
+
+    this.#sizeUpdate();
+  }
+
+
   /** @type {number} */
   get weight () {
     let weight = super.weight;
@@ -324,8 +379,8 @@ const Mob = class extends Entity {
     weight += this.armor.weight;
     weight += this.hand.weight;
     weight += this.side.weight;
-    for (const accessory of this.accessories) weight += accessory.weight;
-    for (const item of this.inventory) weight += item.weight;
+    weight += this.accessories.weight;
+    weight += this.inventory.weight;
 
     return weight;
   }
@@ -338,7 +393,11 @@ const Mob = class extends Entity {
 
   /** @type {number} */
   get reach () { return this.#reach; }
-  set reach (reach) { this.#reach = reach; }
+  set reach (reach) {
+    this.#reach = reach.clamp(0);
+
+    this.#sizeUpdate();
+  }
 
 
   /** @type {Point} */
@@ -404,6 +463,9 @@ const Mob = class extends Entity {
   get vital () { return this.#vital; }
 
 
+  /** @type {Equip<Slot[]>} */
+  get slots () { return this.#slots; }
+
   /** @type {Slot<Armor>} */
   get armor () { return this.#armor; }
 
@@ -420,14 +482,14 @@ const Mob = class extends Entity {
   get inventory () { return this.#inventory; }
 
   /**
-   * @argument {Item} item
+   * @param {Item} item
    * @returns {boolean}
    */
   add (item) {
-    return (this.hand.add(item) || this.side.add(item) || this.inventory.add(item));
+    return this.inventory.add(item);
   }
   /**
-   * @argument {number} index
+   * @param {number} index
    * @returns {Item}
    */
   remove (index) {
@@ -435,53 +497,163 @@ const Mob = class extends Entity {
   }
 
   /**
-   * @argument {number} index
+   * @param {Item} item
+   * @returns {Equip}
+   */
+  #equip (item) {
+    const mobSize = this.size;
+    const mobSizeIndex = Size.indexes[mobSize];
+
+    const itemSize = item.equipSize;
+    const itemSizeIndex = Size.indexes[itemSize];
+
+    const sizeOffset = (itemSizeIndex - mobSizeIndex);
+
+    const equip = item.equip;
+    if (equip === Equip.armor) {
+      if (itemSize !== mobSize) return undefined;
+    }
+    else if (Equip.hands.includes(equip)) {
+      const handIndex = Equip.hands.indexes[equip] + sizeOffset;
+      if (handIndex < 0) return undefined;
+      if (handIndex >= Equip.hands.length) return undefined;
+
+      return Equip.hands[handIndex];
+    }
+
+    return equip;
+  }
+  /**
+   * @param {number} index
    * @returns {boolean}
    */
   equip (index) {
-    const item = this.inventory.remove(index);
-    if (item === undefined) return false;
-
     let success = false;
-    if (item.equip.includes("armor") && this.armor.add(item)) {
-      success = true;
-    }
-    else if (item.equip.includes("side") && this.side.add(item)) {
-      success = true;
-    }
-    else if ((item.equip.includes("hand") || item.equip.includes("side")) && this.hand.add(item)) {
-      success = true;
-    }
-    else if (item.equip.includes("both") && this.side.count === 0 && this.hand.add(item)) {
-      this.side.open = false;
-      success = true;
-    }
-    else if (item.equip.includes("accessories") && this.accessories.add(item)) {
-      success = true;
-    }
-    else {
-      this.add(item);
+
+    const item = this.inventory.at(index);
+    if (item === undefined) return success;
+
+    const equip = this.#equip(item);
+    if (equip === undefined) return success;
+
+
+    const slots = this.slots[equip];
+    for (const slot of slots) {
+      if (slot === Slot.both) {
+        if (!this.side.empty) continue;
+
+        success = this.hand.add(item, equip, slot);
+        if (success) {
+          this.side.open = false;
+          break;
+        }
+      }
+
+      else if (slot === Slot.hand && !this[slot].empty && this.side.empty) {
+        if (slots.includes(Slot.side)) continue;
+        if (!this.slots[this[slot].equip].includes(Slot.side)) continue;
+
+        this.swap();
+
+        success = this[slot].add(item, equip, slot);
+        if (success) break;
+      }
+
+      else if (slot === Slot.side && this.hand.equip === Equip.versatile && this[slot].empty) {
+        this[slot].open = true;
+
+        success = this[slot].add(item, equip, slot);
+        if (success) {
+          this.hand.slot = Slot.hand;
+          break;
+        }
+        else {
+          this[slot].open = false;
+        }
+      }
+
+      else {
+        success = this[slot].add(item, equip, slot);
+        if (success) break;
+      }
     }
 
+
+    if (success) this.inventory.remove(index);
     return success;
   }
   /**
-   * @argument {string} slot
-   * @argument {number} index
    * @returns {boolean}
    */
+  swap () {
+    const hand = { ...this.hand, swappable: true };
+    if (!hand.empty) hand.swappable = this.slots[hand.equip].includes(Slot.side);
+
+    const side = { ...this.side, swappable: true };
+    if (!side.empty) hand.swappable = this.slots[side.equip].includes(Slot.hand);
+
+    if (!hand.swappable || !side.swappable) return false;
+
+
+    if (!hand.empty) {
+      if (hand.slot === Slot.both) this.side.open = true;
+      this.side.set(hand.item, hand.equip, Slot.side);
+      if (side.clear) this.hand.clear();
+    }
+    if (!side.empty) {
+      if (side.equip === Equip.versatile && hand.empty) {
+        side.slot = Slot.both;
+        this.side.open = false;
+      }
+      this.hand.set(side.item, side.equip, Slot.hand);
+      if (hand.empty) this.side.clear();
+    }
+
+    return true;
+  }
+  /**
+   * @param {keyof Slot} slot
+   * @param {number} index
+   * @returns {boolean | boolean[]}
+   */
   unequip (slot, index) {
-    const item = this[slot].remove(index);
-    if (item === undefined) return false;
+    let success = false;
 
-    if (item.equip.includes("both")) this.side.open = true;
+    if (slot === Slot.both) {
+      const both = (this.hand.slot === Slot.both);
+      const hand = this.unequip(Slot.hand);
+      const side = both || this.unequip(Slot.hand) || this.unequip(Slot.side);
+
+      if (hand && side) return true;
+      return [hand, side];
+    }
+
+    const mobSlot = this[slot];
+
+    let item;
+    if (mobSlot instanceof Slot) item = mobSlot.item;
+    if (mobSlot instanceof Inventory) item = mobSlot.at(index);
+    if (item === undefined || item === null) return success;
 
 
-    if (this.add(item)) return true;
+    success = this.inventory.add(item);
+    if (!success) return success;
 
-    this[slot].add(item);
-    if (item.equip.includes("both")) this.side.open = false;
-    return false;
+    let swap = false;
+    if (mobSlot.slot === Slot.both) {
+      this.side.open = true;
+    }
+    else if (slot === Slot.side && !this.hand.empty && this.slots[this.hand.equip].includes(Slot.both)) {
+      this.side.open = false;
+      swap = true;
+    }
+    else if (slot === Slot.hand && !this.side.empty) {
+      swap = true;
+    }
+
+    mobSlot.remove(index);
+    if (swap) this.swap();
+    return success;
   }
 
 
@@ -644,6 +816,7 @@ const Mob = class extends Entity {
 
     fromJSON(json, this, "vital", reviver?.vital);
 
+    fromJSON(json, this, "slots", reviver?.slots);
     fromJSON(json, this, "armor", reviver?.armor);
     fromJSON(json, this, "hand", reviver?.hand);
     fromJSON(json, this, "side", reviver?.side);
@@ -685,6 +858,7 @@ const Mob = class extends Entity {
 
     json.vital = toJSON(this, "vital", replacer?.vital);
 
+    json.slots = toJSON(this, "slots", replacer?.slots);
     json.armor = toJSON(this, "armor", replacer?.armor);
     json.hand = toJSON(this, "hand", replacer?.hand);
     json.side = toJSON(this, "side", replacer?.side);

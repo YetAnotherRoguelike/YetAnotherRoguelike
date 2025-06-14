@@ -59,7 +59,7 @@ const Condition = class extends Entity {
   set type (type) { this.#type = type; }
 
 
-  /** @type {keyof Stack} */
+  /** @type {Stack} */
   get stack () { return this.#stack; }
   set stack (stack) { this.#stack = stack; }
 
@@ -67,7 +67,7 @@ const Condition = class extends Entity {
   get duration () { return this.#duration; }
   set duration (duration) { this.#duration = duration.clamp(0); }
 
-  /** @type {keyof Tick} */
+  /** @type {Tick} */
   get tick () { return this.#tick; }
   set tick (tick) { this.#tick = tick; }
 

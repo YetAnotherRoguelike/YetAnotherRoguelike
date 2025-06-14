@@ -3,21 +3,22 @@ import "@kxirk/utils/number.js";
 
 import Entity from "./entity.js";
 import Equip from "./equip.js";
+import Size from "./size.js";
 
 
 /** @abstract */
 const Item = class extends Entity {
-  /** @type {Equip} */
+  /** @type {keyof Equip} */
   #equip;
-  /** @type {number} */
-  #stack;
+  /** @type {keyof Size} */
+  #equipSize;
 
   constructor () {
     super();
     this.display.push("item");
 
-    this.#equip = Equip.item;
-    this.#stack = 1;
+    this.#equip = Equip.light;
+    this.#equipSize = Size.medium;
   }
 
   /**
@@ -39,15 +40,13 @@ const Item = class extends Entity {
   }
 
 
-  /** @type {Equip} */
+  /** @type {keyof Equip} */
   get equip () { return this.#equip; }
   set equip (equip) { this.#equip = equip; }
 
-  /** @type {number} */
-  get stack () { return this.#stack; }
-  set stack (size) {
-    this.#stack = size.clamp(1);
-  }
+  /** @type {keyof Size} */
+  get equipSize () { return this.#equipSize; }
+  set equipSize (size) { this.#equipSize = size; }
 
 
   /**
@@ -59,7 +58,7 @@ const Item = class extends Entity {
     super.fromJSON(json, reviver);
 
     this.equip = fromJSON(json, this, "equip", reviver?.equip);
-    this.stack = fromJSON(json, this, "stack", reviver?.stack);
+    this.equipSize = fromJSON(json, this, "equipSize", reviver?.equipSize);
 
     return this;
   }
@@ -73,7 +72,7 @@ const Item = class extends Entity {
     const json = super.toJSON(key, replacer);
 
     json.equip = toJSON(this, "equip", replacer?.equip);
-    json.stack = toJSON(this, "stack", replacer?.stack);
+    json.equipSize = toJSON(this, "equipSize", replacer?.equipSize);
 
     return json;
   }

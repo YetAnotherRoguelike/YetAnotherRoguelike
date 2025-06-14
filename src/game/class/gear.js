@@ -62,7 +62,7 @@ const Gear = class extends Item {
   }
 
 
-  /** @type {string} */
+  /** @type {keyof Ability} */
   get scaleAbility () { return this.#scaleAbility; }
   set scaleAbility (ability) {
     this.#scaleAbility = ability;
