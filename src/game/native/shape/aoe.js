@@ -1,18 +1,19 @@
-import "@kxirk/utils/number.js";
 import { fromJSON, toJSON } from "@kxirk/serialize";
 
 import { Shape } from "@yetanotherroguelike/class";
 
 
-/** @abstract */
+/**
+ * @abstract
+ * @extends Shape
+ */
 const AOE = class extends Shape {
-  /** @type {boolean} */
-  #collide;
+  // #region Instance
+  /** @type {boolean} */ #collide;
 
-  /** @type {boolean} */
-  #mobs;
-  /** @type {boolean} */
-  #tiles;
+  /** @type {boolean} */ #mobs;
+  /** @type {boolean} */ #tiles;
+
 
   /**
    * @param {number} range
@@ -26,8 +27,9 @@ const AOE = class extends Shape {
     this.#mobs = true;
     this.#tiles = true;
   }
+  // #endregion
 
-
+  // #region Instance Accessors
   /** @type {boolean} */
   get collide () { return this.#collide; }
   set collide (collide) { this.#collide = collide; }
@@ -40,24 +42,32 @@ const AOE = class extends Shape {
   /** @type {boolean} */
   get tiles () { return this.#tiles; }
   set tiles (tiles) { this.#tiles = tiles; }
+  // #endregion
 
-
+  // #region Instance Methods
   /**
    * @abstract
    * @param {Point} origin
    * @param {Point} target
    * @param {number} offset
-   * @return {Point[]}
-   */
+   * @returns {Point[]}
+  */
+  /* eslint-disable-next-line class-methods-use-this, no-unused-vars */ // abstract
   points (origin, target, offset) {
     return [];
   }
+  // #endregion
+
+
+  // #region Serialize
+  /** @type {string[]} */ static parameters = ["range", "decay"];
 
 
   /**
    * @param {Object} json
    * @param {Function} [reviver]
-   * @returns {AOE}
+   * @modifies {this}
+   * @returns {this}
    */
   fromJSON (json, reviver) {
     super.fromJSON(json, reviver);
@@ -85,5 +95,6 @@ const AOE = class extends Shape {
 
     return json;
   }
+  // #endregion
 };
 export default AOE;

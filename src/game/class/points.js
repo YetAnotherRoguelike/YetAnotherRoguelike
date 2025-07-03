@@ -2,24 +2,27 @@ import Point from "./point.js";
 
 
 const Points = class {
-  /** @type {Map<number, Map<number, Map<number, Point>>>} */
-  #contents;
-  /** @type {Set<Point>} */
-  #order;
+  // #region Instance
+  /** @type {Map<number, Map<number, Map<number, Point>>>} */ #points;
+  /** @type {Set<Point>} */ #order;
+
 
   /**
    * @param {Iterable} [points]
    * @param {boolean} [ordered]
    */
   constructor (points = [], ordered = false) {
-    this.#contents = new Map();
+    this.#points = new Map();
     if (ordered) this.#order = new Set();
+
 
     for (const point of points) {
       this.add(...point);
     }
   }
+  // #endregion
 
+  // #region Instance Methods
   /**
    * @param {number} x
    * @param {number} y
@@ -27,7 +30,7 @@ const Points = class {
    * @returns {Point | undefined}
    */
   get (x, y, z) {
-    return this.#contents.get(z)?.get(y)?.get(x);
+    return this.#points.get(z)?.get(y)?.get(x);
   }
 
   /**
@@ -37,27 +40,29 @@ const Points = class {
    * @returns {boolean}
    */
   has (x, y, z) {
-    return this.get(x, y, z) !== undefined;
+    return (this.get(x, y, z) !== undefined);
   }
+
 
   /**
    * @param {number} x
    * @param {number} y
    * @param {number} z
-   * @returns {Points}
+   * @returns {this}
    */
   add (x, y, z) {
-    if (!this.#contents.has(z)) this.#contents.set(z, new Map());
-    if (!this.#contents.get(z).has(y)) this.#contents.get(z).set(y, new Map());
+    if (!this.#points.has(z)) this.#points.set(z, new Map());
+    if (!this.#points.get(z).has(y)) this.#points.get(z).set(y, new Map());
 
-    if (!this.#contents.get(z).get(y).has(x)) {
+    if (!this.#points.get(z).get(y).has(x)) {
       const point = new Point(x, y, z);
-      this.#contents.get(z).get(y).set(x, point);
+      this.#points.get(z).get(y).set(x, point);
       this.#order?.add(point);
     }
 
     return this;
   }
+
 
   /**
    * @param {number} x
@@ -66,37 +71,42 @@ const Points = class {
    * @returns {boolean}
    */
   delete (x, y, z) {
-    const point = this.#contents.get(z)?.get(y)?.get(x);
+    const point = this.#points.get(z)?.get(y)?.get(x);
 
     if (point !== undefined) {
-      return this.#contents.get(z).get(y).delete(x) && this.#order.delete(point);
+      return (this.#points.get(z).get(y).delete(x) && (this.#order?.delete(point) ?? true));
     }
     return false;
   }
 
+  /**
+   * @returns {undefined}
+   */
   clear () {
-    this.#contents.clear();
+    this.#points.clear();
     this.#order?.clear();
   }
+
 
   /**
    * @returns {Point[]}
    */
   values () {
-    return this.#order?.values() ?? [...this.#contents.values()].flatMap((depth) => [...depth.values()].flatMap((row) => [...row.values()]));
+    return (this.#order?.values() ?? this.#points.values().flatMap((z) => z.values().flatMap((y) => y.values()))).toArray();
   }
 
-  /**
-   * @returns {number}
-   */
+  /** @type {number} */
   get size () {
     return this.values().length;
   }
 
 
-  /** @type {Iterator<Point>} */
+  /**
+   * @returns {Iterator<Point>}
+   */
   [Symbol.iterator] () {
     return this.values()[Symbol.iterator]();
   }
+  // #endregion
 };
 export default Points;

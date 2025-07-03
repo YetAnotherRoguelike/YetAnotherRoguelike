@@ -1,16 +1,15 @@
-import { fromJSON, toJSON } from "@kxirk/serialize";
+import { fromJSON, toJSON, serializable } from "@kxirk/serialize";
 import "@kxirk/utils/number.js";
 
 import EffectRange from "./effect-range.js";
 
 
 /**
- * @param {Effect} effect
- * @returns {ProxyHandler<Object>}
+ * @returns {ProxyHandler<Object<string, EffectRange>>}
  */
-export const handler = (effect) => ({
+const handler = () => ({
   /**
-   * @param {Object} target
+   * @param {Object<string, EffectRange>} target
    * @param {string} property
    * @returns {EffectRange}
    */
@@ -19,18 +18,18 @@ export const handler = (effect) => ({
   },
   /**
    * @typedef {Object} EffectRangeLike
-   * @property {number} [min]
-   * @property {number} [max]
-   * @property {number} avg
+   * @property {number | undefined} min
+   * @property {number | undefined} max
+   * @property {number | undefined} avg
    */
   /**
-   * @typedef {number} min
-   * @typedef {number} max
-   * @typedef {number} avg
-   * @typedef {[?min, ?max, ?avg]} EffectRangeOrdered
+   * @typedef {number | undefined} min
+   * @typedef {number | undefined} max
+   * @typedef {number | undefined} avg
+   * @typedef {[min, max, avg]} EffectRangeOrdered
    */
   /**
-   * @param {Object} target
+   * @param {Object<string, EffectRange>} target
    * @param {string} property
    * @param {EffectRange | EffectRangeLike | EffectRangeOrdered | Number | number} value
    * @returns {boolean}
@@ -50,8 +49,8 @@ export const handler = (effect) => ({
     }
     if (value instanceof Number) {
       target[property].min = undefined;
-      target[property].avg = value.valueOf();
       target[property].max = undefined;
+      target[property].avg = value.valueOf();
 
       return true;
     }
@@ -62,8 +61,8 @@ export const handler = (effect) => ({
     }
     if (Number.isFinite(value)) {
       target[property].min = undefined;
-      target[property].avg = value;
       target[property].max = undefined;
+      target[property].avg = value;
 
       return true;
     }
@@ -73,14 +72,13 @@ export const handler = (effect) => ({
 });
 
 /**
- * @param {Effect} effect
- * @returns {ProxyHandler<Effect>}
+ * @returns {ProxyHandler<Object<string, EffectRange>>}
  */
-export const critical = (effect) => ({
+const critical = () => ({
   /**
    * @param {Effect} target
    * @param {string} property
-   * @returns {Object}
+   * @returns {Object<string, EffectRange>}
    */
   get (target, property) {
     if (["critical"].includes(property)) {
@@ -91,12 +89,8 @@ export const critical = (effect) => ({
       const base = target[property];
       const crit = new Proxy({}, handler(this));
       for (const [type, value] of Object.entries(base)) {
-        if (value.range > 0) {
-          crit[type] = new EffectRange(
-            (value.min + value.avg),
-            (value.max + value.avg),
-            (2 * value.avg)
-          );
+        if (value.range) {
+          crit[type] = new EffectRange((value.min + value.avg), (value.max + value.avg), (2 * value.avg));
         }
         else {
           crit[type] = 2 * value.avg;
@@ -110,36 +104,28 @@ export const critical = (effect) => ({
   }
 });
 
-/** @abstract */
+/**
+ * @abstract
+ */
 const Effect = class {
-  /** @type {Effect} */
-  #critical;
+  // #region Instance
+  /** @type {Effect} */ #critical;
 
-  /** @type {Ability} */
-  #ability;
-  /** @type {Ability} */
-  #abilityFactor;
+  /** @type {Ability} */ #ability;
+  /** @type {Ability} */ #abilityFactor;
 
-  /** @type {Stat} */
-  #stat;
-  /** @type {Stat} */
-  #statFactor;
-  /** @type {Stat} */
-  #statFactorMax;
+  /** @type {Stat} */ #stat;
+  /** @type {Stat} */ #statFactor;
+  /** @type {Stat} */ #statFactorMax;
 
-  /** @type {Type} */
-  #damage;
-  /** @type {Type} */
-  #damageFactor;
-  /** @type {Type} */
-  #damageFactorMax;
+  /** @type {Type} */ #damage;
+  /** @type {Type} */ #damageFactor;
+  /** @type {Type} */ #damageFactorMax;
 
-  /** @type {Type} */
-  #buildup;
-  /** @type {Type} */
-  #buildupFactor;
-  /** @type {Type} */
-  #buildupFactorMax;
+  /** @type {Type} */ #buildup;
+  /** @type {Type} */ #buildupFactor;
+  /** @type {Type} */ #buildupFactorMax;
+
 
   constructor () {
     this.#critical = new Proxy(this, critical(this));
@@ -159,29 +145,12 @@ const Effect = class {
     this.#buildupFactor = new Proxy({}, handler(this));
     this.#buildupFactorMax = new Proxy({}, handler(this));
   }
+  // #endregion
 
-  /**
-   * @param {Object} json
-   * @param {Function} [reviver]
-   * @returns {Effect}
-   */
-  static fromJSON (json, reviver) {
-    return new Effect[json.constructor]().fromJSON(json, reviver);
-  }
-
-  /**
-   * @param {string} key
-   * @param {Function} [replacer]
-   * @returns {string}
-   */
-  static toJSON (key, replacer) {
-    return toJSON(this, "name", replacer?.name);
-  }
-
-
+  // #region Instance Accessors
   /** @type {Effect} */
   get critical () { return this.#critical; }
-  set critical (value) { this.#critical = value; }
+  set critical (effect) { this.#critical = effect; }
 
 
   /** @type {Ability} */
@@ -219,12 +188,15 @@ const Effect = class {
 
   /** @type {Type} */
   get buildupFactorMax () { return this.#buildupFactorMax; }
+  // #endregion
 
 
+  // #region Serialize
   /**
    * @param {Object} json
    * @param {Function} [reviver]
-   * @returns {Effect}
+   * @modifies {this}
+   * @returns {this}
    */
   fromJSON (json, reviver) {
     fromJSON(json, this, "critical", reviver?.critical);
@@ -275,5 +247,6 @@ const Effect = class {
 
     return json;
   }
+  // #endregion
 };
-export default Effect;
+export default serializable(Effect, true);

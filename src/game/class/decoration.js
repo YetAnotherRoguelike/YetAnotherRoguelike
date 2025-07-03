@@ -1,31 +1,33 @@
-import { toJSON } from "@kxirk/serialize";
+import { toJSON, serializable } from "@kxirk/serialize";
 
 import Entity from "./entity.js";
 
 
-/** @abstract */
+/**
+ * @abstract
+ * @extends Entity
+ */
 const Decoration = class extends Entity {
+  // #region Instance
   constructor () {
     super();
     this.display.push("decoration");
   }
+  // #endregion
 
-  /**
-   * @param {Object} json
-   * @param {Function} [reviver]
-   * @returns {Decoration}
-   */
-  static fromJSON (json, reviver) {
-    return new Decoration[json.constructor]().fromJSON(json, reviver);
-  }
 
+  // #region Serialize
   /**
    * @param {string} key
    * @param {Function} [replacer]
-   * @returns {string}
+   * @returns {Object}
    */
-  static toJSON (key, replacer) {
-    return toJSON(this, "name", replacer?.name);
+  toJSON (key, replacer) {
+    const json = super.toJSON(key, replacer);
+    json.constructor = toJSON(this, "constructor", replacer?.constructor);
+
+    return json;
   }
+  // #endregion
 };
-export default Decoration;
+export default serializable(Decoration, true);

@@ -1,149 +1,130 @@
 import { fromJSON, toJSON } from "@kxirk/serialize";
-import { Object } from "@kxirk/utils";
+import Object from "@kxirk/utils/object.js";
 
 
+/**
+ * @enum {string}
+ * @template T
+ */
 const Type = class {
-  /** @type {string[]} */
-  static groups = ["physical", "elemental", "magical"];
-
-  /** @type {string} */
+  // #region Enum
   static striking = "striking";
-  /** @type {string} */
   static slashing = "slashing";
-  /** @type {string} */
   static piercing = "piercing";
-  /** @type {string[]} */
-  static physical = [this.striking, this.slashing, this.piercing];
 
-  /** @type {string} */
   static fire = "fire";
-  /** @type {string} */
   static ice = "ice";
-  /** @type {string} */
   static lightning = "lightning";
-  /** @type {string[]} */
-  static elemental = [this.fire, this.ice, this.lightning];
 
-  /** @type {string} */
   static arcane = "arcane";
-  /** @type {string} */
   static dark = "dark";
-  /** @type {string} */
   static holy = "holy";
-  /** @type {string[]} */
-  static magical = [this.arcane, this.dark, this.holy];
 
-  /** @type {string} */
   static bleeding = "bleeding";
-  /** @type {string} */
   static poison = "poison";
 
-  /** @type {*} */
-  #striking;
-  /** @type {*} */
-  #slashing;
-  /** @type {*} */
-  #piercing;
 
-  /** @type {*} */
-  #fire;
-  /** @type {*} */
-  #ice;
-  /** @type {*} */
-  #lightning;
+  /** @type {string[]} */ static physical = [this.striking, this.slashing, this.piercing];
+  /** @type {string[]} */ static elemental = [this.fire, this.ice, this.lightning];
+  /** @type {string[]} */ static magical = [this.arcane, this.dark, this.holy];
 
-  /** @type {*} */
-  #arcane;
-  /** @type {*} */
-  #dark;
-  /** @type {*} */
-  #holy;
+  /** @type {string[]} */ static groups = ["physical", "elemental", "magical"];
+  // #endregion
 
-  /** @type {*} */
-  #bleeding;
-  /** @type {*} */
-  #poison;
+
+  // #region Instance
+  /** @type {T} */ #striking;
+  /** @type {T} */ #slashing;
+  /** @type {T} */ #piercing;
+
+  /** @type {T} */ #fire;
+  /** @type {T} */ #ice;
+  /** @type {T} */ #lightning;
+
+  /** @type {T} */ #arcane;
+  /** @type {T} */ #dark;
+  /** @type {T} */ #holy;
+
+  /** @type {T} */ #bleeding;
+  /** @type {T} */ #poison;
+
 
   /**
-   * @param {*} [initial]
+   * @param {T} [initial]
    */
   constructor (initial = null) {
     this.all = initial;
 
+
     Object.assignGettersAsEnumerable(this, Type);
   }
+  // #endregion
 
-
-  /** @type {*} */
+  // #region Instance Accessors
+  /** @type {T} */
   get striking () { return this.#striking; }
   set striking (striking) { this.#striking = striking; }
 
-  /** @type {*} */
+  /** @type {T} */
   get slashing () { return this.#slashing; }
   set slashing (slashing) { this.#slashing = slashing; }
 
-  /** @type {*} */
+  /** @type {T} */
   get piercing () { return this.#piercing; }
   set piercing (piercing) { this.#piercing = piercing; }
 
-  /** @type {*} */
+  /** @type {T} */
   set physical (physical) {
-    for (const type of Type.physical) {
-      this[type] = physical;
-    }
+    for (const type of Type.physical) this[type] = physical;
   }
 
 
-  /** @type {*} */
+  /** @type {T} */
   get fire () { return this.#fire; }
   set fire (fire) { this.#fire = fire; }
 
-  /** @type {*} */
+  /** @type {T} */
   get ice () { return this.#ice; }
   set ice (ice) { this.#ice = ice; }
 
-  /** @type {*} */
+  /** @type {T} */
   get lightning () { return this.#lightning; }
   set lightning (lightning) { this.#lightning = lightning; }
 
-  /** @type {*} */
+  /** @type {T} */
   set elemental (elemental) {
-    for (const type of Type.elemental) {
-      this[type] = elemental;
-    }
+    for (const type of Type.elemental) this[type] = elemental;
   }
 
 
-  /** @type {*} */
+  /** @type {T} */
   get arcane () { return this.#arcane; }
   set arcane (arcane) { this.#arcane = arcane; }
 
-  /** @type {*} */
+  /** @type {T} */
   get dark () { return this.#dark; }
   set dark (dark) { this.#dark = dark; }
 
-  /** @type {*} */
+  /** @type {T} */
   get holy () { return this.#holy; }
   set holy (holy) { this.#holy = holy; }
 
-  /** @type {*} */
+  /** @type {T} */
   set magical (magical) {
-    for (const type of Type.magical) {
-      this[type] = magical;
-    }
+    for (const type of Type.magical) this[type] = magical;
   }
 
 
-  /** @type {*} */
+  /** @type {T} */
   get bleeding () { return this.#bleeding; }
   set bleeding (bleeding) { this.#bleeding = bleeding; }
 
-  /** @type {*} */
+  /** @type {T} */
   get poison () { return this.#poison; }
   set poison (poison) { this.#poison = poison; }
 
 
-  /** @type {*} */
+  /** @type {T} */
   set all (value) {
     this.physical = value;
     this.elemental = value;
@@ -151,12 +132,15 @@ const Type = class {
     this.bleeding = value;
     this.poison = value;
   }
+  // #endregion
 
 
+  // #region Serialize
   /**
    * @param {Object} json
    * @param {Function} [reviver]
-   * @returns {Type}
+   * @modifies {this}
+   * @returns {this}
    */
   fromJSON (json, reviver) {
     this.striking = fromJSON(json, this, "striking", reviver?.striking);
@@ -202,5 +186,6 @@ const Type = class {
 
     return json;
   }
+  // #endregion
 };
 export default Type;

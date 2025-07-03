@@ -1,4 +1,4 @@
-import { fromJSON, toJSON } from "@kxirk/serialize";
+import { fromJSON, toJSON, serializable } from "@kxirk/serialize";
 import "@kxirk/utils/number.js";
 
 import Ability from "./ability.js";
@@ -9,6 +9,7 @@ import Attack from "./attack.js";
 import Conditions from "./conditions.js";
 import Entity from "./entity.js";
 import Equip from "./equip.js";
+import Gear from "./gear.js";
 import Inventory from "./inventory.js";
 import Item from "./item.js";
 import Point from "./point.js";
@@ -22,26 +23,13 @@ import Vital from "./vital.js";
 
 
 /**
- * @param {number} level
- * @returns {number} experience
- */
-export const experienceNext = (level) => (5 * level) + 5;
-
-/**
- * @param {number} level
- * @returns {number} experience
- */
-export const experienceCumulative = (level) => ((level / 2) * experienceNext(level)) - 5;
-
-
-/**
  * @param {Mob} mob
  * @returns {ProxyHandler<Ability<number>>}
  */
-export const abilityHandler = (mob) => ({
+const abilityHandler = (mob) => ({
   /**
    * @param {Ability<number>} target
-   * @param {string} ability
+   * @param {keyof Ability} ability
    * @returns {number}
    */
   get (target, ability) {
@@ -66,17 +54,17 @@ export const abilityHandler = (mob) => ({
 
 /**
  * @param {Mob} mob
- * @returns {ProxyHandler<Proficiency<number>>}
+ * @returns {ProxyHandler<Proficiency>}
  */
-export const proficiencyHandler = (mob) => ({
+const proficiencyHandler = (mob) => ({
   /**
-   * @param {Proficiency<number>} target
-   * @param {string} proficiency
+   * @param {Proficiency} target
+   * @param {keyof Proficiency} proficiency
    * @returns {number}
    */
   get (target, proficiency) {
-    const value = mob.proficiencyBase[proficiency] ?? 0;
-    const bonus = Math.floor(mob.level / 4) + 2;
+    const value = (mob.proficiencyBase[proficiency] ?? 0);
+    const bonus = (Math.floor(mob.level / 4) + 2);
 
     return (bonus * value).round();
   }
@@ -86,36 +74,41 @@ export const proficiencyHandler = (mob) => ({
  * @param {Mob} mob
  * @returns {ProxyHandler<Stat>}
  */
-export const statHandler = (mob) => ({
+const statHandler = (mob) => ({
   /**
    * @param {Stat} target
-   * @param {string} stat
+   * @param {keyof Stat} stat
    * @returns {number}
    */
   get (target, stat) {
     const [statUniversal, statGroup] = Stat.type(stat);
 
-    let value = mob.statBase[stat] ?? mob.statBase[statGroup] ?? mob.statBase[statUniversal] ?? 0;
+    let value = (mob.statBase[stat] ?? mob.statBase[statGroup] ?? mob.statBase[statUniversal] ?? 0);
 
 
     // factor
     for (const condition of mob.conditions) {
-      value *= condition?.effect.statFactor?.[stat] ?? 1.0;
+      value *= (condition?.effect.statFactor?.[stat] ?? 1.0);
     }
 
     // flat
     for (const item of [...mob.armor, ...mob.hand, ...mob.side, ...mob.accessories]) {
-      const ability = (mob.ability?.[item.scaleAbility] ?? 0) - item.scaleMin;
-      const scaleFactor = ability.clamp(0, item.scaleMax);
+      if (!(item instanceof Gear)) continue;
 
-      const base = item.statBase?.[stat] ?? 0;
-      const quality = item.qualityModifier * (item.statQuality?.[stat] ?? 0);
-      const scale = scaleFactor * (item.statScale?.[stat] ?? 0);
+
+      const base = (item.statBase?.[stat] ?? 0);
+
+      const quality = (item.qualityModifier * (item.statQuality?.[stat] ?? 0));
+
+      let scale = 0;
+      for (const [ability, score] of Object.entries(mob.ability)) {
+        scale += (score.clamp(item.scaleMin[ability], item.scaleMax[ability]) * (item.statScale?.[stat] ?? 0));
+      }
 
       value += (base + quality + scale);
     }
     for (const condition of mob.conditions) {
-      value += condition?.effect.stat?.[stat] ?? 0;
+      value += (condition?.effect.stat?.[stat] ?? 0);
     }
 
 
@@ -135,10 +128,10 @@ export const statHandler = (mob) => ({
  * @param {Mob} mob
  * @returns {ProxyHandler<Vital>}
  */
-export const vitalHandler = (mob) => ({
+const vitalHandler = (mob) => ({
   /**
    * @param {Vital} target
-   * @param {string} proficiency
+   * @param {keyof Vital} vital
    * @returns {number}
    */
   get (target, vital) {
@@ -148,7 +141,7 @@ export const vitalHandler = (mob) => ({
   },
   /**
    * @param {Stat} target
-   * @param {string} stat
+   * @param {keyof Vital} vital
    * @param {number} value
    * @returns {boolean}
    */
@@ -179,66 +172,62 @@ export const vitalHandler = (mob) => ({
   }
 });
 
-/** @abstract */
+/**
+ * @abstract
+ * @extends Entity
+ */
 const Mob = class extends Entity {
-  /** @type {number} */
-  #reach; // ft
+  // #region Static
+  /**
+   * @param {number} level
+   * @returns {number} experience
+   */
+  static experienceNext = (level) => ((5 * level) + 5);
 
-  /** @type {Point} */
-  #at;
-  /** @type {Point} */
-  #looking;
-  /** @type {Point} */
-  #facing;
+  /**
+   * @param {number} level
+   * @returns {number} experience
+   */
+  static experienceCumulative = (level) => (((level / 2) * this.experienceNext(level)) - 5);
+  // #endregion
 
-  /** @type {number} */
-  #experience;
-  /** @type {number} */
-  #level;
 
-  /** @type {Ability<number>} */
-  #abilityBase;
-  /** @type {Ability<Number>} */
-  #ability;
+  // #region Instance
+  /** @type {number} */ #reach; // ft
 
-  /** @type {Proficiency<number>} */
-  #proficiencyBase;
-  /** @type {Proficiency<number>} */
-  #proficiency;
+  /** @type {Point} */ #at;
+  /** @type {Point} */ #looking;
+  /** @type {Point} */ #facing;
 
-  /** @type {Stat} */
-  #statBase;
-  /** @type {Stat} */
-  #stat;
+  /** @type {number} */ #experience;
+  /** @type {number} */ #level;
 
-  /** @type {Vital} */
-  #vital;
+  /** @type {Ability<number>} */ #abilityBase;
+  /** @type {Ability<number>} */ #ability;
 
-  /** @type {Equip<Slot[]>} */
-  #slots;
-  /** @type {Slot<Armor>} */
-  #armor;
-  /** @type {Slot<Item>} */
-  #hand;
-  /** @type {Slot<Item>} */
-  #side;
-  /** @type {Inventory<Accessory>} */
-  #accessories;
-  /** @type {Inventory<Item>} */
-  #inventory;
+  /** @type {Proficiency} */ #proficiencyBase;
+  /** @type {Proficiency} */ #proficiency;
 
-  /** @type {Type<Class<Condition>>} */
-  #condition;
-  /** @type {Conditions} */
-  #conditions;
+  /** @type {Stat} */ #statBase;
+  /** @type {Stat} */ #stat;
 
-  /** @type {Attack[]} */
-  #attacks;
+  /** @type {Vital} */ #vital;
 
-  /** @type {Action[]} */
-  #turn;
-  /** @type {Function} */
-  #act;
+  /** @type {Equip<Slot[]>} */ #slots;
+  /** @type {Slot<Armor>} */ #armor;
+  /** @type {Slot<Item>} */ #hand;
+  /** @type {Slot<Item>} */ #side;
+  /** @type {Inventory<Accessory>} */ #accessories;
+  /** @type {Inventory<Item>} */ #inventory;
+
+  /** @type {Type<Class<Condition>>} */ #condition;
+  /** @type {Conditions} */ #conditions;
+
+  /** @type {Attack[]} */ #attacks;
+
+  /** @type {Action[]} */ #turn;
+  /** @type {Function} */ #act;
+
 
   constructor () {
     super();
@@ -260,26 +249,26 @@ const Mob = class extends Entity {
     this.#proficiency = new Proxy(new Proficiency(0.0), proficiencyHandler(this));
 
     this.#statBase = Object.defineProperties({}, {
-      weightMax: { get: () => this.sizeFactor * 10 * this.ability.strength },
+      weightMax: { get: () => (this.sizeFactor * 10 * this.ability.strength) },
 
-      view: { get: () => this.heightFactor * 60 },
+      view: { get: () => (this.heightFactor * 60) },
       perception: { get: () => this.ability.wisdom },
 
-      healthMax: { get: () => (this.sizeModifierFactor * this.ability.constitution) + (this.level * (this.ability.constitution / 2)) },
+      healthMax: { get: () => ((this.sizeModifierFactor * this.ability.constitution) + (this.level * (this.ability.constitution / 2))) },
 
-      regenMax: { get: () => 15 - (this.ability.constitution / 2) },
+      regenMax: { get: () => (15 - (this.ability.constitution / 2)) },
 
-      energyMax: { get: () => (10 * this.stat.speed).clamp(50) },
+      energyMax: { get: () => (10 * this.stat.speed).clamp(Stat.energyMin) },
 
-      speed: { get: () => this.ability.dexterity / 2 },
-      stealth: { get: () => this.ability.dexterity - (4 * this.sizeModifier) },
-      evade: { get: () => (this.ability.dexterity / 2) - (2 * this.sizeModifier) },
+      speed: { get: () => (this.ability.dexterity / 2) },
+      stealth: { get: () => (this.ability.dexterity - (4 * this.sizeModifier)) },
+      evade: { get: () => ((this.ability.dexterity / 2) - (2 * this.sizeModifier)) },
 
-      critical: { get: () => this.ability.luck / 200 },
+      critical: { get: () => (this.ability.luck / 200) },
       physicalAttack: { get: () => (this.sizeModifierFactor * ((this.ability.strength / 2) - 4)).clamp(1) },
 
-      physicalDefense: { get: () => this.ability.constitution / 4 },
-      tolerance: { get: () => this.stat.healthMax / 2 }
+      physicalDefense: { get: () => (this.ability.constitution / 4) },
+      tolerance: { get: () => (this.stat.healthMax / 2) }
     });
     this.#stat = new Proxy(new Stat(0), statHandler(this));
 
@@ -307,38 +296,9 @@ const Mob = class extends Entity {
     this.#turn = [];
     this.#act = null;
   }
+  // #endregion
 
-  /**
-   * @param {Object} json
-   * @param {Function} [reviver]
-   * @returns {Mob}
-   */
-  static fromJSON (json, reviver) {
-    return new Mob[json.constructor]().fromJSON(json, reviver);
-  }
-
-  /**
-   * @param {string} key
-   * @param {Function} [replacer]
-   * @returns {string}
-   */
-  static toJSON (key, replacer) {
-    return toJSON(this, "name", replacer?.name);
-  }
-
-
-  #sizeUpdate () {
-    this.hand.dimensionMax = 1.5 * this.height;
-    this.hand.volumeMax = this.sizeFactor / 4;
-    this.side.dimensionMax = 1.5 * this.height;
-    this.side.volumeMax = this.sizeFactor / 4;
-
-    this.inventory.sizeMax = 20 * this.sizeFactor;
-    this.inventory.volumeMax = this.sizeFactor;
-    this.inventory.itemDimensionMax = 1.5 * this.reach;
-    this.inventory.itemVolumeMax = this.sizeFactor;
-  }
-
+  // #region Instance Accessors
   /** @type {number} */
   get length () { return super.length; }
   set length (length) {
@@ -373,25 +333,6 @@ const Mob = class extends Entity {
 
 
   /** @type {number} */
-  get weight () {
-    let weight = super.weight;
-
-    weight += this.armor.weight;
-    weight += this.hand.weight;
-    weight += this.side.weight;
-    weight += this.accessories.weight;
-    weight += this.inventory.weight;
-
-    return weight;
-  }
-
-  /** @type {number} */
-  get weightFactor () {
-    return (this.weight - super.weight) / this.stat.weightMax;
-  }
-
-
-  /** @type {number} */
   get reach () { return this.#reach; }
   set reach (reach) {
     this.#reach = reach.clamp(0);
@@ -416,7 +357,7 @@ const Mob = class extends Entity {
     const current = this.experience;
     if (experience <= current) return;
 
-    const next = experienceCumulative(this.level + 1);
+    const next = Mob.experienceCumulative(this.level + 1);
     if (experience >= next) {
       this.#level++;
       this.experience = experience;
@@ -429,13 +370,9 @@ const Mob = class extends Entity {
   /** @type {number} */
   get level () { return this.#level; }
   set level (level) {
-    const min = experienceCumulative(level);
+    const min = Mob.experienceCumulative(level).clamp(1);
     this.experience = this.experience.clamp(min);
   }
-
-
-  /** @type {Memories} */
-  get memories () { return this.#memories; }
 
 
   /** @type {Ability<number>} */
@@ -445,10 +382,10 @@ const Mob = class extends Entity {
   get ability () { return this.#ability; }
 
 
-  /** @type {Proficiency<number>} */
+  /** @type {Proficiency} */
   get proficiencyBase () { return this.#proficiencyBase; }
 
-  /** @type {Proficiency<number>} */
+  /** @type {Proficiency} */
   get proficiency () { return this.#proficiency; }
 
 
@@ -481,20 +418,62 @@ const Mob = class extends Entity {
   /** @type {Inventory<Item>} */
   get inventory () { return this.#inventory; }
 
-  /**
-   * @param {Item} item
-   * @returns {boolean}
-   */
-  add (item) {
-    return this.inventory.add(item);
+
+  /** @type {Type<Class<Condition>>} */
+  get condition () { return this.#condition; }
+
+  /** @type {Conditions} */
+  get conditions () { return this.#conditions; }
+
+
+  /** @type {Attack[]} */
+  get attacks () { return this.#attacks; }
+
+
+  /** @type {Action[]} */
+  get turn () { return this.#turn; }
+
+  /** @type {Function} */
+  get act () { return this.#act; }
+  set act (act) { this.#act = act; }
+  // #endregion
+
+  // #region Instance Derived Properties
+  /** @type {number} */
+  get weight () {
+    let weight = super.weight;
+
+    weight += this.armor.weight;
+    weight += this.hand.weight;
+    weight += this.side.weight;
+    weight += this.accessories.weight;
+    weight += this.inventory.weight;
+
+    return weight;
   }
-  /**
-   * @param {number} index
-   * @returns {Item}
-   */
-  remove (index) {
-    return this.inventory.remove(index);
+
+  /** @type {number} */
+  get weightFactor () {
+    return ((this.weight - super.weight) / this.stat.weightMax);
   }
+  // #endregion
+
+  // #region Instance Methods
+  /**
+   * @returns {undefined}
+   */
+  #sizeUpdate () {
+    this.hand.dimensionMax = (1.5 * this.height);
+    this.hand.volumeMax = (this.sizeFactor / 4);
+    this.side.dimensionMax = (1.5 * this.height);
+    this.side.volumeMax = (this.sizeFactor / 4);
+
+    this.inventory.sizeMax = (20 * this.sizeFactor);
+    this.inventory.volumeMax = this.sizeFactor;
+    this.inventory.itemDimensionMax = (1.5 * this.reach);
+    this.inventory.itemVolumeMax = this.sizeFactor;
+  }
+
 
   /**
    * @param {Item} item
@@ -514,7 +493,7 @@ const Mob = class extends Entity {
       if (itemSize !== mobSize) return undefined;
     }
     else if (Equip.hands.includes(equip)) {
-      const handIndex = Equip.hands.indexes[equip] + sizeOffset;
+      const handIndex = (Equip.hands.indexes[equip] + sizeOffset);
       if (handIndex < 0) return undefined;
       if (handIndex >= Equip.hands.length) return undefined;
 
@@ -549,7 +528,7 @@ const Mob = class extends Entity {
         }
       }
 
-      else if (slot === Slot.hand && !this[slot].empty && this.side.empty) {
+      else if ((slot === Slot.hand) && !this[slot].empty && this.side.empty) {
         if (slots.includes(Slot.side)) continue;
         if (!this.slots[this[slot].equip].includes(Slot.side)) continue;
 
@@ -559,7 +538,7 @@ const Mob = class extends Entity {
         if (success) break;
       }
 
-      else if (slot === Slot.side && this.hand.equip === Equip.versatile && this[slot].empty) {
+      else if ((slot === Slot.side) && (this.hand.equip === Equip.versatile) && this[slot].empty) {
         this[slot].open = true;
 
         success = this[slot].add(item, equip, slot);
@@ -582,6 +561,7 @@ const Mob = class extends Entity {
     if (success) this.inventory.remove(index);
     return success;
   }
+
   /**
    * @returns {boolean}
    */
@@ -611,6 +591,7 @@ const Mob = class extends Entity {
 
     return true;
   }
+
   /**
    * @param {keyof Slot} slot
    * @param {number} index
@@ -622,7 +603,7 @@ const Mob = class extends Entity {
     if (slot === Slot.both) {
       const both = (this.hand.slot === Slot.both);
       const hand = this.unequip(Slot.hand);
-      const side = both || this.unequip(Slot.hand) || this.unequip(Slot.side);
+      const side = (both || this.unequip(Slot.hand) || this.unequip(Slot.side));
 
       if (hand && side) return true;
       return [hand, side];
@@ -633,7 +614,7 @@ const Mob = class extends Entity {
     let item;
     if (mobSlot instanceof Slot) item = mobSlot.item;
     if (mobSlot instanceof Inventory) item = mobSlot.at(index);
-    if (item === undefined || item === null) return success;
+    if ((item === undefined) || (item === null)) return success;
 
 
     success = this.inventory.add(item);
@@ -643,11 +624,11 @@ const Mob = class extends Entity {
     if (mobSlot.slot === Slot.both) {
       this.side.open = true;
     }
-    else if (slot === Slot.side && !this.hand.empty && this.slots[this.hand.equip].includes(Slot.both)) {
+    else if ((slot === Slot.side) && !this.hand.empty && this.slots[this.hand.equip].includes(Slot.both)) {
       this.side.open = false;
       swap = true;
     }
-    else if (slot === Slot.hand && !this.side.empty) {
+    else if ((slot === Slot.hand) && !this.side.empty) {
       swap = true;
     }
 
@@ -656,12 +637,22 @@ const Mob = class extends Entity {
     return success;
   }
 
+  /**
+   * @param {Item} item
+   * @returns {boolean}
+   */
+  add (item) {
+    return this.inventory.add(item);
+  }
 
-  /** @type {Type<Class<Condition>>} */
-  get condition () { return this.#condition; }
+  /**
+   * @param {number} index
+   * @returns {Item}
+   */
+  remove (index) {
+    return this.inventory.remove(index);
+  }
 
-  /** @type {Conditions} */
-  get conditions () { return this.#conditions; }
 
   /**
    * @param {string} queue
@@ -688,18 +679,6 @@ const Mob = class extends Entity {
   }
 
 
-  /** @type {Attack[]} */
-  get attacks () { return this.#attacks; }
-
-
-  /** @type {Action[]} */
-  get turn () { return this.#turn; }
-
-  /** @type {Function} */
-  get act () { return this.#act; }
-  set act (act) { this.#act = act; }
-
-
   /**
    * @param {Type<number>} damage
    * @param {boolean} [factor]
@@ -712,7 +691,7 @@ const Mob = class extends Entity {
     const dealt = new Type(0);
     for (const [type, value] of Object.entries(damage)) {
       const base = (factor ? (healthFactor * value) : value.valueOf());
-      const resist = this.stat[`${type}Resist`] * base;
+      const resist = (this.stat[`${type}Resist`] * base);
       const defense = this.stat[`${type}Defense`];
 
       let total = (base - resist).round();
@@ -721,7 +700,7 @@ const Mob = class extends Entity {
       dealt[type] = total;
     }
 
-    const dealtTotal = Object.values(dealt).reduce((total, type) => total + type, 0);
+    const dealtTotal = Object.values(dealt).reduce((total, type) => (total + type), 0);
     this.vital.health -= dealtTotal;
     if (dealtTotal > 0) this.vital.regen = this.stat.regenMax;
 
@@ -741,7 +720,7 @@ const Mob = class extends Entity {
       const buildupFactor = (max ? tolerence : this.vital[`${type}Buildup`]);
 
       const base = (factor ? (buildupFactor * value) : value.valueOf());
-      const resist = this.stat[`${type}Resist`] * base;
+      const resist = (this.stat[`${type}Resist`] * base);
       const total = (base - resist).round();
 
       this.vital[`${type}Buildup`] += total;
@@ -773,7 +752,7 @@ const Mob = class extends Entity {
     const damageFactor = this.damage(effect.damageFactor, true);
     const damageFactorMax = this.damage(effect.damageFactorMax, true, true);
     const damageTotal = Object.keys({ ...damage, ...damageFactor, ...damageFactorMax }).reduce((total, type) => {
-      total[type] = damage[type] + damageFactor[type] + damageFactorMax[type];
+      total[type] = (damage[type] + damageFactor[type] + damageFactorMax[type]);
       return total;
     }, {});
     affect.damage = damageTotal;
@@ -782,19 +761,22 @@ const Mob = class extends Entity {
     const buildupFactor = this.buildup(effect.buildupFactor, true);
     const buildupFactorMax = this.buildup(effect.buildupFactorMax, true, true);
     const buildupTotal = Object.keys({ ...buildup, ...buildupFactor, ...buildupFactorMax }).reduce((total, type) => {
-      total[type] = buildup[type] + buildupFactor[type] + buildupFactorMax[type];
+      total[type] = (buildup[type] + buildupFactor[type] + buildupFactorMax[type]);
       return total;
     }, {});
     affect.buildup = buildupTotal;
 
     return affect;
   }
+  // #endregion
 
 
+  // #region Serialize
   /**
    * @param {Object} json
    * @param {Function} [reviver]
-   * @returns {Mob}
+   * @modifies {this}
+   * @returns {this}
    */
   fromJSON (json, reviver) {
     super.fromJSON(json, reviver);
@@ -840,6 +822,7 @@ const Mob = class extends Entity {
    */
   toJSON (key, replacer) {
     const json = super.toJSON(key, replacer);
+    json.constructor = toJSON(this, "constructor", replacer?.constructor);
 
     json.reach = toJSON(this, "reach", replacer?.reach);
 
@@ -874,5 +857,6 @@ const Mob = class extends Entity {
 
     return json;
   }
+  // #endregion
 };
-export default Mob;
+export default serializable(Mob, true);

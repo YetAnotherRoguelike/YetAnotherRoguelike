@@ -8,7 +8,7 @@ form.addEventListener("submit", () => {
   const remember = form.elements.remember.checked;
 
   if (remember) {
-    const cookie = `password=${password}; Max-Age=${config.rememberDuration / 1000}; Secure; SameSite=Strict`;
+    const cookie = `password=${password}; Max-Age=${config.rememberDuration / 1000}; Secure; SameSite=Strict`; // Max-Age in seconds
     document.cookie = cookie;
   }
 });

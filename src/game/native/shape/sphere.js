@@ -1,3 +1,4 @@
+import { fromJSON, toJSON } from "@kxirk/serialize";
 import "@kxirk/utils/number.js";
 
 import { Shape, Tile } from "@yetanotherroguelike/class";
@@ -7,9 +8,13 @@ import { pointsAdjacent } from "../world/point.js";
 import { tilesExist, tilesFill } from "../world/tile.js";
 
 
+/**
+ * @extends AOE
+ */
 const Sphere = class extends AOE {
-  /** @type {number} */
-  #radius;
+  // #region Instance
+  /** @type {number} */ #radius;
+
 
   /**
    * @param {number} range
@@ -21,23 +26,24 @@ const Sphere = class extends AOE {
 
     this.radius = radius;
   }
+  // #endregion
 
-
+  // #region Instance Accessors
   /** @type {number} */
   get radius () { return this.#radius; }
   set radius (radius) {
     this.#radius = radius.clamp(0);
   }
+  // #endregion
 
-
+  // #region Instance Methods
   /**
    * @override
    * @param {Point} origin
    * @param {Point} target
-   * @param {number} offset
    * @return {Point[]}
    */
-  points (origin, target, offset) {
+  points (origin, target) {
     let points = tilesExist(pointsAdjacent(target, this.radius));
 
     if (this.collide) {
@@ -46,6 +52,42 @@ const Sphere = class extends AOE {
 
     return points;
   }
+  // #endregion
+
+
+  // #region Serialize
+  /** @type {string} */ static name = "Sphere";
+  /** @type {string[]} */ static parameters = ["range", "decay", "radius"];
+
+
+  /**
+   * @param {Object} json
+   * @param {Function} [reviver]
+   * @modifies {this}
+   * @returns {this}
+   */
+  fromJSON (json, reviver) {
+    super.fromJSON(json, reviver);
+
+    this.radius = fromJSON(json, this, "radius", reviver?.radius);
+
+    return this;
+  }
+
+  /**
+   * @param {string} key
+   * @param {Function} [replacer]
+   * @returns {Object}
+   */
+  toJSON (key, replacer) {
+    const json = super.toJSON(key, replacer);
+
+    json.radius = toJSON(this, "radius", replacer?.radius);
+
+    return json;
+  }
+  // #endregion
 };
-Shape.Sphere = Sphere;
 export default Sphere;
+
+Shape.register(Sphere);

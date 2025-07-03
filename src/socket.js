@@ -1,16 +1,16 @@
+import { TokenBucket } from "@kxirk/adt";
 import cookie from "cookie";
 import cookieParser from "cookie-parser";
-import { TokenBucket } from "@kxirk/adt";
 import WebSocket, { WebSocketServer } from "ws";
 
-import settings from "./settings.js";
-import { Event, log } from "./events.js";
-import time, { convertTime, Priority, IntervalTask, tasks } from "./time.js";
 import api from "./api.js";
+import audit, { Violation, violations } from "./audit.js";
 import auth from "./auth.js";
-import audit, { ConnectionViolation, MessageViolation, RateViolation, TokenViolation, violations } from "./audit.js";
 import connections from "./connections.js";
 import Client from "./client.js";
+import { Event, Level, log } from "./events.js";
+import settings from "./settings.js";
+import time, { convertTime, Priority, IntervalTask, tasks } from "./time.js";
 
 
 /**
@@ -31,8 +31,7 @@ export const selectProtocol = (protocols, request) => {
   return false;
 };
 
-/** @type {WebSocketServer} */
-export const server = new WebSocketServer({
+/** @type {WebSocketServer} */ const server = new WebSocketServer({
   noServer: true,
   handleProtocols: selectProtocol,
   maxPayload: settings.socket.maxPayload
@@ -48,7 +47,7 @@ export default server;
  * @returns {boolean}
  */
 export const authenticate = (request, socket, ip, token) => {
-  log(new Event("debug", "server", `${ip} AUTH ${token}`));
+  log(new Event(Level.debug, "server", `${ip} AUTH ${token}`));
 
   const whitelisted = auth.whitelisted(ip);
   if (settings.auth.enforceWhitelist && !whitelisted) {
@@ -69,7 +68,7 @@ export const authenticate = (request, socket, ip, token) => {
   const whitelistBypass = (settings.auth.alwaysPermitWhitelist && auth.whitelisted(ip));
   const tokenValidate = (settings.socket.validateTokens && auth.validate(token, ip));
   if (!whitelistBypass && !tokenValidate) {
-    violations.add(new TokenViolation(ip));
+    violations.add(new Violation(Violation.token, ip));
 
     socket.end("HTTP/1.1 401 Unauthorized\r\n\r\n");
     socket.destroy();
@@ -78,7 +77,7 @@ export const authenticate = (request, socket, ip, token) => {
   }
 
   if (!connections.create(ip)) {
-    violations.add(new ConnectionViolation(ip));
+    violations.add(new Violation(Violation.connection, ip));
 
     socket.end("HTTP/1.1 429 Too Many Requests\r\n\r\n");
     socket.destroy();
@@ -101,7 +100,7 @@ export const upgrade = async (request, socket, head) => {
   const cookiesSigned = cookieParser.signedCookies(cookies, settings.auth.tokenSecret);
   const token = cookiesSigned.token;
 
-  log(new Event("debug", "server", `${ip} UPGRADE ${token}`));
+  log(new Event(Level.debug, "server", `${ip} UPGRADE ${token}`));
 
   if (authenticate(request, socket, ip, token)) {
     server.handleUpgrade(request, socket, head, (ws, req) => {
@@ -126,21 +125,21 @@ export const verifyMessage = (ws, request, ip, token, event) => {
   }
 
   if (settings.socket.validateTokens && !auth.validate(token, ip)) {
-    violations.add(new TokenViolation(ip));
+    violations.add(new Violation(Violation.token, ip));
 
     ws.close(1008, "Unauthorized");
     return false;
   }
 
   if (!ws.rate.next(time.now)) {
-    violations.add(new RateViolation(ip));
+    violations.add(new Violation(Violation.rate, ip));
 
     ws.close(1008, "Too Many Messages");
     return false;
   }
 
   if (api.listenerCount(event) === 0) {
-    violations.add(new MessageViolation(ip));
+    violations.add(new Violation(Violation.message, ip));
 
     ws.close(1008, "Invalid API Request");
     return false;
@@ -157,27 +156,25 @@ export const verifyMessage = (ws, request, ip, token, event) => {
  * @returns {undefined}
  */
 export const connect = (ws, request, ip, token) => {
-  const client = new Client(token, ws);
+  /** @type {Client} */ const client = new Client(token, ws);
 
-  log(new Event("debug", "socket", `${token} CONNECT`));
+  log(new Event(Level.debug, "socket", `${token} CONNECT`));
 
 
-  /** @type {boolean} */
-  ws.connected = false;
+  /** @type {boolean} */ ws.connected = false;
 
-  /** @type {number} */
-  ws.last = 0;
+  /** @type {number} */ ws.last = 0;
 
-  /** @type {TokenBucket} */
-  ws.rate = new TokenBucket(settings.socket.rateMax, settings.socket.rateWindow, time.now);
+  /** @type {TokenBucket} */ ws.rate = new TokenBucket(settings.socket.rateMax, settings.socket.rateWindow, time.now);
 
   /**
+   * @override
    * @param {string} event
    * @param {...*} data
    * @returns {undefined}
    */
   ws.send = (event, ...data) => {
-    log(new Event("debug", "socket", `${token} SEND ${event}`));
+    log(new Event(Level.debug, "socket", `${token} SEND ${event}`));
 
     WebSocket.prototype.send.call(ws, JSON.stringify({ event, data }));
   };
@@ -196,7 +193,7 @@ export const connect = (ws, request, ip, token) => {
     try {
       const { event, data } = JSON.parse(message.toString());
 
-      log(new Event("debug", "socket", `${token} MESSAGE ${event}`));
+      log(new Event(Level.debug, "socket", `${token} MESSAGE ${event}`));
 
       if (verifyMessage(ws, request, ip, token, event)) {
         api.emit(event, client, ...data);
@@ -206,13 +203,14 @@ export const connect = (ws, request, ip, token) => {
       ws.emit("error", error);
     }
 
+    ws.last = time.now;
     auth.extend(token);
   });
 
   ws.on("error", (error) => {
-    log(new Event("debug", "socket", `${token} ERROR ${error.name}: ${error.message}`, { cause: error }));
+    log(new Event(Level.debug, "socket", `${token} ERROR ${error.name}: ${error.message}`, { cause: error }));
 
-    violations.add(new MessageViolation(ip));
+    violations.add(new Violation(Violation.message, ip));
 
     if (error.code === "WS_ERR_UNSUPPORTED_MESSAGE_LENGTH") {
       ws.close(1009, "Message Too Big");
@@ -223,7 +221,7 @@ export const connect = (ws, request, ip, token) => {
   });
 
   ws.on("close", (/* code, reason */) => {
-    log(new Event("debug", "socket", `${token} CLOSE`));
+    log(new Event(Level.debug, "socket", `${token} CLOSE`));
 
     ws.connected = false;
     connections.close(ip);
@@ -232,7 +230,8 @@ export const connect = (ws, request, ip, token) => {
 };
 server.on("connection", connect);
 
-export const heartbeatTask = new IntervalTask(
+
+export const heartbeat = new IntervalTask(
   "Socket Heartbeat",
   () => {
     const now = time.now;
@@ -245,7 +244,6 @@ export const heartbeatTask = new IntervalTask(
         ws.terminate();
       }
       else {
-        ws.last = now;
         ws.ping();
       }
     }
@@ -253,4 +251,4 @@ export const heartbeatTask = new IntervalTask(
   Priority.server,
   convertTime(settings.socket.pingInterval)
 );
-tasks.add(heartbeatTask);
+tasks.add(heartbeat);

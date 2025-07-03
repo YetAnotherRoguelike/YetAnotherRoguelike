@@ -1,6 +1,10 @@
+import "@kxirk/utils/array.js";
+import Math from "@kxirk/utils/math.js";
+import "@kxirk/utils/number.js";
+
 import { Point, Points, Tile } from "@yetanotherroguelike/class";
 
-import { pointDistance, pointHeading, pointLine } from "./point.js";
+import { pointDistance, pointHeading, pointsLine } from "./point.js";
 import { tileEmpty, tileExists, tileMatch, tilesMatch } from "./tile.js";
 
 
@@ -11,8 +15,7 @@ import { tileEmpty, tileExists, tileMatch, tilesMatch } from "./tile.js";
  * @property {number} yx
  * @property {number} yy
  */
-/** @type {Octant[]} */
-const octants = [
+/** @type {Octant[]} */ const octants = [
   { index: 0, xx: 0, xy: 1, yx: 1, yy: 0 },
   { index: 1, xx: 1, xy: 0, yx: 0, yy: 1 },
   { index: 2, xx: -1, xy: 0, yx: 0, yy: 1 },
@@ -43,7 +46,7 @@ const directionToOctants = (() => {
   ], true);
 
   /** @type {WeakMap<Point, number>} */
-  const directionsToOctantsIndex = new Map([...directions].map((direction, i) => [direction, i]));
+  const directionsToOctantsIndex = new Map(directions.values().map((direction, i) => [direction, i]));
 
   return (direction, arc, reverse = false) => {
     const results = [];
@@ -91,8 +94,8 @@ export const fov = (center, heading, radius = Infinity, angle = 210, properties 
     const xmin = Math.round((y - 0.5) * start);
     const xmax = Math.ceil(((y + 0.5) * end) - 0.5);
     for (let x = xmin; x <= xmax; x++) {
-      const pointx = center.x + (octant.xx * x) + (octant.xy * y);
-      const pointy = center.y + (octant.yx * x) + (octant.yy * y);
+      const pointx = (center.x + (octant.xx * x) + (octant.xy * y));
+      const pointy = (center.y + (octant.yx * x) + (octant.yy * y));
       const point = new Point(pointx, pointy, center.z);
 
       let skip = false;
@@ -104,25 +107,25 @@ export const fov = (center, heading, radius = Infinity, angle = 210, properties 
       }
       else {
         if (!skip && !tileEmpty(point) && (x >= ((y + bevel - 1) * start)) && ((x - bevel) <= (y * end))) visible.add(...point);
-        scan(y + 1, start, ((x - bevel) / y), octant);
+        scan((y + 1), start, ((x - bevel) / y), octant);
 
         start = ((x - bevel + 1) / y);
         if (start >= end) return;
       }
     }
 
-    scan(y + 1, start, end, octant);
+    scan((y + 1), start, end, octant);
   };
 
   const directionOctants = directionToOctants(direction, arc, reverse);
   const peripheral = [directionOctants.first, directionOctants.last]; if (reverse) peripheral.reverse();
   for (const octant of directionOctants) {
     if (octant === peripheral.first) {
-      if (octant.index % 2 === 0) scan(1, (1 - slope), 1, octant);
+      if ((octant.index % 2) === 0) scan(1, (1 - slope), 1, octant);
       else scan(1, 0, slope, octant);
     }
     else if (octant === peripheral.last) {
-      if (octant.index % 2 === 1) scan(1, (1 - slope), 1, octant);
+      if ((octant.index % 2) === 1) scan(1, (1 - slope), 1, octant);
       else scan(1, 0, slope, octant);
     }
     else scan(1, 0, 1, octant);
@@ -140,7 +143,7 @@ export const fov = (center, heading, radius = Infinity, angle = 210, properties 
  * @returns {Point[]}
  */
 export const line = (start, stop, properties = Tile.transparent, excludeStart = false, excludeFirstException = false) => {
-  const points = pointLine(start, stop, excludeStart);
+  const points = pointsLine(start, stop, excludeStart);
   const match = new Set(tilesMatch(points, properties));
 
   const result = [];

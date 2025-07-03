@@ -1,16 +1,14 @@
 import Random from "@kxirk/random";
 import { fromJSON, toJSON } from "@kxirk/serialize";
 import Math from "@kxirk/utils/math.js";
-import Number from "@kxirk/utils/number.js";
 
 
 const EffectRange = class {
-  /** @type {number} */
-  #min;
-  /** @type {number} */
-  #max;
-  /** @type {number} */
-  #avg;
+  // #region Instance
+  /** @type {number} */ #min;
+  /** @type {number} */ #max;
+  /** @type {number} */ #avg;
+
 
   /**
    * @param {number} [min]
@@ -20,17 +18,9 @@ const EffectRange = class {
   constructor (min = 0, max = 0, avg = Math.average(min, max)) {
     this.set(min, max, avg);
   }
+  // #endregion
 
-  /**
-   * @param {Object} json
-   * @param {Function} [reviver]
-   * @returns {EffectRange}
-   */
-  static fromJSON (json, reviver) {
-    return new EffectRange(json.min, json.max, json.avg).fromJSON(json, reviver);
-  }
-
-
+  // #region Instance Accessors
   /** @type {number} */
   get min () { return this.#min; }
   set min (min) { this.#min = min; }
@@ -42,49 +32,61 @@ const EffectRange = class {
   /** @type {number} */
   get avg () { return this.#avg; }
   set avg (avg) { this.#avg = avg; }
+  // #endregion
 
+  // #region Instance Methods
   /** @type {number} */
   get range () {
     if (Number.isFinite(this.min) && Number.isFinite(this.max)) {
-      return this.max - this.min;
+      return (this.max - this.min);
     }
 
-    return 0;
+    return undefined;
   }
+
 
   /**
    * @param {number} min
    * @param {number} max
    * @param {number} avg
-   * @returns {undefined}
+   * @returns {this}
    */
   set (min, max, avg = Math.average(min, max)) {
-    this.min = min ?? this.min;
-    this.max = max ?? this.max;
-    this.avg = avg ?? this.avg;
+    this.min = min;
+    this.max = max;
+    this.avg = avg;
+
+    return this;
   }
 
 
-  /** @type {number} */
+  /**
+   * @returns {number}
+   */
   valueOf () {
-    if (this.range > 0) {
+    if (this.range) {
       return Random.shared.nextTriangular(this.min, this.max, this.avg);
     }
     return this.avg;
   }
 
-  /** @type {Iterator<number>} */
-  [Symbol.iterator] () {
-    const array = [this.min, this.max, this.avg];
-
-    return array[Symbol.iterator]();
+  /**
+   * @returns {Iterator<number>}
+   */
+  * [Symbol.iterator] () {
+    yield this.min;
+    yield this.max;
+    yield this.avg;
   }
+  // #endregion
 
 
+  // #region Serialize
   /**
    * @param {Object} json
    * @param {Function} [reviver]
-   * @returns {Effect}
+   * @modifies {this}
+   * @returns {this}
    */
   fromJSON (json, reviver) {
     this.min = fromJSON(json, this, "min", reviver?.min);
@@ -108,5 +110,6 @@ const EffectRange = class {
 
     return json;
   }
+  // #endregion
 };
 export default EffectRange;

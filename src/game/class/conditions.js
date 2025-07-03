@@ -4,20 +4,20 @@ import TickQueue from "./tick-queue.js";
 
 
 const Conditions = class {
-  /** @type {TickQueue} */
-  #before;
-  /** @type {TickQueue} */
-  #after;
-  /** @type {TickQueue} */
-  #persist;
+  // #region Instance
+  /** @type {TickQueue} */ #before;
+  /** @type {TickQueue} */ #after;
+  /** @type {TickQueue} */ #persist;
+
 
   constructor () {
     this.#before = new TickQueue();
     this.#after = new TickQueue();
     this.#persist = new TickQueue();
   }
+  // #endregion
 
-
+  // #region Instance Accessors
   /** @type {TickQueue} */
   get before () { return this.#before; }
 
@@ -26,7 +26,28 @@ const Conditions = class {
 
   /** @type {TickQueue} */
   get persist () { return this.#persist; }
+  // #endregion
 
+  // #region Instance Methods
+  /**
+   * @param {Class<Condition>} ConditionClass
+   * @returns {Condition[]}
+   */
+  get (ConditionClass) {
+    const before = this.before.get(ConditionClass);
+    const after = this.after.get(ConditionClass);
+    const persist = this.persist.get(ConditionClass);
+
+    return [...before, ...after, ...persist];
+  }
+
+  /**
+   * @param {Class<Condition>} ConditionClass
+   * @returns {boolean}
+   */
+  has (ConditionClass) {
+    return this.get(ConditionClass).length > 0;
+  }
 
   /**
    * @param {Condition} condition
@@ -37,35 +58,15 @@ const Conditions = class {
   }
 
   /**
-   * @param {Class<Condition>} Class
-   * @returns {Condition[]}
-   */
-  get (Class) {
-    const before = this.before.get(Class);
-    const after = this.after.get(Class);
-    const persist = this.persist.get(Class);
-
-    return [...before, ...after, ...persist];
-  }
-
-  /**
-   * @param {Class<Condition>} Class
-   * @returns {boolean}
-   */
-  has (Class) {
-    return this.get(Class).length > 0;
-  }
-
-  /**
-   * @param {Class<Condition>} Class
+   * @param {Class<Condition>} ConditionClass
    * @param {boolean} [stopFirst]
    * @param {boolean} [newestFirst]
    * @returns {Condition[]}
    */
-  remove (Class, stopFirst = false, newestFirst = false) {
-    const before = this.before.remove(Class, stopFirst, newestFirst);
-    const after = this.after.remove(Class, stopFirst, newestFirst);
-    const persist = this.persist.remove(Class, stopFirst, newestFirst);
+  remove (ConditionClass, stopFirst, newestFirst) {
+    const before = this.before.remove(ConditionClass, stopFirst, newestFirst);
+    const after = this.after.remove(ConditionClass, stopFirst, newestFirst);
+    const persist = this.persist.remove(ConditionClass, stopFirst, newestFirst);
 
     return [...before, ...after, ...persist];
   }
@@ -74,15 +75,20 @@ const Conditions = class {
   /**
    * @returns {Iterator<Condition>}
    */
-  [Symbol.iterator] () {
-    return [...this.before, ...this.after, ...this.persist][Symbol.iterator]();
+  * [Symbol.iterator] () {
+    yield* this.before[Symbol.iterator]();
+    yield* this.after[Symbol.iterator]();
+    yield* this.persist[Symbol.iterator]();
   }
+  // #endregion
 
 
+  // #region Serialize
   /**
    * @param {Object} json
    * @param {Function} [reviver]
-   * @returns {Conditions}
+   * @modifies {this}
+   * @returns {this}
    */
   fromJSON (json, reviver) {
     fromJSON(json, this, "before", reviver?.before);
@@ -106,5 +112,6 @@ const Conditions = class {
 
     return json;
   }
+  // #endregion
 };
 export default Conditions;

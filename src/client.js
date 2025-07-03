@@ -1,11 +1,9 @@
 const Client = class {
-  /** @type {string} */
-  #id;
-  /** @type {WebSocket} */
-  #socket;
+  // #region Instance
+  /** @type {string} */ #id;
+  /** @type {WebSocket} */ #socket;
 
-  /** @type {Player} */
-  #player;
+  /** @type {Player} */ #player;
 
   /**
    * @param {string} id
@@ -17,19 +15,24 @@ const Client = class {
 
     this.#player = null;
   }
+  // #endregion
 
-
+  // #region Instance Accessors
   /** @type {string} */
   get id () { return this.#id; }
 
   /** @type {WebSocket} */
   get socket () { return this.#socket; }
-  /** @type {Function} */
-  get send () { return this.#socket.send; }
 
 
   /** @type {Player} */
   get player () { return this.#player; }
   set player (player) { this.#player = player; }
+  // #endregion
+
+  // #region Instance Derived Properties
+  /** @type {Function} */
+  get send () { return this.#socket.send; }
+  // #endregion
 };
 export default Client;

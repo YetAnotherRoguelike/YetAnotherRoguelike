@@ -1,31 +1,27 @@
-import { fromJSON, toJSON } from "@kxirk/serialize";
+import { fromJSON, toJSON, serializable } from "@kxirk/serialize";
 import "@kxirk/utils/number.js";
 
-import Accuracy from "./accuracy.js";
+import Accuracy from "./accuracy.js"; /* eslint-disable-line import/no-cycle */ // serialize
 import Effect from "./effect.js";
 import Shape from "./shape.js";
 
 
-/** @abstract */
+/**
+ * @abstract
+ */
 const Action = class {
-  /** @type {Effect} */
-  #userBefore;
-  /** @type {Effect} */
-  #target;
-  /** @type {Effect} */
-  #user;
-  /** @type {Effect} */
-  #userAfter;
+  // #region Instance
+  /** @type {Effect} */ #userBefore;
+  /** @type {Effect} */ #target;
+  /** @type {Effect} */ #user;
+  /** @type {Effect} */ #userAfter;
 
-  /** @type {number} */
-  #energy;
+  /** @type {number} */ #energy;
 
-  /** @type {number} */
-  #speed; // ft
-  /** @type {Shape} */
-  #shape;
-  /** @type {Accuracy} */
-  #accuracy;
+  /** @type {number} */ #speed; // ft
+  /** @type {Shape} */ #shape;
+  /** @type {Accuracy} */ #accuracy;
+
 
   constructor () {
     this.#userBefore = null;
@@ -39,26 +35,9 @@ const Action = class {
     this.#shape = null;
     this.#accuracy = null;
   }
+  // #endregion
 
-  /**
-   * @param {Object} json
-   * @param {Function} [reviver]
-   * @returns {Action}
-   */
-  static fromJSON (json, reviver) {
-    return new Action[json.constructor]().fromJSON(json, reviver);
-  }
-
-  /**
-   * @param {string} key
-   * @param {Function} [replacer]
-   * @returns {string}
-   */
-  static toJSON (key, replacer) {
-    return toJSON(this, "name", replacer?.name);
-  }
-
-
+  // #region Instance Accessors
   /** @type {Effect} */
   get userBefore () { return this.#userBefore; }
   set userBefore (userBefore) { this.#userBefore = userBefore; }
@@ -96,18 +75,21 @@ const Action = class {
   /** @type {Accuracy} */
   get accuracy () { return this.#accuracy; }
   set accuracy (accuracy) { this.#accuracy = accuracy; }
+  // #endregion
 
 
+  // #region Serialize
   /**
    * @param {Object} json
    * @param {Function} [reviver]
-   * @returns {Action}
+   * @modifies {this}
+   * @returns {this}
    */
   fromJSON (json, reviver) {
-    if (json.userBefore !== undefined) this.userBefore = fromJSON(json, this, "userBefore", (reviver?.userBefore ?? Effect.fromJSON));
-    if (json.target !== undefined) this.target = fromJSON(json, this, "target", (reviver?.target ?? Effect.fromJSON));
-    if (json.user !== undefined) this.user = fromJSON(json, this, "user", (reviver?.user ?? Effect.fromJSON));
-    if (json.userAfter !== undefined) this.userAfter = fromJSON(json, this, "userAfter", (reviver?.userAfter ?? Effect.fromJSON));
+    if (json.userBefore) this.userBefore = fromJSON(json, this, "userBefore", (reviver?.userBefore ?? Effect.fromJSON));
+    if (json.target) this.target = fromJSON(json, this, "target", (reviver?.target ?? Effect.fromJSON));
+    if (json.user) this.user = fromJSON(json, this, "user", (reviver?.user ?? Effect.fromJSON));
+    if (json.userAfter) this.userAfter = fromJSON(json, this, "userAfter", (reviver?.userAfter ?? Effect.fromJSON));
 
     this.energy = fromJSON(json, this, "energy", reviver?.energy);
 
@@ -127,10 +109,10 @@ const Action = class {
     const json = {};
     json.constructor = toJSON(this, "constructor", replacer?.constructor);
 
-    if (this.userBefore !== null) json.userBefore = toJSON(this, "userBefore", replacer?.userBefore);
-    if (this.target !== null) json.target = toJSON(this, "target", replacer?.target);
-    if (this.user !== null) json.user = toJSON(this, "user", replacer?.user);
-    if (this.userAfter !== null) json.userAfter = toJSON(this, "userAfter", replacer?.userAfter);
+    json.userBefore = toJSON(this, "userBefore", replacer?.userBefore);
+    json.target = toJSON(this, "target", replacer?.target);
+    json.user = toJSON(this, "user", replacer?.user);
+    json.userAfter = toJSON(this, "userAfter", replacer?.userAfter);
 
     json.energy = toJSON(this, "energy", replacer?.energy);
 
@@ -140,5 +122,6 @@ const Action = class {
 
     return json;
   }
+  // #endregion
 };
-export default Action;
+export default serializable(Action, true);

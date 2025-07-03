@@ -1,33 +1,24 @@
 import { fromJSON, toJSON } from "@kxirk/serialize";
-import "@kxirk/utils/number.js";
+import Object from "@kxirk/utils/object.js";
 
 
 const Proficiency = class {
-  /** @member {number} */
-  #armorLight;
-  /** @member {number} */
-  #armorMedium;
-  /** @member {number} */
-  #armorHeavy;
+  // #region Instance
+  /** @member {number} */ #armorLight;
+  /** @member {number} */ #armorMedium;
+  /** @member {number} */ #armorHeavy;
 
-  /** @member {number} */
-  #weaponLight;
-  /** @member {number} */
-  #weaponMedium;
-  /** @member {number} */
-  #weaponHeavy;
-  /** @member {number} */
-  #weaponRanged;
+  /** @member {number} */ #weaponLight;
+  /** @member {number} */ #weaponMedium;
+  /** @member {number} */ #weaponHeavy;
+  /** @member {number} */ #weaponRanged;
 
-  /** @member {number} */
-  #shieldLight;
-  /** @member {number} */
-  #shieldMedium;
-  /** @member {number} */
-  #shieldHeavy;
+  /** @member {number} */ #shieldLight;
+  /** @member {number} */ #shieldMedium;
+  /** @member {number} */ #shieldHeavy;
 
-  /** @member {number} */
-  #accessory;
+  /** @member {number} */ #accessory;
+
 
   /**
    * @param {number} [initial]
@@ -35,10 +26,12 @@ const Proficiency = class {
   constructor (initial = 1.0) {
     this.all = initial;
 
+
     Object.assignGettersAsEnumerable(this, Proficiency);
   }
+  // #endregion
 
-
+  // #region Instance Accessors
   /** @type {number} */
   get armorLight () { return this.#armorLight; }
   set armorLight (armorLight) {
@@ -138,12 +131,15 @@ const Proficiency = class {
     this.shield = value;
     this.accessory = value;
   }
+  // #endregion
 
 
+  // #region Serialize
   /**
    * @param {Object} json
    * @param {Function} [reviver]
-   * @returns {Proficiency}
+   * @modifies {this}
+   * @returns {this}
    */
   fromJSON (json, reviver) {
     this.armorLight = fromJSON(json, this, "armorLight", reviver?.armorLight);
@@ -189,5 +185,6 @@ const Proficiency = class {
 
     return json;
   }
+  // #endregion
 };
 export default Proficiency;

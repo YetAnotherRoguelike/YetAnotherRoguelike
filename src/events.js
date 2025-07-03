@@ -1,31 +1,57 @@
-import { fromJSON, toJSON } from "@kxirk/serialize";
+import { fromJSON, toJSON, serializable } from "@kxirk/serialize";
 
 import { events as settings } from "./settings.js";
 
 
-/** @enum {number} */
+/**
+ * @enum {string}
+ */
 export const Level = class {
-  static error = 0;
-  static warn = 1;
-  static info = 2;
-  static debug = 3;
+  // #region Enum
+  static error = "error";
+  static warn = "warn";
+  static info = "info";
+  static debug = "debug";
+
+
+  /**
+   * @returns {Iterator<string>}
+   */
+  static* [Symbol.iterator] () {
+    yield this.error;
+    yield this.warn;
+    yield this.info;
+    yield this.debug;
+  }
+  // #endregion
 };
 
-/** @abstract */
+/** @type {string[]} */ export const levels = [...Level];
+Object.defineProperty(levels, "indexes", {
+  /**
+   * @enum {number}
+   */
+  value: Object.fromEntries(levels.map((size, i) => [size, i])),
+  enumerable: false
+});
+
+
+/**
+ * @extends Error
+ */
 export const Event = class extends Error {
-  /** @type {keyof Level} */
-  #level;
-  /** @type {string} */
-  #module;
-  /** @type {number} */
-  #time;
+  // #region Instance
+  /** @type {Level} */ #level;
+  /** @type {string} */ #module;
+  /** @type {number} */ #time;
+
 
   /**
    * @typedef {Object} Options
    * @property {*} cause
    */
   /**
-   * @param {keyof Level} level
+   * @param {Level} level
    * @param {string} module
    * @param {string} message
    * @param {Options} options
@@ -40,27 +66,10 @@ export const Event = class extends Error {
 
     Error.captureStackTrace(this, this.constructor);
   }
+  // #endregion
 
-  /**
-   * @param {Object} json
-   * @param {Function} [reviver]
-   * @returns {Event}
-   */
-  static fromJSON (json, reviver) {
-    return new Event[json.constructor](json.level, json.module, json.message, { cause: json.cause }).fromJSON(json, reviver);
-  }
-
-  /**
-   * @param {string} key
-   * @param {Function} [replacer]
-   * @returns {string}
-   */
-  static toJSON (key, replacer) {
-    return toJSON(this, "name", replacer?.name);
-  }
-
-
-  /** @type {keyof Level} */
+  // #region Instance Accessors
+  /** @type {Level} */
   get level () { return this.#level; }
 
   /** @type {string} */
@@ -68,19 +77,25 @@ export const Event = class extends Error {
 
   /** @type {number} */
   get time () { return this.#time; }
+  // #endregion
+
+
+  // #region Serialize
+  /** @type {string[]} */ static parameters = ["level", "module", "message", "options"];
 
 
   /**
    * @param {Object} json
    * @param {Function} [reviver]
-   * @returns {Event}
+   * @modifies {this}
+   * @returns {this}
    */
   fromJSON (json, reviver) {
     this.name = fromJSON(json, this, "name", reviver?.name);
     this.code = fromJSON(json, this, "code", reviver?.code);
     this.message = fromJSON(json, this, "message", reviver?.message);
     this.stack = fromJSON(json, this, "stack", reviver?.stack);
-    this.cause = fromJSON(json, this, "cause", reviver?.cause);
+    this.cause = fromJSON(json.options, this, "cause", reviver?.cause);
 
     this.#level = fromJSON(json, this, "level", reviver?.level);
     this.#module = fromJSON(json, this, "module", reviver?.module);
@@ -101,7 +116,7 @@ export const Event = class extends Error {
     json.code = toJSON(this, "code", replacer?.code);
     json.message = toJSON(this, "message", replacer?.message);
     json.stack = toJSON(this, "stack", replacer?.stack);
-    json.cause = toJSON(this, "cause", replacer?.cause);
+    json.options = { cause: toJSON(this, "cause", replacer?.cause) };
 
     json.level = toJSON(this, "level", replacer?.level);
     json.module = toJSON(this, "module", replacer?.module);
@@ -109,48 +124,21 @@ export const Event = class extends Error {
 
     return json;
   }
+  // #endregion
 };
-
-export const ErrorEvent = class extends Event {
-  constructor (module, message, options) {
-    super(Level.error, module, message, options);
-  }
-};
-Event.ErrorEvent = ErrorEvent;
-
-export const WarnEvent = class extends Event {
-  constructor (module, message, options) {
-    super(Level.warn, module, message, options);
-  }
-};
-Event.WarnEvent = WarnEvent;
-
-export const InfoEvent = class extends Event {
-  constructor (module, message, options) {
-    super(Level.info, module, message, options);
-  }
-};
-Event.InfoEvent = InfoEvent;
-
-export const DebugEvent = class extends Event {
-  constructor (module, message, options) {
-    super(Level.debug, module, message, options);
-  }
-};
-Event.DebugEvent = DebugEvent;
+serializable(Event);
 
 
-/** @type {Event[]} */
-export const events = [];
-
+/** @type {Event[]} */ export const events = [];
 Object.defineProperty(events, "fromJSON", {
   /**
    * @param {Object[]} json
    * @param {Function} [reviver]
-   * @returns {Event[]}
+   * @modifies {this}
+   * @returns {this}
    */
   value (json, reviver) {
-    return Array.prototype.fromJSON.call(events, json, (reviver ?? { value: Event.fromJSON }), false);
+    return Array.prototype.fromJSON.call(this, json, (reviver ?? { value: Event.fromJSON }), false);
   },
   enumerable: false
 });
@@ -163,7 +151,7 @@ Object.defineProperty(events, "fromJSON", {
 export const log = (event, filter = () => true) => {
   events.push(event);
 
-  const filtered = settings.streams.filter((stream) => (Level[event.level] <= Level[stream.level])).filter(filter);
+  const filtered = settings.streams.filter((stream) => (levels.indexes[event.level] <= levels.indexes[stream.level])).filter(filter);
   for (const stream of filtered) {
     let data = event;
     if (stream.format === "serialized") {
@@ -183,11 +171,9 @@ export const log = (event, filter = () => true) => {
 
 export default {
   Level,
+  levels,
+
   Event,
-  ErrorEvent,
-  WarnEvent,
-  InfoEvent,
-  DebugEvent,
 
   events,
   log

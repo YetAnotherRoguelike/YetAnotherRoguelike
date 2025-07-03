@@ -1,27 +1,34 @@
-import { fromJSON, toJSON } from "@kxirk/serialize";
+import { fromJSON, toJSON, serializable } from "@kxirk/serialize";
 import "@kxirk/utils/number.js";
 
-import Entity from "./entity.js";
 import Effect from "./effect.js";
 
 
-/** @abstract */
-const Condition = class extends Entity {
-  /** @type {Effect} */
-  #effect;
-  /** @type {keyof Type} */
-  #type;
+/**
+ * @abstract
+ */
+const Condition = class {
+  // #region Instance
+  /** @type {string} */ #name;
+  /** @type {string} */ #description;
 
-  /** @type {Stack} */
-  #stack;
-  /** @type {number} */
-  #duration;
-  /** @type {Tick} */
-  #tick;
+  /** @type {string[]} */ #display;
+  /** @type {Color} */ #color;
+
+  /** @type {Effect} */ #effect;
+  /** @type {keyof Type} */ #type;
+
+  /** @type {Stack} */ #stack;
+  /** @type {number} */ #duration;
+  /** @type {Tick} */ #tick;
+
 
   constructor () {
-    super();
-    this.display.push("condition");
+    this.#name = null;
+    this.#description = null;
+
+    this.#display = ["condition"];
+    this.#color = null;
 
     this.#effect = null;
     this.#type = null;
@@ -30,24 +37,24 @@ const Condition = class extends Entity {
     this.#duration = 0;
     this.#tick = null;
   }
+  // #endregion
 
-  /**
-   * @param {Object} json
-   * @param {Function} [reviver]
-   * @returns {Condition}
-   */
-  static fromJSON (json, reviver) {
-    return new Condition[json.constructor]().fromJSON(json, reviver);
-  }
+  // #region Instance Accessors
+  /** @type {string} */
+  get name () { return this.#name; }
+  set name (name) { this.#name = name; }
 
-  /**
-   * @param {string} key
-   * @param {Function} [replacer]
-   * @returns {string}
-   */
-  static toJSON (key, replacer) {
-    return toJSON(this, "name", replacer?.name);
-  }
+  /** @type {string} */
+  get description () { return this.#description; }
+  set description (description) { this.#description = description; }
+
+
+  /** @type {string[]} */
+  get display () { return this.#display; }
+
+  /** @type {Color} */
+  get color () { return this.#color; }
+  set color (color) { this.#color = color; }
 
 
   /** @type {Effect} */
@@ -65,20 +72,29 @@ const Condition = class extends Entity {
 
   /** @type {number} */
   get duration () { return this.#duration; }
-  set duration (duration) { this.#duration = duration.clamp(0); }
+  set duration (duration) {
+    this.#duration = duration.clamp(0);
+  }
 
   /** @type {Tick} */
   get tick () { return this.#tick; }
   set tick (tick) { this.#tick = tick; }
+  // #endregion
 
 
+  // #region Serialize
   /**
    * @param {Object} json
    * @param {Function} [reviver]
-   * @returns {Condition}
+   * @modifies {this}
+   * @returns {this}
    */
   fromJSON (json, reviver) {
-    super.fromJSON(json, reviver);
+    this.name = fromJSON(json, this, "name", reviver?.name);
+    this.description = fromJSON(json, this, "description", reviver?.description);
+
+    fromJSON(json, this, "display", reviver?.display);
+    this.color = fromJSON(json, this, "color", reviver?.color);
 
     this.effect = fromJSON(json, this, "effect", (reviver?.effect ?? Effect.fromJSON));
     this.type = fromJSON(json, this, "type", reviver?.type);
@@ -96,7 +112,14 @@ const Condition = class extends Entity {
    * @returns {Object}
    */
   toJSON (key, replacer) {
-    const json = super.toJSON(key, replacer);
+    const json = {};
+    json.constructor = toJSON(this, "constructor", replacer?.constructor);
+
+    json.name = toJSON(this, "name", replacer?.name);
+    json.description = toJSON(this, "description", replacer?.description);
+
+    json.display = toJSON(this, "display", replacer?.display);
+    json.color = toJSON(this, "color", replacer?.color);
 
     json.effect = toJSON(this, "effect", replacer?.effect);
     json.type = toJSON(this, "type", replacer?.type);
@@ -107,5 +130,6 @@ const Condition = class extends Entity {
 
     return json;
   }
+  // #endregion
 };
-export default Condition;
+export default serializable(Condition, true);

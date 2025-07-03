@@ -2,12 +2,11 @@ import { fromJSON, toJSON } from "@kxirk/serialize";
 
 
 const Point = class {
-  /** @type {number} */
-  #x;
-  /** @type {number} */
-  #y;
-  /** @type {number} */
-  #z;
+  // #region Instance
+  /** @type {number} */ #x;
+  /** @type {number} */ #y;
+  /** @type {number} */ #z;
+
 
   /**
    * @param {number} x
@@ -17,8 +16,9 @@ const Point = class {
   constructor (x, y, z) {
     this.set(x, y, z);
   }
+  // #endregion
 
-
+  // #region Instance Accessors
   /** @type {number} */
   get x () { return this.#x; }
   set x (x) { this.#x = x; }
@@ -30,32 +30,41 @@ const Point = class {
   /** @type {number} */
   get z () { return this.#z; }
   set z (z) { this.#z = z; }
+  // #endregion
 
+  // #region Instance Methods
   /**
-   * @param {number} x
-   * @param {number} y
-   * @param {number} z
-   * @returns {undefined}
+   * @param {?number} x
+   * @param {?number} y
+   * @param {?number} z
+   * @returns {this}
    */
   set (x, y, z) {
     this.x = x ?? this.x;
     this.y = y ?? this.y;
     this.z = z ?? this.z;
-  }
 
-
-  /** @type {Iterator<number>} */
-  [Symbol.iterator] () {
-    const array = [this.x, this.y, this.z];
-
-    return array[Symbol.iterator]();
+    return this;
   }
 
 
   /**
+   * @returns {Iterator<number>}
+   */
+  * [Symbol.iterator] () {
+    yield this.x;
+    yield this.y;
+    yield this.z;
+  }
+  // #endregion
+
+
+  // #region Serialize
+  /**
    * @param {Object} json
    * @param {Function} [reviver]
-   * @returns {Point}
+   * @modifies {this}
+   * @returns {this}
    */
   fromJSON (json, reviver) {
     this.x = fromJSON(json, this, "x", reviver?.x);
@@ -79,5 +88,6 @@ const Point = class {
 
     return json;
   }
+  // #endregion
 };
 export default Point;

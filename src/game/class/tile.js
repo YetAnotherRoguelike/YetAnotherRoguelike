@@ -1,11 +1,12 @@
-import { fromJSON, toJSON } from "@kxirk/serialize";
+import { fromJSON, toJSON, serializable } from "@kxirk/serialize";
 import "@kxirk/utils/number.js";
 
 import Entity from "./entity.js";
 import Decoration from "./decoration.js";
 import Item from "./item.js";
-import Mob from "./mob.js";
+import Mob from "./mob.js"; /* eslint-disable-line import/no-cycle */ // serialize
 import Point from "./point.js";
+import TileBase from "./tile-base.js";
 
 
 /**
@@ -15,45 +16,47 @@ import Point from "./point.js";
  * @property {boolean} [walkable]
  */
 
-/** @abstract */
+/**
+ * @enum {TileProperties}
+ * @abstract
+ * @extends Entity
+ */
 const Tile = class extends Entity {
-  /** @type {TileProperties} */
+  // #region Enum
   static destructible = { destructible: true };
-  /** @type {TileProperties} */
   static transparent = { transparent: true };
-  /** @type {TileProperties} */
   static walkable = { walkable: true };
+  // #endregion
 
-  /** @type {Point} */
-  #at;
 
-  /** @type {boolean} */
-  #masked;
-  /** @type {Tile} */
-  #mask;
+  // #region Static
+  /** @type {number} */ static dimensionBase = 5;
+  /** @type {number} */ static height = 10;
+  /** @type {number} */ static heightMin = Entity.dimensionUnitMin;
+  // #endregion
 
-  /** @type {boolean} */
-  #destructible;
-  /** @type {boolean} */
-  #transparent;
-  /** @type {boolean} */
-  #walkable;
 
-  /** @type {Set<Mob>} */
-  #mobs;
-  /** @type {Set<Item>} */
-  #items;
-  /** @type {Set<Decoration>} */
-  #decorations;
+  // #region Instance
+  /** @type {Point} */ #at;
+
+  /** @type {boolean} */ #masked;
+  /** @type {Tile} */ #mask;
+
+  /** @type {boolean} */ #destructible;
+  /** @type {boolean} */ #transparent;
+  /** @type {boolean} */ #walkable;
+
+  /** @type {Set<Mob>} */ #mobs;
+  /** @type {Set<Item>} */ #items;
+  /** @type {Set<Decoration>} */ #decorations;
 
 
   constructor () {
     super();
     this.display.push("tile");
-
-    this.length = 5;
-    this.width = 5;
-    this.height = 10;
+    this.length = Tile.dimensionBase;
+    this.width = Tile.dimensionBase;
+    this.height = Tile.height;
 
     this.#at = new Point();
 
@@ -68,62 +71,63 @@ const Tile = class extends Entity {
     this.#items = new Set();
     this.#decorations = new Set();
   }
+  // #endregion
 
-  /**
-   * @param {Object} json
-   * @param {Function} [reviver]
-   * @returns {Tile}
-   */
-  static fromJSON (json, reviver) {
-    return new Tile[json.constructor]().fromJSON(json, reviver);
-  }
-
-  /**
-   * @param {string} key
-   * @param {Function} [replacer]
-   * @returns {string}
-   */
-  static toJSON (key, replacer) {
-    return toJSON(this, "name", replacer?.name);
-  }
-
-
+  // #region Instance Accessors
   /** @type {string} */
-  get name () { return (this.masked ? this.#mask.name : super.name); }
+  get name () {
+    return (this.masked ? this.#mask.name : super.name);
+  }
   set name (name) { super.name = name; }
 
   /** @type {string} */
-  get description () { return (this.masked ? this.#mask.description : super.description); }
+  get description () {
+    return (this.masked ? this.#mask.description : super.description);
+  }
   set description (description) { super.description = description; }
 
 
   /** @type {string[]} */
-  get display () { return (this.masked ? this.#mask.display : super.display); }
+  get display () {
+    return (this.masked ? this.#mask.display : super.display);
+  }
 
-  /** @type {keyof Color} */
-  get color () { return (this.masked ? this.#mask.color : super.color); }
+  /** @type {Color} */
+  get color () {
+    return (this.masked ? this.#mask.color : super.color);
+  }
   set color (color) { super.color = color; }
 
 
   /** @type {number} */
-  get length () { return (this.masked ? this.#mask.length : super.length); }
+  get length () {
+    return (this.masked ? this.#mask.length : super.length);
+  }
   set length (length) { super.length = length; }
 
   /** @type {number} */
-  get width () { return (this.masked ? this.#mask.width : super.width); }
+  get width () {
+    return (this.masked ? this.#mask.width : super.width);
+  }
   set width (width) { super.width = width; }
 
   /** @type {number} */
-  get height () { return (this.masked ? this.#mask.height : super.height); }
+  get height () {
+    return (this.masked ? this.#mask.height : super.height);
+  }
   set height (height) { super.height = height; }
 
   /** @type {number} */
-  get volumeFactor () { return (this.masked ? this.#mask.volumeFactor : super.volumeFactor); }
+  get volumeFactor () {
+    return (this.masked ? this.#mask.volumeFactor : super.volumeFactor);
+  }
   set volumeFactor (factor) { super.volumeFactor = factor; }
 
 
   /** @type {number} */
-  get density () { return (this.masked ? this.#mask.density : super.density); }
+  get density () {
+    return (this.masked ? this.#mask.density : super.density);
+  }
   set density (density) { super.density = density; }
 
 
@@ -145,11 +149,15 @@ const Tile = class extends Entity {
   set destructible (destructible) { this.#destructible = destructible; }
 
   /** @type {boolean} */
-  get transparent () { return (this.masked ? this.#mask.transparent : this.#transparent); }
+  get transparent () {
+    return (this.masked ? this.#mask.transparent : this.#transparent);
+  }
   set transparent (transparent) { this.#transparent = transparent; }
 
   /** @type {boolean} */
-  get walkable () { return (this.masked ? this.#mask.walkable : this.#walkable); }
+  get walkable () {
+    return (this.masked ? this.#mask.walkable : this.#walkable);
+  }
   set walkable (walkable) { this.#walkable = walkable; }
 
 
@@ -160,8 +168,12 @@ const Tile = class extends Entity {
   get items () { return this.#items; }
 
   /** @type {Set<Decoration>} */
-  get decorations () { return (this.masked ? this.#mask.decorations : this.#decorations); }
+  get decorations () {
+    return (this.masked ? this.#mask.decorations : this.#decorations);
+  }
+  // #endregion
 
+  // #region Instance Derived Properties
   /** @type {number} */
   get occupancy () {
     const volume = this.volume + [
@@ -170,14 +182,17 @@ const Tile = class extends Entity {
       ...this.mobs.values()
     ].reduce((total, entity) => (total + entity.volume), 0);
 
-    return (volume / 5);
+    return (volume / Tile.dimensionBase);
   }
+  // #endregion
 
 
+  // #region Serialize
   /**
    * @param {Object} json
    * @param {Function} [reviver]
-   * @returns {Tile}
+   * @modifies {this}
+   * @returns {this}
    */
   fromJSON (json, reviver) {
     super.fromJSON(json, reviver);
@@ -205,6 +220,7 @@ const Tile = class extends Entity {
    */
   toJSON (key, replacer) {
     const json = super.toJSON(key, replacer);
+    json.constructor = toJSON(this, "constructor", replacer?.constructor);
 
     json.at = toJSON(this, "at", replacer?.at);
 
@@ -221,5 +237,8 @@ const Tile = class extends Entity {
 
     return json;
   }
+  // #endregion
 };
-export default Tile;
+export default serializable(Tile, true);
+
+for (const [property, value] of Object.entries(TileBase)) Object.defineProperty(Tile, property, { value });

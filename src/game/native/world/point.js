@@ -1,3 +1,5 @@
+import "@kxirk/random/array.js";
+import "@kxirk/utils/array.js";
 import "@kxirk/utils/number.js";
 
 import { Point } from "@yetanotherroguelike/class";
@@ -8,7 +10,7 @@ import { Point } from "@yetanotherroguelike/class";
  * @param {Point} b
  * @returns {number}
  */
-export const pointDistance = (a, b) => Math.sqrt((a.x - b.x) ** 2 + (a.y - b.y) ** 2 + (a.z - b.z) ** 2);
+export const pointDistance = (a, b) => Math.sqrt(((a.x - b.x) ** 2) + ((a.y - b.y) ** 2) + ((a.z - b.z) ** 2));
 
 /**
  * @param {Point} point
@@ -40,6 +42,29 @@ export const pointHeading = (point, to) => {
   return new Point(offset.x.clamp(-1, 1), offset.y.clamp(-1, 1), offset.z.clamp(-1, 1));
 };
 
+
+/**
+ * @param {Point[]} center
+ * @param {number} radius
+ * @param {boolean} [excludeCenter]
+ * @returns {Point[]}
+ */
+export const pointsAdjacent = (center, radius, excludeCenter = false) => {
+  const points = [];
+
+  const r = radius.round();
+  for (let y = -r; y <= r; y++) {
+    for (let x = -r; x <= r; x++) {
+      if (excludeCenter && (x === 0) && (y === 0)) continue;
+
+      const point = new Point((center.x + x), (center.y + y), center.z);
+      if (pointDistance(center, point) <= radius) points.push(point);
+    }
+  }
+
+  return points;
+};
+
 /**
  * @param {...Point} points
  * @returns {boolean}
@@ -56,34 +81,12 @@ export const pointsEqual = (...points) => {
 };
 
 /**
- * @param {Point[]} center
- * @param {number} radius
- * @param {boolean} [excludeCenter]
- * @returns {Point[]}
- */
-export const pointsAdjacent = (center, radius, excludeCenter = false) => {
-  const points = [];
-
-  const r = radius.round();
-  for (let y = -r; y <= r; y++) {
-    for (let x = -r; x <= r; x++) {
-      if (excludeCenter && x === 0 && y === 0) continue;
-
-      const point = new Point((center.x + x), (center.y + y), center.z);
-      if (pointDistance(center, point) <= radius) points.push(point);
-    }
-  }
-
-  return points;
-};
-
-/**
  * @param {Point} start
  * @param {Point} stop
  * @param {boolean} [excludeStart]
  * @returns {Point[]}
  */
-export const pointLine = (start, stop, excludeStart = false) => {
+export const pointsLine = (start, stop, excludeStart = false) => {
   const points = [];
 
   let x = start.x; const dx = Math.abs(stop.x - x); const sx = ((x < stop.x) ? 1 : -1);
@@ -103,7 +106,7 @@ export const pointLine = (start, stop, excludeStart = false) => {
       points.push(point);
     }
 
-    if (x === stop.x && y === stop.y) break;
+    if ((x === stop.x) && (y === stop.y)) break;
 
     const e2 = (2 * error);
     if (e2 > -dy) { error -= dy; x += sx; }

@@ -1,17 +1,11 @@
 import { EventEmitter } from "events";
 import { readdirSync } from "fs";
 
-import { Event, log } from "./events.js";
+import { Event, Level, log } from "./events.js";
 
 
-/** @type {EventEmitter} */
-const api = new EventEmitter();
+/** @type {EventEmitter} */ const api = new EventEmitter();
 export default api;
-
-/** @type {string[]} */
-export const protocols = ["dev"];
-api.protocols = protocols;
-
 
 // import api/* default exports
 await Promise.all([...readdirSync(new URL("api/", import.meta.url)).map((file) => import(new URL(`api/${file}`, import.meta.url)))]).then((modules) => {
@@ -23,7 +17,11 @@ await Promise.all([...readdirSync(new URL("api/", import.meta.url)).map((file) =
     }
   }
 
-  log(new Event("info", "api", `Loaded ${listeners} listeners`));
+  log(new Event(Level.info, "api", `Loaded ${listeners} listeners`));
 });
 
-log(new Event("info", "api", `Handling protocols: ${protocols.join(", ")}`));
+
+/** @type {string[]} */ export const protocols = ["dev"];
+api.protocols = protocols;
+
+log(new Event(Level.info, "api", `Handling protocols: ${protocols.join(", ")}`));

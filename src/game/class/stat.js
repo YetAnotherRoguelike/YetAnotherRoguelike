@@ -1,49 +1,66 @@
 import { fromJSON, toJSON } from "@kxirk/serialize";
 import "@kxirk/utils/number.js";
-import { Object } from "@kxirk/utils";
+import Object from "@kxirk/utils/object.js";
 
 import Type from "./type.js";
 
 
 const Stat = class {
-  /** @type {string[]} */
-  static types = ["Attack", "Resist", "Defense", "Tolerance"];
+  // #region Static
+  /** @type {number} */ static energyMin = 50;
 
-  /** @type {number} */
-  #weightMax; // lbs
+  /** @type {string[]} */ static types = ["Attack", "Resist", "Defense", "Tolerance"];
 
-  /** @type {number} */
-  #view; // tiles
-  /** @type {number} */
-  #perception;
 
-  /** @type {number} */
-  #healthMax;
+  /**
+   * @param {string} stat
+   * @typedef {string} universal
+   * @typedef {string} group
+   * @typedef {string} stat
+   * @returns {[universal, group, stat]}
+   */
+  static type (stat) {
+    let universal;
+    let group;
 
-  /** @type {number} */
-  #regenMax; // turns to regen 1 health
+    const [type, suffix] = stat.split(new RegExp(`(${this.types.join("|")})`, "g"));
+    if (suffix) {
+      universal = suffix.toLowerCase();
 
-  /** @type {number} */
-  #energyMax;
+      const typeGroup = Type.groups.find((g) => Type[g].includes(type));
+      if (typeGroup) {
+        group = `${typeGroup}${suffix}`;
+      }
+    }
 
-  /** @type {number} */
-  #speed; // ft/turn
-  /** @type {number} */
-  #stealth;
-  /** @type {number} */
-  #evade;
+    return [universal, group, stat];
+  }
+  // #endregion
 
-  /** @type {number} */
-  #critical; // % chance [0.0, 1.0] to deal additional damage
-  /** @type {Type<number>} */
-  #attack;
 
-  /** @type {Type<number>} */
-  #resist; // % type reduction: weak (-Infinity, 0.0), neutral [0.0], resist (0.0, 1.0), immune [1.0], absorb (1.0, Infinity)
-  /** @type {Type<number>} */
-  #defense;
-  /** @type {Type<number>} */
-  #tolerance; // buildup threshold
+  // #region Instance
+  /** @type {number} */ #weightMax; // lbs
+
+  /** @type {number} */ #view;
+  /** @type {number} */ #perception;
+
+  /** @type {number} */ #healthMax;
+
+  /** @type {number} */ #regenMax; // turns to regen 1 health
+
+  /** @type {number} */ #energyMax;
+
+  /** @type {number} */ #speed; // ft/turn
+  /** @type {number} */ #stealth;
+  /** @type {number} */ #evade;
+
+  /** @type {number} */ #critical; // % chance [0.0, 1.0] to deal additional damage
+  /** @type {Type<number>} */ #attack;
+
+  /** @type {Type<number>} */ #resist; // % damage reduction: weak (-Infinity, 0.0), neutral [0.0], resist (0.0, 1.0), immune [1.0], absorb (1.0, Infinity)
+  /** @type {Type<number>} */ #defense;
+  /** @type {Type<number>} */ #tolerance; // vital.buildup threshold
+
 
   /**
    * @param {number} [initial]
@@ -74,32 +91,9 @@ const Stat = class {
 
     Object.assignGettersAsEnumerable(this, Stat);
   }
+  // #endregion
 
-  /**
-   * @param {string} stat
-   * @typedef {string} universal
-   * @typedef {string} group
-   * @typedef {string} stat
-   * @returns {[universal, group, stat]}
-   */
-  static type (stat) {
-    let universal;
-    let group;
-
-    const [type, suffix] = stat.split(new RegExp(`(${Stat.types.join("|")})`, "g"));
-    if (suffix) {
-      universal = suffix.toLowerCase();
-
-      const typeGroup = Type.groups.find((g) => Type[g].includes(type));
-      if (typeGroup) {
-        group = `${typeGroup}${suffix}`;
-      }
-    }
-
-    return [universal, group, stat];
-  }
-
-
+  // #region Instance Accessors
   /** @type {number} */
   get weightMax () { return this.#weightMax; }
   set weightMax (weightMax) {
@@ -173,16 +167,16 @@ const Stat = class {
     this.#attack.all = attack.clamp(0);
   }
   /** @type {number} */
-  set physicalAttack (physicalAttack) {
-    this.#attack.physical = physicalAttack.clamp(0);
+  set physicalAttack (attack) {
+    this.#attack.physical = attack.clamp(0);
   }
   /** @type {number} */
-  set elementalAttack (elementalAttack) {
-    this.#attack.elemental = elementalAttack.clamp(0);
+  set elementalAttack (attack) {
+    this.#attack.elemental = attack.clamp(0);
   }
   /** @type {number} */
-  set magicalAttack (magicalAttack) {
-    this.#attack.magical = magicalAttack.clamp(0);
+  set magicalAttack (attack) {
+    this.#attack.magical = attack.clamp(0);
   }
 
 
@@ -193,16 +187,16 @@ const Stat = class {
     this.#resist.all = resist;
   }
   /** @type {number} */
-  set physicalResist (physicalResist) {
-    this.#resist.physical = physicalResist;
+  set physicalResist (resist) {
+    this.#resist.physical = resist;
   }
   /** @type {number} */
-  set elementalResist (elementalResist) {
-    this.#resist.elemental = elementalResist;
+  set elementalResist (resist) {
+    this.#resist.elemental = resist;
   }
   /** @type {number} */
-  set magicalResist (magicalResist) {
-    this.#resist.magical = magicalResist;
+  set magicalResist (resist) {
+    this.#resist.magical = resist;
   }
 
   /** @type {Type} */
@@ -212,16 +206,16 @@ const Stat = class {
     this.#defense.all = defense.clamp(0);
   }
   /** @type {number} */
-  set physicalDefense (physicalDefense) {
-    this.#defense.physical = physicalDefense.clamp(0);
+  set physicalDefense (defense) {
+    this.#defense.physical = defense.clamp(0);
   }
   /** @type {number} */
-  set elementalDefense (elementalDefense) {
-    this.#defense.elemental = elementalDefense.clamp(0);
+  set elementalDefense (defense) {
+    this.#defense.elemental = defense.clamp(0);
   }
   /** @type {number} */
-  set magicalDefense (magicalDefense) {
-    this.#defense.magical = magicalDefense.clamp(0);
+  set magicalDefense (defense) {
+    this.#defense.magical = defense.clamp(0);
   }
 
   /** @type {Type} */
@@ -231,23 +225,26 @@ const Stat = class {
     this.#tolerance.all = tolerance.clamp(0);
   }
   /** @type {number} */
-  set physicalTolerance (physicalTolerance) {
-    this.#tolerance.physical = physicalTolerance.clamp(0);
+  set physicalTolerance (tolerance) {
+    this.#tolerance.physical = tolerance.clamp(0);
   }
   /** @type {number} */
-  set elementalTolerance (elementalTolerance) {
-    this.#tolerance.elemental = elementalTolerance.clamp(0);
+  set elementalTolerance (tolerance) {
+    this.#tolerance.elemental = tolerance.clamp(0);
   }
   /** @type {number} */
-  set magicalTolerance (magicalTolerance) {
-    this.#tolerance.magical = magicalTolerance.clamp(0);
+  set magicalTolerance (tolerance) {
+    this.#tolerance.magical = tolerance.clamp(0);
   }
+  // #endregion
 
 
+  // #region Serialize
   /**
    * @param {Object} json
    * @param {Function} [reviver]
-   * @returns {Stat}
+   * @modifies {this}
+   * @returns {this}
    */
   fromJSON (json, reviver) {
     this.weightMax = fromJSON(json, this, "weightMax", reviver?.weightMax);
@@ -307,5 +304,6 @@ const Stat = class {
 
     return json;
   }
+  // #endregion
 };
 export default Stat;

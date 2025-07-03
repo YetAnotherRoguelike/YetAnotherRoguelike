@@ -4,22 +4,23 @@ import { fromJSON, toJSON } from "@kxirk/serialize";
 import { Level } from "@yetanotherroguelike/class";
 
 
-/** @type {Queue<Level>} */
-const levels = new Queue();
+/** @type {Queue<Level>} */ const levels = new Queue();
 export default levels;
+
 
 Object.defineProperty(levels, "fromJSON", {
   /**
    * @param {Object[]} json
    * @param {Function} [reviver]
-   * @returns {Queue<Level>}
+   * @modifies {this}
+   * @returns {this}
    */
   value (json, reviver) {
-    levels.clear();
+    this.clear();
 
-    levels.add(...fromJSON(json, [], undefined, (reviver ?? { value: Level.fromJSON })));
+    this.add(...fromJSON(json, [], undefined, (reviver ?? { value: Level.fromJSON })));
 
-    return levels;
+    return this;
   },
   enumerable: false
 });
@@ -31,9 +32,7 @@ Object.defineProperty(levels, "toJSON", {
    * @returns {Object[]}
    */
   value (key, replacer) {
-    const json = toJSON([...levels], undefined, replacer);
-
-    return json;
+    return toJSON([...this], undefined, replacer);
   },
   enumerable: false
 });

@@ -1,31 +1,28 @@
 import { connections as settings } from "./settings.js";
 
 
-/** @type {Map<string, number>} */
-const connections = new Map();
-
+/** @type {Map<string, number>} */ const connections = new Map();
 Object.defineProperty(connections, "increment", {
   /**
    * @param {string} ip
    * @returns {number}
    */
   value (ip) {
-    connections.set(ip, connections.get(ip) + 1);
+    this.set(ip, this.get(ip) + 1);
 
-    return connections.get(ip);
+    return this.get(ip);
   },
   enumerable: false
 });
-
 Object.defineProperty(connections, "decrement", {
   /**
    * @param {string} ip
    * @returns {number}
    */
   value (ip) {
-    connections.set(ip, connections.get(ip) - 1);
+    this.set(ip, this.get(ip) - 1);
 
-    return connections.get(ip);
+    return this.get(ip);
   },
   enumerable: false
 });
@@ -41,7 +38,7 @@ export const count = (ip) => (connections.get(ip) ?? 0);
  * @returns {boolean}
  */
 export const valid = (ip) => {
-  const total = [...connections.values()].reduce((acc, countIP) => (acc + countIP), 0);
+  const total = connections.values().reduce((acc, countIP) => (acc + countIP), 0);
   if (total >= settings.max) return false;
 
   if (count(ip) >= settings.maxIP) return false;

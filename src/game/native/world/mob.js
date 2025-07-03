@@ -4,12 +4,12 @@ import Math from "@kxirk/utils/math.js";
 import "@kxirk/utils/number.js";
 
 import { Mob, Point, Tick, Tile } from "@yetanotherroguelike/class";
-import { depths, initiative } from "@yetanotherroguelike/data";
+import { initiative } from "@yetanotherroguelike/data";
 
 import Target from "../shape/target.js";
-import { pointDistance, pointHeading, pointsEqual, pointsAdjacent, pointLine } from "./point.js";
-import { tileAt, tileDistance, tileMatch, tilesAt, tilesExist, tilesMatch } from "./tile.js";
 import { line } from "./fov.js";
+import { pointDistance, pointHeading, pointsEqual, pointsAdjacent, pointsLine } from "./point.js";
+import { tileAt, tileDistance, tilesAt, tilesExist, tilesMatch } from "./tile.js";
 
 
 /**
@@ -73,14 +73,14 @@ export const act = (user, action, target) => {
     let evade = 0;
     if (entity instanceof Mob) {
       const occupancies = tilesAt(tilesMatch(tilesExist(pointsAdjacent(entity.at, Math.SQRT2, true)), { walkable: true, not: { has: targets } })).map((tile) => tile.occupancy.clamp(0, 1));
-      const occupancyFactor = 1 - Math.average(...occupancies);
+      const occupancyFactor = (1 - Math.average(...occupancies));
 
       evade = (occupancyFactor * entity.stat.evade);
     }
 
     const distance = tileDistance(user.at, entity.at);
     const accuracy = action.accuracy((distance - user.reach), action.shape.decay);
-    const speedFactor = action.speed / (evade + action.speed);
+    const speedFactor = (action.speed / (evade + action.speed));
     const hit = (speedFactor * accuracy);
 
     const proc = Random.shared.next();
@@ -91,7 +91,7 @@ export const act = (user, action, target) => {
     let effectUser = action.user;
     let critical = false;
     const criticalThreshold = (action.critical ?? user.stat.critical);
-    if (proc < criticalThreshold || (1 - speedFactor) < criticalThreshold) {
+    if ((proc < criticalThreshold) || ((1 - speedFactor) < criticalThreshold)) {
       effectTarget = action.target?.critical;
       effectUser = action.user?.critical;
       critical = true;
@@ -102,7 +102,7 @@ export const act = (user, action, target) => {
     if (affectTarget) {
       let affectUser;
       if (action.user) {
-        affectUser = applyEffect(user, (effectUser instanceof Function ? effectUser(affectTarget, critical) : effectUser));
+        affectUser = applyEffect(user, ((effectUser instanceof Function) ? effectUser(affectTarget, critical) : effectUser));
         affects.push([user, affectUser]);
       }
 
@@ -114,7 +114,7 @@ export const act = (user, action, target) => {
   }
 
   const effectAfter = action.userAfter;
-  if (effectAfter) affects.push([user, applyEffect(user, (effectAfter instanceof Function ? effectAfter(affectPairs) : effectAfter))]);
+  if (effectAfter) affects.push([user, applyEffect(user, ((effectAfter instanceof Function) ? effectAfter(affectPairs) : effectAfter))]);
 
   return affects;
 };
@@ -146,15 +146,14 @@ export const move = (mob, point) => {
 
     const prev = tileAt(mob.at);
     const tile = tileAt(point);
-
-    if (tile.walkable && tile.occupancy < 1.0) {
+    if (tile.walkable && (tile.occupancy < 1.0)) {
       prev.mobs.delete(mob);
 
       tile.mobs.add(mob);
       mob.at.set(...point);
 
-      const los = pointLine(mob.at, mob.looking, true);
-      const facing = los.first ?? new Point((mob.at.x + direction.x), (mob.at.y + direction.y), (mob.at.z + direction.z));
+      const los = pointsLine(mob.at, mob.looking, true);
+      const facing = (los.first ?? new Point((mob.at.x + direction.x), (mob.at.y + direction.y), mob.at.z));
       mob.facing.set(...facing);
 
       return true;
@@ -168,13 +167,20 @@ export const move = (mob, point) => {
  * @param {Mob} mob
  * @param {Point} at
  * @param {Point} looking
+ * @param {boolean} [force]
  * @returns {boolean}
  */
-export const place = (mob, at, looking) => {
-  depths[at.z][at.y][at.x].mobs.add(mob);
+export const place = (mob, at, looking, force = false) => {
+  const tile = tileAt(at);
+  if (force || (tile.walkable && (tile.occupancy < 1.0))) {
+    tile.mobs.add(mob);
+    mob.at.set(...at);
+  }
+  else return false;
 
-  mob.at.set(...at);
   look(mob, looking);
+
+  initiative.add(mob);
 
   return true;
 };
@@ -187,7 +193,7 @@ export const tick = async () => {
   actor.tick(Tick.before);
 
   const energy = await actor.act(actor);
-  const energyMax = Math.max(...[...initiative].map((mob) => mob.stat.energyMax));
+  const energyMax = initiative.max;
   for (const mob of initiative) {
     const delta = ((mob.stat.energyMax / energyMax) * energy);
     mob.vital.energy += delta;

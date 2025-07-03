@@ -6,13 +6,12 @@ import Wall from "../tile/wall.js";
 
 
 /**
- * @param {Random} random
  * @param {Level} level
  * @param {number} depthBase
  * @param {number} depthLevel
  * @returns {Depth}
  */
-export const generateDepth = (random, level, depthBase, depthLevel) => {
+export const generateDepth = (level, depthBase, depthLevel) => {
   const depthModifier = Math.log(depthBase + depthLevel + 1);
 
   const width = ((3 * depthModifier) + 45).round().clamp(level.widthMin, level.widthMax);
@@ -47,15 +46,14 @@ export const generateDepth = (random, level, depthBase, depthLevel) => {
 };
 
 /**
- * @param {Random} random
  * @param {Level} level
  * @param {number} depth
  * @returns {Depth[]}
  */
-export const generateDepths = (random, level, depth) => {
+export const generateDepths = (level, depth) => {
   const generated = [];
   for (let i = 0; i < level.depthCount; i++) {
-    generated.push(generateDepth(random, level, depth, i));
+    generated.push(generateDepth(level, depth, i));
   }
 
   return generated;

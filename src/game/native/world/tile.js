@@ -1,4 +1,4 @@
-import { Point, Points } from "@yetanotherroguelike/class";
+import { Point, Points, Tile } from "@yetanotherroguelike/class";
 import { depths } from "@yetanotherroguelike/data";
 
 import Empty from "../tile/empty.js";
@@ -16,7 +16,13 @@ export const tileAt = (point) => depths[point.z][point.y][point.x];
  * @param {Point} b
  * @returns {number} ft
  */
-export const tileDistance = (a, b) => 5 * pointDistance(a, b);
+export const tileDistance = (a, b) => (Tile.dimensionBase * pointDistance(a, b));
+
+/**
+ * @param {Point} point
+ * @returns {boolean}
+ */
+export const tileEmpty = (point) => (tileAt(point) instanceof Empty);
 
 /**
  * @param {Point} point
@@ -33,12 +39,6 @@ export const tileExists = (point) => {
 
   return true;
 };
-
-/**
- * @param {Point} point
- * @returns {boolean}
- */
-export const tileEmpty = (point) => tileAt(point) instanceof Empty;
 
 /**
  * @param {Point} point
@@ -66,7 +66,7 @@ export const tilesAt = (points) => points.map((point) => tileAt(point));
  * @param {Point[]} points
  * @returns {Point[]}
  */
-export const tilesExist = (points) => points.filter((point) => tileExists(point));
+export const tilesEmpty = (points) => points.filter((point) => tileEmpty(point));
 
 /**
  * @typedef {number} x
@@ -80,7 +80,7 @@ export const tilesExist = (points) => points.filter((point) => tileExists(point)
  * @param {Padding} [padding]
  * @returns {boolean}
  */
-export const tilesEmpty = (start, stop = start, padding = [0, 0, 0]) => {
+export const tilesEmptyContinuous = (start, stop = start, padding = [0, 0, 0]) => {
   const offset = new Point(...padding);
 
   const startOffset = new Point((start.x + offset.x), (start.y + offset.y), (start.z + offset.z));
@@ -102,6 +102,50 @@ export const tilesEmpty = (start, stop = start, padding = [0, 0, 0]) => {
   }
 
   return true;
+};
+
+/**
+ * @param {Point[]} points
+ * @returns {Point[]}
+ */
+export const tilesExist = (points) => points.filter((point) => tileExists(point));
+
+/**
+ * @param {Point} point
+ * @param {Points} visited
+ * @param {Points} match
+ * @param {TileProperties} [properties]
+ * @param {Points} [contained]
+ */
+const floodFill = (point, visited, match, properties = {}, contained = new Points()) => {
+  if (!tileExists(point)) return;
+
+  if (contained.size > 0 && !contained.has(...point)) return;
+
+  if (visited.has(...point)) return;
+  visited.add(...point);
+
+  if (!tileMatch(point, properties)) return;
+  match.add(...point);
+
+  floodFill(new Point((point.x - 1), point.y, point.z), visited, match, properties, contained);
+  floodFill(new Point((point.x + 1), point.y, point.z), visited, match, properties, contained);
+  floodFill(new Point(point.x, (point.y - 1), point.z), visited, match, properties, contained);
+  floodFill(new Point(point.x, (point.y + 1), point.z), visited, match, properties, contained);
+};
+/**
+ * @param {Point} start
+ * @param {TileProperties} [properties]
+ * @param {Point[]} [contained]
+ * @returns {Point[]}
+ */
+export const tilesFill = (start, properties = {}, contained = []) => {
+  const visited = new Points();
+  const match = new Points();
+
+  floodFill(start, visited, match, properties, new Points(contained));
+
+  return [...match];
 };
 
 /**
@@ -129,43 +173,4 @@ export const tilesMatchSearch = (depthsSearch, properties = {}) => {
   }
 
   return points;
-};
-
-/**
- * @param {Point} point
- * @param {Points} visited
- * @param {Points} match
- * @param {TileProperties} [properties]
- * @param {Points} [contained]
- */
-const floodFill = (point, visited, match, properties = {}, contained = new Points()) => {
-  if (!tileExists(point)) return;
-
-  if (contained.size > 0 && !contained.has(...point)) return;
-
-  if (visited.has(...point)) return;
-  visited.add(...point);
-
-  if (!tileMatch(point, properties)) return;
-  match.add(...point);
-
-  floodFill(new Point((point.x - 1), point.y, point.z), visited, match, properties, contained);
-  floodFill(new Point((point.x + 1), point.y, point.z), visited, match, properties, contained);
-  floodFill(new Point(point.x, (point.y - 1), point.z), visited, match, properties, contained);
-  floodFill(new Point(point.x, (point.y + 1), point.z), visited, match, properties, contained);
-};
-
-/**
- * @param {Point} start
- * @param {TileProperties} [properties]
- * @param {Point[]} [contained]
- * @returns {Point[]}
- */
-export const tilesFill = (start, properties = {}, contained = []) => {
-  const visited = new Points();
-  const match = new Points();
-
-  floodFill(start, visited, match, properties, new Points(contained));
-
-  return [...match];
 };

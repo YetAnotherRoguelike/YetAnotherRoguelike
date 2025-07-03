@@ -1,34 +1,39 @@
 import { fromJSON, toJSON } from "@kxirk/serialize";
 import "@kxirk/utils/number.js";
 
+import Ability from "./ability.js";
+import Action from "./action.js"; /* eslint-disable-line import/no-cycle */ // serialize
 import Item from "./item.js";
 
 
-/** @abstract */
+/**
+ * @abstract
+ * @extends Item
+ */
 const Gear = class extends Item {
-  /** @type {number} */
-  #quality; // [-5, 15]
+  // #region Static
+  /** @type {number} */ static qualityMin = -1;
+  /** @type {number} */ static qualityMax = 3;
+  // #endregion
 
-  /** @type {keyof Ability} */
-  #scaleAbility;
-  /** @type {number} */
-  #scaleMin;
-  /** @type {number} */
-  #scaleMax;
 
-  /** @type {Stat} */
-  #statBase;
-  /** @type {Stat} */
-  #statQuality;
-  /** @type {Stat} */
-  #statScale;
+  // #region Instance
+  /** @type {number} */ #quality;
 
-  /** @type {number} */
-  #durabilityBase;
-  /** @type {number} */
-  #durabilityQuality;
-  /** @type {number} */
-  #durability;
+  /** @type {Ability<number>} */ #scaleMin;
+  /** @type {Ability<number>} */ #scaleMax;
+
+  /** @type {Stat} */ #statBase;
+  /** @type {Stat} */ #statQuality;
+  /** @type {Ability<Stat>} */ #statScale;
+
+  /** @type {number} */ #durabilityBase;
+  /** @type {number} */ #durabilityQuality;
+  /** @type {number} */ #durability;
+
+  /** @type {Action} */ #equipAction;
+  /** @type {Action} */ #unequipAction;
+
 
   constructor () {
     super();
@@ -36,49 +41,35 @@ const Gear = class extends Item {
 
     this.#quality = 0;
 
-    this.#scaleAbility = null;
-    this.#scaleMin = 0;
-    this.#scaleMax = 0;
+    this.#scaleMin = new Ability(0);
+    this.#scaleMax = new Ability(0);
 
     this.#statBase = {};
     this.#statQuality = {};
-    this.#statScale = {};
+    this.#statScale = new Ability(Object, true);
 
     this.#durabilityBase = 0;
     this.#durabilityQuality = 0;
     this.#durability = 0;
+
+    this.#equipAction = null;
+    this.#unequipAction = null;
   }
+  // #endregion
 
-
+  // #region Instance Accessors
   /** @type {number} */
   get quality () { return this.#quality; }
   set quality (quality) {
-    this.#quality = quality.clamp(-5, 15);
-  }
-
-  /** @type {number} */
-  get qualityModifier () {
-    return (this.quality / 5);
+    this.#quality = quality.clamp(Gear.qualityMin, Gear.qualityMax);
   }
 
 
-  /** @type {keyof Ability} */
-  get scaleAbility () { return this.#scaleAbility; }
-  set scaleAbility (ability) {
-    this.#scaleAbility = ability;
-  }
-
-  /** @type {number} */
+  /** @type {Ability<number>} */
   get scaleMin () { return this.#scaleMin; }
-  set scaleMin (min) {
-    this.#scaleMin = min.clamp(0);
-  }
 
-  /** @type {number} */
+  /** @type {Ability<number>} */
   get scaleMax () { return this.#scaleMax; }
-  set scaleMax (max) {
-    this.#scaleMax = max.clamp(0);
-  }
 
 
   /** @type {Stat} */
@@ -87,7 +78,7 @@ const Gear = class extends Item {
   /** @type {Stat} */
   get statQuality () { return this.#statQuality; }
 
-  /** @type {Stat} */
+  /** @type {Ability<Stat>} */
   get statScale () { return this.#statScale; }
 
 
@@ -104,33 +95,59 @@ const Gear = class extends Item {
   }
 
   /** @type {number} */
-  get durabilityMax () {
-    return (this.durabilityBase + (this.qualityModifier * this.durabilityQuality)).clamp(1);
-  }
-
-  /** @type {number} */
   get durability () { return this.#durability; }
   set durability (durability) {
     this.#durability = durability.clamp(0);
   }
 
+
+  /** @type {Action} */
+  get equipAction () { return this.#equipAction; }
+  set equipAction (action) { this.#equipAction = action; }
+
+  /** @type {Action} */
+  get unequipAction () { return this.#unequipAction; }
+  set unequipAction (action) { this.#unequipAction = action; }
+  // #endregion
+
+  // #region Instance Derived Properties
   /** @type {number} */
-  get durabilityFactor () { return (this.durability / this.durabilityMax); }
+  get qualityFacor () {
+    return (this.quality / (Gear.qualityMax - Gear.qualityMin));
+  }
+
+  /** @type {number} */
+  get qualityModifier () {
+    return (1 + this.qualityFacor);
+  }
 
 
+  /** @type {number} */
+  get durabilityMax () {
+    return (this.durabilityBase + (this.qualityModifier * this.durabilityQuality)).clamp(1);
+  }
+
+  /** @type {number} */
+  get durabilityFactor () {
+    return (this.durability / this.durabilityMax);
+  }
+  // #endregion
+
+
+  // #region Serialize
   /**
    * @param {Object} json
    * @param {Function} [reviver]
-   * @returns {Gear}
+   * @modifies {this}
+   * @returns {this}
    */
   fromJSON (json, reviver) {
     super.fromJSON(json, reviver);
 
     this.quality = fromJSON(json, this, "quality", reviver?.quality);
 
-    this.scaleAbility = fromJSON(json, this, "scaleAbility", reviver?.scaleAbility);
-    this.scaleMin = fromJSON(json, this, "scaleMin", reviver?.scaleMin);
-    this.scaleMax = fromJSON(json, this, "scaleMax", reviver?.scaleMax);
+    fromJSON(json, this, "scaleMin", reviver?.scaleMin);
+    fromJSON(json, this, "scaleMax", reviver?.scaleMax);
 
     fromJSON(json, this, "statBase", reviver?.statBase);
     fromJSON(json, this, "statQuality", reviver?.statQuality);
@@ -139,6 +156,9 @@ const Gear = class extends Item {
     this.durabilityBase = fromJSON(json, this, "durabilityBase", reviver?.durabilityBase);
     this.durabilityQuality = fromJSON(json, this, "durabilityQuality", reviver?.durabilityQuality);
     this.durability = fromJSON(json, this, "durability", reviver?.durability);
+
+    this.equipAction = fromJSON(json, this, "equipAction", (reviver?.equipAction ?? Action.fromJSON));
+    this.unequipAction = fromJSON(json, this, "unequipAction", (reviver?.unequipAction ?? Action.fromJSON));
 
     return this;
   }
@@ -153,19 +173,22 @@ const Gear = class extends Item {
 
     json.quality = toJSON(this, "quality", replacer?.quality);
 
-    json.scaleAbility = toJSON(this, "quality", replacer?.quality);
-    json.scaleMin = toJSON(this, "quality", replacer?.quality);
-    json.scaleMax = toJSON(this, "quality", replacer?.quality);
+    json.scaleMin = toJSON(this, "scaleMin", replacer?.scaleMin);
+    json.scaleMax = toJSON(this, "scaleMax", replacer?.scaleMax);
 
-    json.statBase = toJSON(this, "quality", replacer?.quality);
-    json.statQuality = toJSON(this, "quality", replacer?.quality);
-    json.statScale = toJSON(this, "quality", replacer?.quality);
+    json.statBase = toJSON(this, "statBase", replacer?.statBase);
+    json.statQuality = toJSON(this, "statQuality", replacer?.statQuality);
+    json.statScale = toJSON(this, "statScale", replacer?.statScale);
 
-    json.durabilityBase = toJSON(this, "quality", replacer?.quality);
-    json.durabilityQuality = toJSON(this, "quality", replacer?.quality);
-    json.durability = toJSON(this, "quality", replacer?.quality);
+    json.durabilityBase = toJSON(this, "durabilityBase", replacer?.durabilityBase);
+    json.durabilityQuality = toJSON(this, "durabilityQuality", replacer?.durabilityQuality);
+    json.durability = toJSON(this, "durability", replacer?.durability);
+
+    json.equipAction = toJSON(this, "equipAction", replacer?.equipAction);
+    json.unequipAction = toJSON(this, "unequipAction", replacer?.unequipAction);
 
     return json;
   }
+  // #endregion
 };
 export default Gear;

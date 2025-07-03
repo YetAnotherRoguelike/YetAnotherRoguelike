@@ -6,23 +6,36 @@ import Stack from "./stack.js";
 
 
 const TickQueue = class {
-  /** @type {Condition[]} */
-  #stack;
-  /** @type {Map<string, Condition>} */
-  #map;
+  // #region Instance
+  /** @type {Condition[]} */ #stack;
+  /** @type {Map<Class<Condition>, Condition>} */ #map;
+
 
   constructor () {
     this.#stack = [];
     this.#map = new Map();
   }
+  // #endregion
 
-
+  // #region Instance Accessors
   /** @type {Condition[]} */
   get stack () { return this.#stack; }
 
-  /** @type {Map<string, Condition>} */
+  /** @type {Map<Class<Condition>, Condition>} */
   get map () { return this.#map; }
+  // #endregion
 
+  // #region Instance Methods
+  /**
+   * @param {Class<Condition>} ConditionClass
+   * @returns {Condition[]}
+   */
+  get (ConditionClass) {
+    const match = this.stack.filter((condition) => (condition instanceof ConditionClass));
+    const map = this.map.get(ConditionClass); if (map) match.push(map);
+
+    return match;
+  }
 
   /**
    * @param {Condition} condition
@@ -36,16 +49,14 @@ const TickQueue = class {
 
     const existing = this.map.get(condition.name);
     if (existing === undefined) {
-      this.map.set(condition.name, condition);
+      this.map.set(condition.constructor, condition);
       return condition;
     }
     if (condition.stack === Stack.ignore) {
       return existing;
     }
     if (condition.stack === Stack.replace) {
-      // end existing
-
-      this.map.set(condition.name, condition);
+      this.map.set(condition.constructor, condition);
       return condition;
     }
     if (condition.stack === Stack.extend) {
@@ -53,32 +64,22 @@ const TickQueue = class {
       return existing;
     }
 
-    return null;
+    return undefined;
   }
 
   /**
-   * @param {Class<Condition>} Class
+   * @param {Class<Condition>} ConditionClass
+   * @param {boolean} [stopFirst]
+   * @param {boolean} [newestFirst]
    * @returns {Condition[]}
    */
-  get (Class) {
-    const match = this.stack.filter((condition) => condition instanceof Class);
-    const map = this.map.get(Class.name); if (map) match.push(map);
-
-    return match;
-  }
-
-  /**
-   * @param {Class<Condition>} Class
-   * @param {boolean} stopFirst
-   * @param {boolean} newestFirst
-   * @returns {Condition[]}
-   */
-  remove (Class, stopFirst, newestFirst) {
+  remove (ConditionClass, stopFirst = false, newestFirst = false) {
     const removed = [];
 
-    if (newestFirst || !stopFirst) {
-      for (let i = this.stack.length - 1; i >= 0; i--) {
-        if (this.stack[i] instanceof Class) {
+    // stack
+    if (newestFirst) {
+      for (let i = (this.stack.length - 1); i >= 0; i--) {
+        if (this.stack[i] instanceof ConditionClass) {
           removed.push(this.stack.remove(i));
           if (stopFirst) return removed;
         }
@@ -86,13 +87,19 @@ const TickQueue = class {
     }
     else {
       for (let i = 0; i < this.stack.length; i++) {
-        if (this.stack[i] instanceof Class) {
+        if (this.stack[i] instanceof ConditionClass) {
           removed.push(this.stack.remove(i)); i--;
           if (stopFirst) return removed;
         }
       }
     }
-    const map = this.map.get(Class.name); if (map) removed.push(map); this.map.delete(Class.name);
+    // map
+    const condition = this.map.get(ConditionClass);
+    if (condition) {
+      removed.push(condition);
+
+      this.map.delete(ConditionClass);
+    }
 
     return removed;
   }
@@ -101,15 +108,19 @@ const TickQueue = class {
   /**
    * @returns {Iterator<Condition>}
    */
-  [Symbol.iterator] () {
-    return [...this.stack, ...this.map.values()][Symbol.iterator]();
+  * [Symbol.iterator] () {
+    yield* this.stack[Symbol.iterator]();
+    yield* this.map.values();
   }
+  // #endregion
 
 
+  // #region Serialize
   /**
    * @param {Object} json
    * @param {Function} [reviver]
-   * @returns {TickQueue}
+   * @modifies {this}
+   * @returns {this}
    */
   fromJSON (json, reviver) {
     fromJSON(json, this, "stack", (reviver?.stack ?? { value: Condition.fromJSON }));
@@ -131,5 +142,6 @@ const TickQueue = class {
 
     return json;
   }
+  // #endregion
 };
 export default TickQueue;

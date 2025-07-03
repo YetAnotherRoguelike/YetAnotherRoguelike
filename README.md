@@ -5,7 +5,7 @@ __   __   _        _                _   _                 ____                  
   |_|\___|\__| /_/   \_\_| |_|\___/ \__|_| |_|\___|_|    |_| \_\___/ \__, |\__,_|\___|_|_|_|\_\___|
                                                                      |___/
 
-Copyright (c) 2024 Cody Morton <https://github.com/YetAnotherRoguelike>
+Copyright (c) 2024-2025 Cody Morton <https://github.com/YetAnotherRoguelike>
 
 This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License version 3 as published by the Free Software Foundation.
 

@@ -1,19 +1,17 @@
-import express from "express";
 import cookieParser from "cookie-parser";
+import express from "express";
 import { readdirSync } from "fs";
 import { fileURLToPath } from "url";
 
-import settings from "./settings.js";
-import { Event, log } from "./events.js";
+import audit, { Violation, violations } from "./audit.js";
 import auth from "./auth.js";
-import audit, { CredentialViolation, PathViolation, violations } from "./audit.js";
+import { Event, Level, log } from "./events.js";
+import settings from "./settings.js";
 
 
-/** @type {string} */
-export const root = fileURLToPath(new URL("client/", import.meta.url));
+/** @type {string} */ export const root = fileURLToPath(new URL("client/", import.meta.url));
 
-/** @type {Express} */
-const app = express();
+/** @type {Express} */ const app = express();
 export default app;
 
 app.set("x-powered-by", false);
@@ -23,8 +21,7 @@ app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser(settings.auth.tokenSecret));
 
 
-/** @type {Set<string>} */
-export const sharedAssets = new Set([
+/** @type {Set<string>} */ export const sharedAssets = new Set([
   "/assets/css/theme.css", "/assets/css/main.css",
   "/assets/font/sharetechmono.ttf", "/assets/font/cursor.cur",
   "/config.js"
@@ -52,15 +49,14 @@ export const any = (request, response, next) => {
     return;
   }
 
-  log(new Event("debug", "server", `${ip} ${method} ${path}`));
+  log(new Event(Level.debug, "server", `${ip} ${method} ${path}`));
 
   next();
 };
 app.use(any);
 
 
-/** @type {Set<string>} */
-export const loginAssets = new Set([
+/** @type {Set<string>} */ export const loginAssets = new Set([
   ...sharedAssets,
   "/login",
   "/assets/css/login.css",
@@ -78,7 +74,7 @@ export const checkPassword = (ip, password, response, report = false) => {
   if (auth.login(password)) return true;
 
   if (report && !response.locals.audited) {
-    violations.add(new CredentialViolation(ip));
+    violations.add(new Violation(Violation.credential, ip));
     response.locals.audited = true;
   }
 
@@ -105,7 +101,7 @@ export const setToken = (ip, response) => {
     sameSite: "Strict"
   });
 
-  log(new Event("debug", "server", `${ip} TOKEN ${token}`));
+  log(new Event(Level.debug, "server", `${ip} TOKEN ${token}`));
 };
 
 /**
@@ -128,11 +124,9 @@ export const login = (request, response) => {
 app.post("/login", login);
 
 
-/** @type {string[]} */
-export const apiFiles = [...readdirSync(new URL("client/api/", import.meta.url))];
+/** @type {string[]} */ export const apiFiles = [...readdirSync(new URL("client/api/", import.meta.url))];
 
-/** @type {Set<string>} */
-export const apiAssets = new Set([...apiFiles.map((file) => `/api/${file}`)]);
+/** @type {Set<string>} */ export const apiAssets = new Set(apiFiles.map((file) => `/api/${file}`));
 
 /**
  * @param {http.IncomingMessage} request
@@ -146,8 +140,7 @@ export const api = (request, response) => {
 app.get("/api.json", api);
 
 
-/** @type {Set<string>} */
-export const indexAssets = new Set([
+/** @type {Set<string>} */ export const indexAssets = new Set([
   ...sharedAssets,
   "/",
   "/assets/css/index.css",
@@ -166,7 +159,7 @@ export const get = (request, response, next) => {
   const { path } = request;
 
   if (!(indexAssets.has(path) || loginAssets.has(path))) {
-    violations.add(new PathViolation(ip));
+    violations.add(new Violation(Violation.path, ip));
 
     response.redirect("/");
     return;

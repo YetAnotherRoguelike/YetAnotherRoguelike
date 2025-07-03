@@ -3,26 +3,19 @@ import readline from "readline";
 import util from "util";
 import vm from "vm";
 
-import { Event, log } from "./events.js";
+import { Event, Level, log } from "./events.js";
 import server, { settings, events, time, api, auth, audit, connections, socket, app } from "./index.js";
 
 
-/** @type {ReadStream} */
-const inputStream = process.stdin;
-/** @type {WriteStream} */
-const outputStream = process.stdout;
-/** @type {WriteStream} */
-const errorStream = process.stderr;
+/** @type {ReadStream} */ const inputStream = process.stdin;
+/** @type {WriteStream} */ const outputStream = process.stdout;
+/** @type {WriteStream} */ const errorStream = process.stderr;
 
-/** @type {string} */
-const prompt = "> ";
-/** @type {string} */
-const success = "+ ";
-/** @type {string} */
-const failure = "- ";
+/** @type {string} */ const prompt = "> ";
+/** @type {string} */ const success = "+ ";
+/** @type {string} */ const failure = "- ";
 
-/** @type {readline.Interface} */
-const io = readline.createInterface({
+/** @type {readline.Interface} */ const io = readline.createInterface({
   input: inputStream,
   output: outputStream,
 
@@ -31,8 +24,7 @@ const io = readline.createInterface({
 });
 
 
-/** @type {number} */
-let pos = io.getPrompt().length;
+/** @type {number} */ let pos = io.getPrompt().length;
 
 /**
  * @returns {boolean}
@@ -64,7 +56,7 @@ vm.createContext(context, { name: "shell" });
  * @returns {undefined}
  */
 const execute = (code) => {
-  log(new Event("debug", "shell", `Executing \`${code}\``), (stream) => !(stream.console));
+  log(new Event(Level.debug, "shell", `Executing \`${code}\``), (stream) => !(stream.console));
 
   try {
     const result = vm.runInContext(code, context, {
@@ -96,4 +88,4 @@ outputStream.on("reset", clearLine);
 outputStream.on("write", resetLine);
 
 
-log(new Event("info", "shell", "Attached"));
+log(new Event(Level.info, "shell", "Attached"));

@@ -1,5 +1,8 @@
-/** @enum {string} */
+/**
+ * @enum {string}
+ */
 const Color = class {
+  // #region Enum
   static red = "red";
   static scarlet = "scarlet"; // red alt
   static vermilion = "vermilion";
@@ -44,5 +47,6 @@ const Color = class {
   static background = "background";
   static foreground = "foreground";
   static accent = "accent";
+  // #endregion
 };
 export default Color;

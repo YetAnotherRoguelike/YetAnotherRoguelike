@@ -1,27 +1,51 @@
 import { fromJSON, toJSON } from "@kxirk/serialize";
 import "@kxirk/utils/number.js";
-import { Object } from "@kxirk/utils";
+import Object from "@kxirk/utils/object.js";
 
 import Type from "./type.js";
 
 
 const Vital = class {
-  /** @type {string[]} */
-  static types = ["Buildup"];
+  // #region Static
+  /** @type {string[]} */ static types = ["Buildup"];
 
-  /** @type {number} */
-  #health;
 
-  /** @type {number} */
-  #regen; // reset on taking damage
+  /**
+   * @param {string} vital
+   * @typedef {string} universal
+   * @typedef {string} group
+   * @typedef {string} vital
+   * @returns {[universal, group, vital]}
+   */
+  static type (vital) {
+    let universal;
+    let group;
 
-  /** @type {number} */
-  #energy;
-  /** @type {number} */
-  #energyOverflow;
+    const [type, suffix] = vital.split(new RegExp(`(${this.types.join("|")})`, "g"));
+    if (suffix) {
+      universal = suffix.toLowerCase();
 
-  /** @type {Type<number>} */
-  #buildup; // damage sustained before applying type-specific condition, decreases each turn
+      const typeGroup = Type.groups.find((g) => Type[g].includes(type));
+      if (typeGroup) {
+        group = `${typeGroup}${suffix}`;
+      }
+    }
+
+    return [universal, group, vital];
+  }
+  // #endregion
+
+
+  // #region Instance
+  /** @type {number} */ #health;
+
+  /** @type {number} */ #regen; // reset on taking damage
+
+  /** @type {number} */ #energy;
+  /** @type {number} */ #energyOverflow;
+
+  /** @type {Type<number>} */ #buildup; // damage sustained before applying mob.condition for a given type, decreases each turn
+
 
   /**
    * @param {number} [initial]
@@ -39,32 +63,9 @@ const Vital = class {
 
     Object.assignGettersAsEnumerable(this, Vital);
   }
+  // #endregion
 
-  /**
-   * @param {string} vital
-   * @typedef {string} universal
-   * @typedef {string} group
-   * @typedef {string} vital
-   * @returns {[universal, group, vital]}
-   */
-  static type (vital) {
-    let universal;
-    let group;
-
-    const [type, suffix] = vital.split(new RegExp(`(${Vital.types.join("|")})`, "g"));
-    if (suffix) {
-      universal = suffix.toLowerCase();
-
-      const typeGroup = Type.groups.find((g) => Type[g].includes(type));
-      if (typeGroup) {
-        group = `${typeGroup}${suffix}`;
-      }
-    }
-
-    return [universal, group, vital];
-  }
-
-
+  // #region Instance Accessors
   /** @type {number} */
   get health () { return this.#health; }
   set health (health) {
@@ -99,23 +100,26 @@ const Vital = class {
     this.#buildup.all = buildup.clamp(0);
   }
   /** @type {number} */
-  set physicalBuildup (physicalBuildup) {
-    this.#buildup.physical = physicalBuildup.clamp(0);
+  set physicalBuildup (buildup) {
+    this.#buildup.physical = buildup.clamp(0);
   }
   /** @type {number} */
-  set elementalBuildup (elementalBuildup) {
-    this.#buildup.elemental = elementalBuildup.clamp(0);
+  set elementalBuildup (buildup) {
+    this.#buildup.elemental = buildup.clamp(0);
   }
   /** @type {number} */
-  set magicalBuildup (magicalBuildup) {
-    this.#buildup.magical = magicalBuildup.clamp(0);
+  set magicalBuildup (buildup) {
+    this.#buildup.magical = buildup.clamp(0);
   }
+  // #endregion
 
 
+  // #region Serialize
   /**
    * @param {Object} json
    * @param {Function} [reviver]
-   * @returns {Vital}
+   * @modifies {this}
+   * @returns {this}
    */
   fromJSON (json, reviver) {
     this.health = fromJSON(json, this, "health", reviver?.health);
@@ -149,5 +153,6 @@ const Vital = class {
 
     return json;
   }
+  // #endregion
 };
 export default Vital;

@@ -19,5 +19,14 @@
   "scripts": {
     "start": "node src/server.js",
     "shell": "node src/shell.js"
+  },
+  "type": "module",
+  "dependencies": {
+    "@kxirk/adt": "^2.1.0",
+    "@kxirk/random": "^3.1.0",
+    "@kxirk/serialize": "^1.0.0",
+    "@kxirk/utils": "^2.2.0",
+    "@yetanotherroguelike/game": "^0.0.0",
+    "@yetanotherroguelike/server": "^0.0.0"
   }
 }

@@ -1,12 +1,16 @@
+import { fromJSON, toJSON, serializable } from "@kxirk/serialize";
+import "@kxirk/utils/array.js";
 import "@kxirk/utils/number.js";
-import { fromJSON, toJSON } from "@kxirk/serialize";
 
 
+/**
+ * @abstract
+ */
 const Shape = class {
-  /** @type {number} */
-  #range;
-  /** @type {number} */
-  #decay;
+  // #region Instance
+  /** @type {number} */ #range;
+  /** @type {number} */ #decay;
+
 
   /**
    * @param {number} range
@@ -16,26 +20,9 @@ const Shape = class {
     this.range = range;
     this.decay = decay;
   }
+  // #endregion
 
-  /**
-   * @param {Object} json
-   * @param {Function} [reviver]
-   * @returns {Shape}
-   */
-  static fromJSON (json, reviver) {
-    return new Shape[json.constructor]().fromJSON(json, reviver);
-  }
-
-  /**
-   * @param {string} key
-   * @param {Function} [replacer]
-   * @returns {string}
-   */
-  static toJSON (key, replacer) {
-    return toJSON(this, "name", replacer?.name);
-  }
-
-
+  // #region Instance Accessors
   /** @type {number} */
   get range () { return this.#range; }
   set range (range) {
@@ -47,12 +34,18 @@ const Shape = class {
   set decay (decay) {
     this.#decay = decay.clamp(0);
   }
+  // #endregion
+
+
+  // #region Serialize
+  /** @type {string[]} */ static parameters = ["range", "decay"];
 
 
   /**
    * @param {Object} json
    * @param {Function} [reviver]
-   * @returns {Shape}
+   * @modifies {this}
+   * @returns {this}
    */
   fromJSON (json, reviver) {
     this.range = fromJSON(json, this, "range", reviver?.range);
@@ -75,5 +68,6 @@ const Shape = class {
 
     return json;
   }
+  // #endregion
 };
-export default Shape;
+export default serializable(Shape, true);

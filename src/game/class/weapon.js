@@ -1,14 +1,17 @@
 import { fromJSON, toJSON } from "@kxirk/serialize";
 
 import Attack from "./attack.js";
-import Equip from "./equip.js";
 import Gear from "./gear.js";
 
 
-/** @abstract */
+/**
+ * @abstract
+ * @extends Gear
+ */
 const Weapon = class extends Gear {
-  /** @type {Attack[]} */
-  #attacks;
+  // #region Instance
+  /** @type {Attack[]} */ #attacks;
+
 
   constructor () {
     super();
@@ -16,16 +19,20 @@ const Weapon = class extends Gear {
 
     this.#attacks = [];
   }
+  // #endregion
 
-
+  // #region Instance Accessors
   /** @type {Attack[]} */
   get attacks () { return this.#attacks; }
+  // #endregion
 
 
+  // #region Serialize
   /**
    * @param {Object} json
    * @param {Function} [reviver]
-   * @returns {Weapon}
+   * @modifies {this}
+   * @returns {this}
    */
   fromJSON (json, reviver) {
     super.fromJSON(json, reviver);
@@ -47,60 +54,6 @@ const Weapon = class extends Gear {
 
     return json;
   }
+  // #endregion
 };
 export default Weapon;
-
-/** @abstract */
-export const Light = class extends Weapon {
-  constructor () {
-    super();
-    this.display.push("light");
-
-    this.equip = Equip.light;
-  }
-};
-Weapon.Light = Light;
-
-/** @abstract */
-export const Medium = class extends Weapon {
-  constructor () {
-    super();
-    this.display.push("medium");
-
-    this.equip = Equip.medium;
-  }
-};
-Weapon.Medium = Medium;
-
-/** @abstract */
-export const Versatile = class extends Weapon {
-  constructor () {
-    super();
-    this.display.push("versatile");
-
-    this.equip = Equip.versatile;
-  }
-};
-Weapon.Versatile = Versatile;
-
-/** @abstract */
-export const Heavy = class extends Weapon {
-  constructor () {
-    super();
-    this.display.push("heavy");
-
-    this.equip = Equip.heavy;
-  }
-};
-Weapon.Heavy = Heavy;
-
-/** @abstract */
-export const Ranged = class extends Weapon {
-  constructor () {
-    super();
-    this.display.push("ranged");
-
-    this.equip = Equip.light;
-  }
-};
-Weapon.Ranged = Ranged;

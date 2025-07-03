@@ -6,29 +6,31 @@ import "@kxirk/utils/number.js";
 import { DimensionMax, VolumeRange } from "./size.js";
 
 
-/** @abstract */
+/**
+ * @abstract
+ */
 const Entity = class {
-  /** @type {string} */
-  #name;
-  /** @type {string} */
-  #description;
+  // #region Static
+  /** @type {number} */ static dimensionUnitMin = 0.01;
+  /** @type {number} */ static volumeUnitMin = 0.01;
+  /** @type {number} */ static densityUnitMin = 0.001;
+  // #endregion
 
-  /** @type {string[]} */
-  #display;
-  /** @type {Color} */
-  #color;
 
-  /** @type {number} */
-  #length; // ft
-  /** @type {number} */
-  #width; // ft
-  /** @type {number} */
-  #height; // ft
-  /** @type {number} */
-  #volumeFactor; // [0.0, 1.0]
+  // #region Instance
+  /** @type {string} */ #name;
+  /** @type {string} */ #description;
 
-  /** @type {number} */
-  #density; // lb/ft3
+  /** @type {string[]} */ #display;
+  /** @type {Color} */ #color;
+
+  /** @type {number} */ #length; // ft
+  /** @type {number} */ #width; // ft
+  /** @type {number} */ #height; // ft
+  /** @type {number} */ #volumeFactor; // [0.0, 1.0]
+
+  /** @type {number} */ #density; // lb/ft3
+
 
   constructor () {
     this.#name = null;
@@ -44,8 +46,9 @@ const Entity = class {
 
     this.#density = 0;
   }
+  // #endregion
 
-
+  // #region Instance Accessors
   /** @type {string} */
   get name () { return this.#name; }
   set name (name) { this.#name = name; }
@@ -65,49 +68,69 @@ const Entity = class {
 
   /** @type {number} */
   get length () { return this.#length; }
-  set length (length) { this.#length = length.round(0.01).clamp(0); }
+  set length (length) {
+    this.#length = length.round(Entity.dimensionUnitMin).clamp(0);
+  }
 
   /** @type {number} */
   get width () { return this.#width; }
-  set width (width) { this.#width = width.round(0.01).clamp(0); }
+  set width (width) {
+    this.#width = width.round(Entity.dimensionUnitMin).clamp(0);
+  }
 
   /** @type {number} */
   get height () { return this.#height; }
-  set height (height) { this.#height = height.round(0.01).clamp(0); }
-
-  /** @type {number} */
-  get heightFactor () {
-    return this.height / Math.average(DimensionMax.small, DimensionMax.medium);
+  set height (height) {
+    this.#height = height.round(Entity.dimensionUnitMin).clamp(0);
   }
 
+  /** @type {number} */
+  get volumeFactor () { return this.#volumeFactor; }
+  set volumeFactor (factor) {
+    this.#volumeFactor = factor.round(Entity.volumeUnitMin).clamp(0.0, 1.0);
+  }
+
+
+  /** @type {number} */
+  get density () { return this.#density; }
+  set density (density) {
+    this.#density = density.round(Entity.densityUnitMin).clamp(0);
+  }
+  // #endregion
+
+  // #region Instance Derived Properties
   /** @type {number} */
   get dimensionMax () {
     return Math.max(this.length, this.width, this.height);
   }
 
   /** @type {number} */
-  get volumeFactor () { return this.#volumeFactor; }
-  set volumeFactor (factor) { this.#volumeFactor = factor.round(0.01).clamp(0.0, 1.0); }
+  get heightFactor () {
+    return (this.height / Math.average(DimensionMax.small, DimensionMax.medium));
+  }
 
   /** @type {number} */
   get volume () {
-    return (this.volumeFactor * this.length * this.width * this.height);
+    const unitMin = Math.min(Entity.volumeUnitMin, Entity.dimensionUnitMin);
+
+    return (this.volumeFactor * this.length * this.width * this.height).round(unitMin);
   }
+
 
   /** @type {keyof Size} */
   get size () {
-    const volumeMax = this.dimensionMax ** 3;
+    const volumeMax = (this.dimensionMax ** 3);
 
     for (const [size, range] of Object.entries(VolumeRange)) {
       if (range.includes(volumeMax)) return size;
     }
 
-    return null;
+    return undefined;
   }
 
   /** @type {number} */
   get sizeFactor () {
-    return this.dimensionMax / Math.average(DimensionMax.small, DimensionMax.medium);
+    return (this.dimensionMax / Math.average(DimensionMax.small, DimensionMax.medium));
   }
 
   /** @type {number} */
@@ -122,19 +145,20 @@ const Entity = class {
 
 
   /** @type {number} */
-  get density () { return this.#density; }
-  set density (density) { this.#density = density.round(0.001).clamp(0); }
-
-  /** @type {number} */
   get weight () {
-    return (this.density * this.volume).round(0.001);
+    const unitMin = Math.min(Entity.densityUnitMin, Entity.volumeUnitMin, Entity.dimensionUnitMin);
+
+    return (this.density * this.volume).round(unitMin);
   }
+  // #endregion
 
 
+  // #region Serialize
   /**
    * @param {Object} json
    * @param {Function} [reviver]
-   * @returns {Entity}
+   * @modifies {this}
+   * @returns {this}
    */
   fromJSON (json, reviver) {
     this.name = fromJSON(json, this, "name", reviver?.name);
@@ -160,7 +184,6 @@ const Entity = class {
    */
   toJSON (key, replacer) {
     const json = {};
-    json.constructor = toJSON(this, "constructor", replacer?.constructor);
 
     json.name = toJSON(this, "name", replacer?.name);
     json.description = toJSON(this, "description", replacer?.description);
@@ -177,5 +200,6 @@ const Entity = class {
 
     return json;
   }
+  // #endregion
 };
 export default Entity;

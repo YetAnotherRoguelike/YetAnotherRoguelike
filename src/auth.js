@@ -1,12 +1,16 @@
 import crypto from "crypto";
 import net, { isIPv4 } from "net";
 
+import { Event, Level, log } from "./events.js";
 import { auth as settings } from "./settings.js";
-import { Event, log } from "./events.js";
 import time, { convertTime, Priority, IntervalTask, tasks } from "./time.js";
 
 
+/**
+ * @extends net.BlockList
+ */
 export const BlockList = class extends net.BlockList {
+  // #region Static
   /**
    * @param {string} address
    * @returns {"ipv4" | "ipv6"}
@@ -14,7 +18,10 @@ export const BlockList = class extends net.BlockList {
   static #type (address) {
     return (isIPv4(address) ? "ipv4" : "ipv6");
   }
+  // #endregion
 
+
+  // #region Instance Methods
   /**
    * @param {string} address
    * @returns {undefined}
@@ -48,14 +55,11 @@ export const BlockList = class extends net.BlockList {
   check (address) {
     return super.check(address, BlockList.#type(address));
   }
+  // #endregion
 };
 
-/** @type {BlockList} */
-export const blacklist = new BlockList();
-
-/** @type {BlockList} */
-export const whitelist = new BlockList();
-
+/** @type {BlockList} */ export const blacklist = new BlockList();
+/** @type {BlockList} */ export const whitelist = new BlockList();
 for (const [name, list] of Object.entries({ blacklist, whitelist })) {
   const rules = settings[name];
   for (const rule of rules) {
@@ -93,17 +97,6 @@ export const blacklisted = (ip) => blacklist.check(ip);
 export const whitelisted = (ip) => whitelist.check(ip);
 
 
-if (settings.serverPassword === null) {
-  let password = crypto.randomBytes(settings.serverPasswordBytes).toString(settings.serverPasswordEncoding);
-  if (settings.serverPasswordSimple) {
-    password = password.replaceAll("-", "a").replaceAll("_", "b").toUpperCase();
-  }
-
-  settings.serverPassword = password;
-
-  log(new Event("info", "auth", `Server password is ${settings.serverPassword}`), (stream) => stream.console);
-}
-
 /**
  * @param {string} password
  * @returns {boolean}
@@ -116,19 +109,25 @@ export const login = (password) => {
   return crypto.timingSafeEqual(passwordHash, serverPasswordHash);
 };
 
+if (settings.serverPassword === null) {
+  let password = crypto.randomBytes(settings.serverPasswordBytes).toString(settings.serverPasswordEncoding);
+  if (settings.serverPasswordSimple) {
+    password = password.replaceAll("-", "a").replaceAll("_", "b").toUpperCase();
+  }
 
-if (settings.tokenSecret === null) {
-  settings.tokenSecret = crypto.randomBytes(settings.tokenSecretBytes).toString(settings.tokenSecretEncoding);
+  settings.serverPassword = password;
+
+  log(new Event(Level.info, "auth", `Server password is ${settings.serverPassword}`), (stream) => stream.console);
 }
 
-export const Token = class {
-  /** @type {string} */
-  #ip;
 
-  /** @type {number} */
-  #created;
-  /** @type {number} */
-  #expires;
+export const Token = class {
+  // #region Instance
+  /** @type {string} */ #ip;
+
+  /** @type {number} */ #created;
+  /** @type {number} */ #expires;
+
 
   /**
    * @param {string} ip
@@ -140,8 +139,9 @@ export const Token = class {
     this.#created = time.now;
     this.#expires = expires;
   }
+  // #endregion
 
-
+  // #region Instance Accessors
   /** @type {string} */
   get ip () { return this.#ip; }
 
@@ -151,17 +151,25 @@ export const Token = class {
 
   /** @type {number} */
   get expires () { return this.#expires; }
-  set expires (ms) { this.#expires = Math.max(ms, (time.now + settings.tokenTimeout)); }
+  set expires (ms) {
+    this.#expires = Math.max(ms, (time.now + settings.tokenTimeout));
+  }
+  // #endregion
 
+  // #region Instance Derived Properties
   /** @type {boolean} */
-  get valid () { return (this.expires > time.now); }
+  get valid () {
+    return (this.expires > time.now);
+  }
 
   /** @type {number} */
-  get remaining () { return Math.max((this.expires - time.now), 0); }
+  get remaining () {
+    return Math.max((this.expires - time.now), 0);
+  }
+  // #endregion
 };
 
-/** @type {Map<string, Token>} */
-const tokens = new Map();
+/** @type {Map<string, Token>} */ const tokens = new Map();
 
 /**
  * @param {string} ip
@@ -184,6 +192,23 @@ export const create = (ip, duration = settings.tokenTimeout) => {
 
 /**
  * @param {string} id
+ * @param {number} [ms]
+ * @returns {number}
+ */
+export const extend = (id, ms = settings.tokenTimeout) => {
+  (tokens.get(id) ?? { expires: 0 }).expires += ms;
+
+  return (tokens.get(id)?.expires ?? 0);
+};
+
+/**
+ * @param {string} id
+ * @returns {boolean}
+ */
+export const revoke = (id) => tokens.delete(id);
+
+/**
+ * @param {string} id
  * @param {string} ip
  * @returns {boolean}
  */
@@ -193,25 +218,13 @@ export const validate = (id, ip) => {
   return (token.valid && (token.ip === ip));
 };
 
-/**
- * @param {string} id
- * @param {number} [ms]
- * @returns {number}
- */
-export const extend = (id, ms = settings.tokenTimeout) => {
-  (tokens.get(id) ?? { expires: 0 }).expires += ms;
+if (settings.tokenSecret === null) {
+  settings.tokenSecret = crypto.randomBytes(settings.tokenSecretBytes).toString(settings.tokenSecretEncoding);
+}
 
-  return tokens.get(id)?.expires;
-};
-
-/**
- * @param {string} id
- * @returns {boolean}
- */
-export const revoke = (id) => tokens.delete(id);
 
 /** @type {IntervalTask} */
-const tokensCleanTask = new IntervalTask(
+const tokensClean = new IntervalTask(
   "Tokens Clean",
   () => {
     for (const [id, token] of tokens.entries()) if (!token.valid) revoke(id);
@@ -219,7 +232,7 @@ const tokensCleanTask = new IntervalTask(
   Priority.server,
   convertTime(settings.tokensCleanInterval)
 );
-tasks.add(tokensCleanTask);
+tasks.add(tokensClean);
 
 
 export default {
@@ -233,7 +246,7 @@ export default {
   Token,
   tokens,
   create,
-  validate,
   extend,
-  revoke
+  revoke,
+  validate
 };

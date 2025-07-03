@@ -1,16 +1,19 @@
 import Equip from "./equip.js";
 import Gear from "./gear.js";
-import Item from "./item.js";
 
 
-/** @abstract */
+/**
+ * @abstract
+ * @extends Gear
+ */
 const Accessory = class extends Gear {
+  // #region Instance
   constructor () {
     super();
     this.display.push("accessory");
 
     this.equip = Equip.accessory;
   }
+  // #endregion
 };
-Item.Accessory = Accessory;
 export default Accessory;

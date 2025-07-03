@@ -2,14 +2,14 @@ import { fromJSON, toJSON } from "@kxirk/serialize";
 import Random from "@kxirk/random";
 
 
-/** @type {Function} */
-let seed = Random.generateSeed();
+/** @type {Function} */ let seed = Random.generateSeed();
 
-/** @type {Random} */
-const random = new Random(seed);
+/** @type {Random} */ const random = new Random(seed);
 export default new Proxy(random, {
   get: (target, property) => {
     if (property === "seed") return seed;
+
+    if (["next", "nextTriangular", "nextNormal", "nextBoolean", "nextSign"].includes(property)) return target[property].bind(random);
 
     return target[property];
   },
@@ -23,17 +23,19 @@ export default new Proxy(random, {
   }
 });
 
+
 Object.defineProperty(random, "fromJSON", {
   /**
    * @param {Object} json
    * @param {Function} [reviver]
-   * @returns {Point}
+   * @modifies {this}
+   * @returns {this}
    */
   value (json, reviver) {
     seed = fromJSON(json, {}, "seed", reviver?.seed);
-    random.state = fromJSON(json, random, "state", reviver?.state);
+    this.state = fromJSON(json, this, "state", reviver?.state);
 
-    return random;
+    return this;
   },
   enumerable: false
 });
@@ -48,7 +50,7 @@ Object.defineProperty(random, "toJSON", {
     const json = {};
 
     json.seed = toJSON(seed, undefined, replacer?.seed);
-    json.state = toJSON(random, "state", replacer?.state);
+    json.state = toJSON(this, "state", replacer?.state);
 
     return json;
   },

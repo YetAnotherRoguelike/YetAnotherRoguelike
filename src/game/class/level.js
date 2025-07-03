@@ -1,20 +1,19 @@
-import { fromJSON, toJSON } from "@kxirk/serialize";
+import { fromJSON, toJSON, serializable } from "@kxirk/serialize";
 import "@kxirk/utils/number.js";
 
 
-/** @abstract */
+/**
+ * @abstract
+ */
 const Level = class {
-  /** @type {number} */
-  #depthCount;
+  // #region Instance
+  /** @type {number} */ #depthCount;
 
-  /** @type {number} */
-  #widthMin;
-  /** @type {number} */
-  #widthMax;
-  /** @type {number} */
-  #heightMin;
-  /** @type {number} */
-  #heightMax;
+  /** @type {number} */ #widthMin;
+  /** @type {number} */ #widthMax;
+  /** @type {number} */ #heightMin;
+  /** @type {number} */ #heightMax;
+
 
   constructor () {
     this.#depthCount = 0;
@@ -24,26 +23,9 @@ const Level = class {
     this.#heightMin = 0;
     this.#heightMax = Infinity;
   }
+  // #endregion
 
-  /**
-   * @param {Object} json
-   * @param {Function} [reviver]
-   * @returns {Level}
-   */
-  static fromJSON (json, reviver) {
-    return new Level[json.constructor]().fromJSON(json, reviver);
-  }
-
-  /**
-   * @param {string} key
-   * @param {Function} [replacer]
-   * @returns {string}
-   */
-  static toJSON (key, replacer) {
-    return toJSON(this, "name", replacer?.name);
-  }
-
-
+  // #region Instance Accessors
   /** @type {number} */
   get depthCount () { return this.#depthCount; }
   set depthCount (count) {
@@ -74,20 +56,23 @@ const Level = class {
   set heightMax (max) {
     this.#heightMax = max.clamp(this.heightMin);
   }
+  // #endregion
 
 
+  // #region Serialize
   /**
    * @param {Object} json
    * @param {Function} [reviver]
-   * @returns {Level}
+   * @modifies {this}
+   * @returns {this}
    */
   fromJSON (json, reviver) {
     this.depthCount = fromJSON(json, this, "depthCount", reviver?.depthCount);
 
     this.widthMin = fromJSON(json, this, "widthMin", reviver?.widthMin);
-    this.widthMax = fromJSON(json, this, "widthMax", reviver?.widthMax);
+    this.widthMax = fromJSON(json, this, "widthMax", (reviver?.widthMax ?? Number.fromJSON));
     this.heightMin = fromJSON(json, this, "heightMin", reviver?.heightMin);
-    this.heightMax = fromJSON(json, this, "heightMax", reviver?.heightMax);
+    this.heightMax = fromJSON(json, this, "heightMax", (reviver?.heightMax ?? Number.fromJSON));
 
     return this;
   }
@@ -110,5 +95,6 @@ const Level = class {
 
     return json;
   }
+  // #endregion
 };
-export default Level;
+export default serializable(Level, true);

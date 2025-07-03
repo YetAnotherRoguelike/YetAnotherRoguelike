@@ -1,39 +1,35 @@
 import { fromJSON, toJSON } from "@kxirk/serialize";
+import "@kxirk/utils/number.js";
 import Object from "@kxirk/utils/object.js";
 
 import Item from "./item.js";
 
 
-/** @enum {string} */
+/**
+ * @enum {string}
+ */
 const Slot = class {
-  /** @type {string} */
+  // #region Enum
   static armor = "armor";
 
-  /** @type {string} */
   static hand = "hand";
-  /** @type {string} */
   static side = "side";
-  /** @type {string} */
   static both = "both";
 
-  /** @type {string} */
   static accessories = "accessories";
+  // #endregion
 
-  /** @type {Item} */
-  #item;
-  /** @type {keyof Equip} */
-  #equip;
-  /** @type {keyof Slot} */
-  #slot;
 
-  /** @type {Class<Item>} */
-  #Type;
-  /** @type {number} */
-  #dimensionMax;
-  /** @type {number} */
-  #volumeMax;
-  /** @type {boolean} */
-  #open;
+  // #region Instance
+  /** @type {Item} */ #item;
+  /** @type {keyof Equip} */ #equip;
+  /** @type {keyof Slot} */ #slot;
+
+  /** @type {Class<Item>} */ #Type;
+  /** @type {number} */ #dimensionMax;
+  /** @type {number} */ #volumeMax;
+  /** @type {boolean} */ #open;
+
 
   /**
    * @param {Class<Item>} [Type]
@@ -49,19 +45,15 @@ const Slot = class {
     this.volumeMax = volumeMax;
     this.open = open;
 
+
     Object.assignGettersAsEnumerable(this, Slot);
   }
+  // #endregion
 
-
+  // #region Instance Accessors
   /** @type {Item} */
   get item () { return this.#item; }
   set item (item) { this.#item = item; }
-
-  /** @type {boolean} */
-  get empty () { return (this.#item === null); }
-
-  /** @type {number} */
-  get weight () { return (this.item?.weight ?? 0); }
 
   /** @type {keyof Equip} */
   get equip () { return this.#equip; }
@@ -90,13 +82,26 @@ const Slot = class {
   /** @type {boolean} */
   get open () { return this.#open; }
   set open (open) { this.#open = open; }
+  // #endregion
 
+  // #region Instance Derived Properties
+  /** @type {boolean} */
+  get empty () {
+    return (this.#item === null);
+  }
 
+  /** @type {number} */
+  get weight () {
+    return (this.item?.weight ?? 0);
+  }
+  // #endregion
+
+  // #region Instance Methods
   /**
    * @param {Item} item
    * @param {keyof Equip} equip
    * @param {keyof Slot} slot
-   * @returns {Slot}
+   * @returns {this}
    */
   set (item, equip, slot) {
     this.#item = item;
@@ -124,6 +129,7 @@ const Slot = class {
     return true;
   }
 
+
   /**
    * @returns {Item}
    */
@@ -145,25 +151,30 @@ const Slot = class {
   }
 
 
-  /** @type {Iterator<Item>} */
-  [Symbol.iterator] () {
-    return (this.empty ? [] : [this.item])[Symbol.iterator]();
+  /**
+   * @returns {Iterator<Item>}
+   */
+  * [Symbol.iterator] () {
+    if (!this.empty) yield this.item;
   }
+  // #endregion
 
 
+  // #region Serialize
   /**
    * @param {Object} json
    * @param {Function} [reviver]
-   * @returns {Slot}
+   * @modifies {this}
+   * @returns {this}
    */
   fromJSON (json, reviver) {
     this.item = fromJSON(json, this, "item", (reviver?.item ?? Item.fromJSON));
-    this.equip = fromJSON(json, this, "equip", reviver?.equip);
+    this.#equip = fromJSON(json, this, "equip", reviver?.equip);
     this.slot = fromJSON(json, this, "slot", reviver?.slot);
 
-    this.Type = fromJSON(json, this, "Type", (reviver?.Type ?? ((constructor) => Item[constructor])));
-    this.dimensionMax = fromJSON(json, this, "dimensionMax", reviver?.dimensionMax);
-    this.volumeMax = fromJSON(json, this, "volumeMax", reviver?.volumeMax);
+    this.Type = fromJSON(json, this, "Type", (reviver?.Type ?? ((constructor) => Item.resolve(constructor))));
+    this.dimensionMax = fromJSON(json, this, "dimensionMax", (reviver?.dimensionMax ?? Number.fromJSON));
+    this.volumeMax = fromJSON(json, this, "volumeMax", (reviver?.volumeMax ?? Number.fromJSON));
     this.open = fromJSON(json, this, "open", reviver?.open);
 
     return this;
@@ -188,5 +199,6 @@ const Slot = class {
 
     return json;
   }
+  // #endregion
 };
 export default Slot;

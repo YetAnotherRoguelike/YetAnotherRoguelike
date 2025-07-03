@@ -1,18 +1,15 @@
 import { PriorityQueue } from "@kxirk/adt";
-import { fromJSON, toJSON } from "@kxirk/serialize";
+import { fromJSON, toJSON, serializable } from "@kxirk/serialize";
 import "@kxirk/utils/number.js";
 
+import { Event, Level, log } from "./events.js";
 import { time as settings } from "./settings.js";
-import { Event, log } from "./events.js";
 
 
-/** @type {ms} */
-export const start = performance.timeOrigin;
+/** @type {number} */ export const start = performance.timeOrigin;
 
-/** @type {ms} */
-export const rate = settings.tickRate;
-/** @type {tick} */
-let tick = 0;
+/** @type {number} */ export const rate = settings.tickRate;
+/** @type {number} */ let tick = 0;
 
 /**
  * @param {number} ms
@@ -27,13 +24,17 @@ export const convertTime = (ms) => (ms / rate).round().clamp(1);
 export const convertTick = (tick) => (rate * tick);
 
 
-/** @enum {number} */
+/**
+ * @enum {number}
+ */
 export const Priority = class {
+  // #region Enum
   static next = 0;
   static time = 2;
   static server = 8;
   static game = 32;
   static api = 128;
+  // #endregion
 };
 
 /**
@@ -43,28 +44,22 @@ export const Priority = class {
  * @param {number} next
  * @param {number} count
  */
-/** @abstract */
+
 export const Task = class {
-  /** @type {string} */
-  #name;
-  /** @type {Run} */
-  #callback;
-  /** @type {Priority} */
-  #priority;
+  // #region Instance
+  /** @type {string} */ #name;
+  /** @type {Run} */ #callback;
+  /** @type {Priority} */ #priority;
 
-  /** @type {number} */
-  #interval;
+  /** @type {number} */ #interval;
 
-  /** @type {number} */
-  #last;
-  /** @type {number} */
-  #next;
+  /** @type {number} */ #last;
+  /** @type {number} */ #next;
 
-  /** @type {number} */
-  #count;
+  /** @type {number} */ #count;
 
-  /** @type {Task[]} */
-  #depends;
+  /** @type {Task[]} */ #depends;
+
 
   /**
    * @param {string} name
@@ -89,26 +84,9 @@ export const Task = class {
 
     this.#depends = [];
   }
+  // #endregion
 
-  /**
-   * @param {Object} json
-   * @param {Function} [reviver]
-   * @returns {Task}
-   */
-  static fromJSON (json, reviver) {
-    return new Task[json.constructor](json.name, json.callback, json.priority, json.interval, json.last, json.count).fromJSON(json, reviver);
-  }
-
-  /**
-   * @param {string} key
-   * @param {Function} [replacer]
-   * @returns {string}
-   */
-  static toJSON (key, replacer) {
-    return toJSON(this, "name", replacer?.name);
-  }
-
-
+  // #region Instance Accessors
   /** @type {string} */
   get name () { return this.#name; }
 
@@ -129,9 +107,19 @@ export const Task = class {
   /** @type {number} */
   get next () { return this.#next; }
 
+
+  /** @type {number} */
+  get count () { return this.#count; }
+
+
+  /** @type {Task[]} */
+  get depends () { return this.#depends; }
+  // #endregion
+
+  // #region Instance Methods
   /**
-   * @param {tick} start
-   * @returns {tick} next
+   * @param {number} start
+   * @returns {number} next
    */
   start (start) {
     this.#next = (start + this.interval);
@@ -140,30 +128,15 @@ export const Task = class {
   }
 
 
-  /** @type {number} */
-  get count () { return this.#count; }
-
   /**
-   * @returns {undefined}
-   */
-  clear () {
-    this.#count = 0;
-  }
-
-
-  /** @type {Task[]} */
-  get depends () { return this.#depends; }
-
-
-  /**
-   * @param {tick} tick
-   * @returns {tick} next
+   * @param {number} tick
+   * @returns {number} next
    */
   run (tick) {
     for (const task of this.depends) if (task.last !== tick) task.run(tick);
 
     this.#count--;
-    this.#next += (this.count > 0 ? this.interval : Infinity);
+    this.#next += ((this.count > 0) ? this.interval : Infinity);
 
     this.#callback(tick, this.last, this.next, this.count);
     this.#last = tick;
@@ -173,9 +146,23 @@ export const Task = class {
 
 
   /**
+   * @returns {undefined}
+   */
+  clear () {
+    this.#count = 0;
+  }
+  // #endregion
+
+
+  // #region Serialize
+  /** @type {string[]} */ static parameters = ["name", "callback", "priority", "interval", "start", "count"];
+
+
+  /**
    * @param {Object} json
    * @param {Function} [reviver]
-   * @returns {Task}
+   * @modifies {this}
+   * @returns {this}
    */
   fromJSON (json, reviver) {
     this.#name = fromJSON(json, this, "name", reviver?.name);
@@ -200,6 +187,7 @@ export const Task = class {
    */
   toJSON (key, replacer) {
     const json = {};
+    json.constructor = toJSON(this, "constructor", replacer?.constructor);
 
     json.name = toJSON(this, "name", replacer?.name);
     json.callback = toJSON(this, "callback", replacer?.callback);
@@ -216,32 +204,68 @@ export const Task = class {
 
     return json;
   }
+  // #endregion
 };
+serializable(Task);
 
+/**
+ * @extends Task
+ */
 export const TimeoutTask = class extends Task {
+  // #region Instance
+  /**
+   * @param {string} name
+   * @param {Run} callback
+   * @param {Priority} priority
+   * @param {number} delay
+   * @param {number} [start]
+   */
   constructor (name, callback, priority, delay, start) {
     super(name, callback, priority, delay, start, 1);
   }
-};
-Task.TimeoutTask = TimeoutTask;
+  // #endregion
 
+
+  // #region Serialize
+  /** @type {string} */ static name = "TimeoutTask";
+  /** @type {string[]} */ static parameters = ["name", "callback", "priority", "interval", "start"];
+  // #endregion
+};
+Task.register(TimeoutTask);
+
+/**
+ * @extends Task
+ */
 export const IntervalTask = class extends Task {
+  // #region Instance
+  /**
+   * @param {string} name
+   * @param {Run} callback
+   * @param {Priority} priority
+   * @param {number} interval
+   * @param {number} [start]
+   */
   constructor (name, callback, priority, interval, start) {
     super(name, callback, priority, interval, start, Infinity);
   }
+  // #endregion
+
+
+  // #region Serialize
+  /** @type {string} */ static name = "IntervalTask";
+  /** @type {string[]} */ static parameters = ["name", "callback", "priority", "interval", "start"];
+  // #endregion
 };
-Task.IntervalTask = IntervalTask;
+Task.register(IntervalTask);
 
 
-/** @type {PriorityQueue<Task>} */
-export const tasks = new PriorityQueue((a, b) => {
+/** @type {PriorityQueue<Task>} */ export const tasks = new PriorityQueue((a, b) => {
   if (a.next === b.next) {
     if (a.priority === b.priority) return (a.interval < b.interval);
     return (a.priority < b.priority);
   }
   return (a.next < b.next);
 });
-
 Object.defineProperty(tasks, "add", {
   /**
    * @param {Task} task
@@ -252,23 +276,22 @@ Object.defineProperty(tasks, "add", {
   },
   enumerable: false
 });
-
 Object.defineProperty(tasks, "fromJSON", {
   /**
    * @param {Object[]} json
    * @param {Function} [reviver]
-   * @returns {PriorityQueue<Task>}
+   * @modifies {this}
+   * @returns {this}
    */
   value (json, reviver) {
-    tasks.clear();
+    this.clear();
 
-    tasks.add(...fromJSON(json, [], undefined, (reviver ?? { value: Task.fromJSON })));
+    this.add(...fromJSON(json, [], undefined, (reviver ?? { value: Task.fromJSON })));
 
-    return tasks;
+    return this;
   },
   enumerable: false
 });
-
 Object.defineProperty(tasks, "toJSON", {
   /**
    * @param {string} key
@@ -276,28 +299,25 @@ Object.defineProperty(tasks, "toJSON", {
    * @returns {Object[]}
    */
   value (key, replacer) {
-    const json = toJSON([...tasks], undefined, replacer);
-
-    return json;
+    return toJSON([...tasks], undefined, replacer);
   },
   enumerable: false
 });
 
-/** @type {ms} */
-let last = 0;
+/** @type {number} */ let last = 0;
 
 /**
- * @param {ms} now
- * @returns {TimeoutTask}
+ * @param {number} now
+ * @returns {Timeout}
  */
 export const run = (now) => {
   last = now;
 
-  const real = performance.timeOrigin + performance.now();
-  const drift = real - now;
-  const tickDrift = drift / rate;
+  const real = (performance.timeOrigin + performance.now());
+  const drift = (real - now);
+  const tickDrift = (drift / rate);
   if (Math.abs(tickDrift) >= settings.tickDriftThreshold) {
-    log(new Event("warn", "time", `Ran ${tickDrift.round()} ticks behind expected`));
+    log(new Event(Level.warn, "time", `Ran ${tickDrift.round()} ticks behind expected`));
 
     now = real;
   }
@@ -306,7 +326,7 @@ export const run = (now) => {
     const task = tasks.remove();
 
     if (task.count > 0) {
-      if (task instanceof TimeoutTask) log(new Event("debug", "task", `Running task ${task.name}`));
+      if (task instanceof TimeoutTask) log(new Event(Level.debug, "task", `Running task ${task.name}`));
       task.run(tick);
 
       tasks.add(task);
@@ -321,7 +341,7 @@ export const run = (now) => {
 export default {
   start,
   get elapsed () { return performance.now(); },
-  get now () { return start + this.elapsed; },
+  get now () { return (start + this.elapsed); },
   rate,
   get tick () { return tick; },
   convertTime,
@@ -334,6 +354,6 @@ export default {
 
   tasks,
   get last () { return last; },
-  get drift () { return this.now - last; },
+  get drift () { return (this.now - last); },
   run
 };

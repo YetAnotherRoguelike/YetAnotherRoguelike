@@ -1,28 +1,28 @@
 import { fromJSON, toJSON } from "@kxirk/serialize";
 import "@kxirk/utils/array.js";
+import "@kxirk/utils/number.js";
 
 import Item from "./item.js";
 
 
-export const smallFactor = 0.1;
-export const smallDimensionFactor = 0.15;
-export const smallVolumeFactor = 0.025;
-
 const Inventory = class {
-  /** @type {Class<Item>} */
-  #Type;
-  /** @type {Item[]} */
-  #items;
+  // #region Static
+  /** @type {number} */ static smallFactor = 0.1;
+  /** @type {number} */ static smallDimensionFactor = 0.15;
+  /** @type {number} */ static smallVolumeFactor = 0.025;
+  // #endregion
 
-  /** @type {number} */
-  #sizeMax;
-  /** @type {number} */
-  #volumeMax;
 
-  /** @type {number} */
-  #itemDimensionMax;
-  /** @type {number} */
-  #itemVolumeMax;
+  // #region Instance
+  /** @type {Class<Item>} */ #Type;
+  /** @type {Item[]} */ #items;
+
+  /** @type {number} */ #sizeMax;
+  /** @type {number} */ #volumeMax;
+
+  /** @type {number} */ #itemDimensionMax;
+  /** @type {number} */ #itemVolumeMax;
+
 
   /**
    * @param {Class<Item>} [Type]
@@ -41,32 +41,12 @@ const Inventory = class {
     this.itemDimensionMax = itemDimensionMax;
     this.itemVolumeMax = itemVolumeMax;
   }
+  // #endregion
 
-  /**
-   * @param {Item} item
-   * @returns {boolean}
-   */
-  #small (item) {
-    if (this.itemDimensionMax === Infinity && this.itemVolumeMax === Infinity) return false;
-
-    const dimension = item.dimensionMax <= (smallDimensionFactor * this.itemDimensionMax);
-    const volume = item.volume <= (smallVolumeFactor * this.itemVolumeMax);
-    return (dimension && volume);
-  }
-
-
+  // #region Instance Accessors
   /** @type {Class<Item>} */
   get Type () { return this.#Type; }
   set Type (Type) { this.#Type = Type; }
-
-  /** @type {number} */
-  get size () { return this.#items.reduce((size, item) => size + (this.#small(item) ? smallFactor : 1), 0); }
-
-  /** @type {number} */
-  get volume () { return this.#items.reduce((volume, item) => volume + item.volume, 0); }
-
-  /** @type {number} */
-  get weight () { return this.#items.reduce((weight, item) => weight + item.weight, 0); }
 
 
   /** @type {number} */
@@ -93,6 +73,45 @@ const Inventory = class {
   set itemVolumeMax (itemVolumeMax) {
     this.#itemVolumeMax = itemVolumeMax.clamp(0);
   }
+  // #endregion
+
+  // #region Instance Derived Properties
+  /** @type {number} */
+  get size () {
+    return this.#items.reduce((size, item) => (size + this.#size(item)), 0);
+  }
+
+  /** @type {number} */
+  get volume () {
+    return this.#items.reduce((volume, item) => (volume + item.volume), 0);
+  }
+
+  /** @type {number} */
+  get weight () {
+    return this.#items.reduce((weight, item) => (weight + item.weight), 0);
+  }
+  // #endregion
+
+  // #region Instance Methods
+  /**
+   * @param {Item} item
+   * @returns {boolean}
+   */
+  #small (item) {
+    if ((this.itemDimensionMax === Infinity) && (this.itemVolumeMax === Infinity)) return false;
+
+    const dimension = (item.dimensionMax <= (Inventory.smallDimensionFactor * this.itemDimensionMax));
+    const volume = (item.volume <= (Inventory.smallVolumeFactor * this.itemVolumeMax));
+    return (dimension && volume);
+  }
+
+  /**
+   * @param {Item} item
+   * @returns {number}
+   */
+  #size (item) {
+    return (this.#small(item) ? Inventory.smallFactor : 1);
+  }
 
 
   /**
@@ -113,8 +132,8 @@ const Inventory = class {
     if (item.dimensionMax > this.itemDimensionMax) return false;
     if (item.volume > this.itemVolumeMax) return false;
 
-    if (this.size >= this.sizeMax) return false;
-    if (this.volume > this.volumeMax) return false;
+    if ((this.size + this.#size(item)) >= this.sizeMax) return false;
+    if ((this.volume + item.volume) > this.volumeMax) return false;
 
     this.#items.push(item);
     return true;
@@ -131,26 +150,31 @@ const Inventory = class {
   }
 
 
-  /** @type {Iterator<Item>} */
+  /**
+   * @returns {Iterator<Item>}
+   */
   [Symbol.iterator] () {
     return this.#items[Symbol.iterator]();
   }
+  // #endregion
 
 
+  // #region Serialize
   /**
    * @param {Object} json
    * @param {Function} [reviver]
-   * @returns {Inventory}
+   * @modifies {this}
+   * @returns {this}
    */
   fromJSON (json, reviver) {
-    this.Type = fromJSON(json, this, "Type", (reviver?.Type ?? ((constructor) => Item[constructor])));
+    this.Type = fromJSON(json, this, "Type", (reviver?.Type ?? ((constructor) => Item.resolve(constructor))));
     fromJSON(json, this, "items", (reviver?.items ?? { value: Item.fromJSON }));
 
-    this.sizeMax = fromJSON(json, this, "sizeMax", reviver?.sizeMax);
-    this.volumeMax = fromJSON(json, this, "volumeMax", reviver?.volumeMax);
+    this.sizeMax = fromJSON(json, this, "sizeMax", (reviver?.sizeMax ?? Number.fromJSON));
+    this.volumeMax = fromJSON(json, this, "volumeMax", (reviver?.volumeMax ?? Number.fromJSON));
 
-    this.itemDimensionMax = fromJSON(json, this, "itemDimensionMax", reviver?.itemDimensionMax);
-    this.itemVolumeMax = fromJSON(json, this, "itemVolumeMax", reviver?.itemVolumeMax);
+    this.itemDimensionMax = fromJSON(json, this, "itemDimensionMax", (reviver?.itemDimensionMax ?? Number.fromJSON));
+    this.itemVolumeMax = fromJSON(json, this, "itemVolumeMax", (reviver?.itemVolumeMax ?? Number.fromJSON));
 
     return this;
   }
@@ -174,5 +198,6 @@ const Inventory = class {
 
     return json;
   }
+  // #endregion
 };
 export default Inventory;
